@@ -156,6 +156,90 @@ class AnalyticsService {
       value: resultsCount
     });
   }
+  
+  // New tracking methods for enhanced user behavior analytics
+  
+  trackFormSubmission(formName: string, success: boolean, errorType?: string): void {
+    this.trackEvent({
+      action: 'form_submission',
+      category: 'Forms',
+      label: `${formName} | ${success ? 'Success' : 'Error' + (errorType ? ': ' + errorType : '')}`
+    });
+  }
+  
+  trackFormFieldInteraction(formName: string, fieldName: string, interactionType: 'focus' | 'blur' | 'change'): void {
+    this.trackEvent({
+      action: 'form_field_interaction',
+      category: 'Forms',
+      label: `${formName} | ${fieldName} | ${interactionType}`
+    });
+  }
+  
+  trackDropdownSelection(dropdownName: string, selectedValue: string, location: string): void {
+    this.trackEvent({
+      action: 'dropdown_selection',
+      category: 'UI Interaction',
+      label: `${dropdownName} | Selected: ${selectedValue} | ${location}`
+    });
+  }
+  
+  trackTabChange(tabGroup: string, selectedTab: string): void {
+    this.trackEvent({
+      action: 'tab_change',
+      category: 'UI Interaction',
+      label: `${tabGroup} | Selected: ${selectedTab}`
+    });
+  }
+  
+  trackModalOpen(modalName: string, trigger: string): void {
+    this.trackEvent({
+      action: 'modal_open',
+      category: 'UI Interaction',
+      label: `${modalName} | Triggered by: ${trigger}`
+    });
+  }
+  
+  trackModalClose(modalName: string, method: 'button' | 'overlay' | 'escape' | 'auto'): void {
+    this.trackEvent({
+      action: 'modal_close',
+      category: 'UI Interaction',
+      label: `${modalName} | Closed by: ${method}`
+    });
+  }
+  
+  trackScrollDepth(page: string, depth: number): void {
+    this.trackEvent({
+      action: 'scroll_depth',
+      category: 'User Engagement',
+      label: `${page} | ${depth}%`,
+      value: depth
+    });
+  }
+  
+  trackTimeOnPage(page: string, seconds: number): void {
+    this.trackEvent({
+      action: 'time_on_page',
+      category: 'User Engagement',
+      label: page,
+      value: seconds
+    });
+  }
+  
+  trackOutboundLink(url: string, linkText: string): void {
+    this.trackEvent({
+      action: 'outbound_link',
+      category: 'Navigation',
+      label: `${url} | ${linkText}`
+    });
+  }
+  
+  trackDownload(fileName: string, fileType: string): void {
+    this.trackEvent({
+      action: 'download',
+      category: 'Content',
+      label: `${fileName} (${fileType})`
+    });
+  }
 }
 
 // Create and export the analytics service with Google Analytics provider
@@ -191,6 +275,37 @@ export const trackCountryView = (countryName: string) =>
 
 export const trackSearch = (query: string, resultsCount: number) => 
   analyticsService.trackSearch(query, resultsCount);
+
+// Export new enhanced analytics functions
+export const trackFormSubmission = (formName: string, success: boolean, errorType?: string) =>
+  analyticsService.trackFormSubmission(formName, success, errorType);
+
+export const trackFormFieldInteraction = (formName: string, fieldName: string, interactionType: 'focus' | 'blur' | 'change') =>
+  analyticsService.trackFormFieldInteraction(formName, fieldName, interactionType);
+  
+export const trackDropdownSelection = (dropdownName: string, selectedValue: string, location: string) =>
+  analyticsService.trackDropdownSelection(dropdownName, selectedValue, location);
+  
+export const trackTabChange = (tabGroup: string, selectedTab: string) =>
+  analyticsService.trackTabChange(tabGroup, selectedTab);
+  
+export const trackModalOpen = (modalName: string, trigger: string) =>
+  analyticsService.trackModalOpen(modalName, trigger);
+  
+export const trackModalClose = (modalName: string, method: 'button' | 'overlay' | 'escape' | 'auto') =>
+  analyticsService.trackModalClose(modalName, method);
+  
+export const trackScrollDepth = (page: string, depth: number) =>
+  analyticsService.trackScrollDepth(page, depth);
+  
+export const trackTimeOnPage = (page: string, seconds: number) =>
+  analyticsService.trackTimeOnPage(page, seconds);
+  
+export const trackOutboundLink = (url: string, linkText: string) =>
+  analyticsService.trackOutboundLink(url, linkText);
+  
+export const trackDownload = (fileName: string, fileType: string) =>
+  analyticsService.trackDownload(fileName, fileType);
 
 // Export the service for advanced usage
 export { analyticsService };
