@@ -5,7 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { trackCalculation } from "@/lib/analytics";
+import { 
+  trackCalculation, 
+  trackFormSubmission, 
+  trackFormFieldInteraction, 
+  trackDropdownSelection, 
+  trackButtonClick 
+} from "@/lib/analytics";
 import { useFeatureFlags } from "@/lib/featureFlags";
 import { CalculationSummary, Country } from "@/lib/types";
 import { Link } from "wouter";
@@ -95,9 +101,14 @@ export function TariffCalculator() {
         description: "Please enter at least one item with an amount greater than zero",
         variant: "destructive",
       });
+      
+      // Track unsuccessful form submission
+      trackFormSubmission('TariffCalculator', false, 'NoItemsEntered');
       return;
     }
     
+    // Track successful form submission
+    trackFormSubmission('TariffCalculator', true);
     mutate({ items: filteredItems });
   };
 
@@ -147,7 +158,14 @@ export function TariffCalculator() {
                                       min="0"
                                       placeholder="Monthly spend ($)"
                                       className="w-full py-2 px-3 border border-primary-light rounded-md bg-white bg-opacity-10 text-white placeholder-white placeholder-opacity-60"
-                                      {...form.register(`items.${index}.amount`, { valueAsNumber: true })}
+                                      {...form.register(`items.${index}.amount`, { 
+                                        valueAsNumber: true,
+                                        onChange: (e) => {
+                                          trackFormFieldInteraction('TariffCalculator', `${field.value}Amount`, 'change');
+                                        }
+                                      })}
+                                      onFocus={() => trackFormFieldInteraction('TariffCalculator', `${field.value}Amount`, 'focus')}
+                                      onBlur={() => trackFormFieldInteraction('TariffCalculator', `${field.value}Amount`, 'blur')}
                                     />
                                   </FormControl>
                                 </div>
@@ -157,7 +175,10 @@ export function TariffCalculator() {
                                   render={({ field }) => (
                                     <FormItem>
                                       <Select 
-                                        onValueChange={field.onChange} 
+                                        onValueChange={(value) => {
+                                          field.onChange(value);
+                                          trackDropdownSelection('CountrySelect', value, 'TariffCalculator');
+                                        }} 
                                         defaultValue={field.value}
                                         disabled={isLoadingCountries}
                                       >
@@ -190,7 +211,12 @@ export function TariffCalculator() {
                     ))}
                     
                     <div className="mt-6">
-                      <Button type="submit" className="w-full bg-white text-primary py-2 px-4 rounded-md font-medium hover:bg-neutral-100" disabled={isPending}>
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-white text-primary py-2 px-4 rounded-md font-medium hover:bg-neutral-100" 
+                        disabled={isPending}
+                        onClick={() => trackButtonClick('CalculateImpact', 'TariffCalculator')}
+                      >
                         {isPending ? "Calculating..." : "Calculate Impact"}
                       </Button>
                     </div>
@@ -246,7 +272,10 @@ export function TariffCalculator() {
                     
                     <div className="mt-6">
                       <Link href="/products">
-                        <Button className="w-full bg-secondary text-white py-2 px-4 rounded-md font-medium hover:bg-secondary-dark">
+                        <Button 
+                          className="w-full bg-secondary text-white py-2 px-4 rounded-md font-medium hover:bg-secondary-dark"
+                          onClick={() => trackButtonClick('FindAlternativeProducts', 'TariffCalculator')}
+                        >
                           Find Alternative Products
                         </Button>
                       </Link>
