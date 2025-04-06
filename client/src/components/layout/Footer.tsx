@@ -33,6 +33,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link href="/about#help" className="hover:text-white">Help Center</Link></li>
               <li><Link href="/about#data-sources" className="hover:text-white">Data Sources</Link></li>
+              <li><Link href="/about#ai-content" className="hover:text-white">AI Content Disclaimer</Link></li>
               <li><Link href="/about#api" className="hover:text-white">API Documentation</Link></li>
               <li><Link href="/about#privacy" className="hover:text-white">Privacy Policy</Link></li>
             </ul>
@@ -49,9 +50,9 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="mt-8 pt-8 border-t border-neutral-700 flex flex-col md:flex-row justify-between items-center">
+        <div className="mt-8 pt-8 border-t border-neutral-700 flex flex-col items-center">
           <p className="text-sm">© {currentYear} {APP_NAME}. All rights reserved.</p>
-          <div className="mt-4 md:mt-0 flex space-x-6">
+          <div className="mt-4 flex space-x-6">
             <Link href="/about#privacy" className="text-neutral-400 hover:text-white">
               <span className="sr-only">Privacy</span>
               Privacy Policy
@@ -64,7 +65,14 @@ export function Footer() {
               <span className="sr-only">Cookies</span>
               Cookie Policy
             </Link>
+            <Link href="/about#ai-content" className="text-neutral-400 hover:text-white">
+              <span className="sr-only">AI Content</span>
+              AI Content Disclaimer
+            </Link>
           </div>
+          <p className="text-xs text-neutral-500 mt-6 text-center">
+            Some content on this site is AI-generated. <Link href="/about#ai-content" className="underline hover:text-neutral-400">Learn more</Link> about our use of AI.
+          </p>
         </div>
       </div>
     </footer>

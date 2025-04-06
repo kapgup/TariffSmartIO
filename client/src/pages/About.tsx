@@ -54,6 +54,21 @@ export default function About() {
                   Our data is updated regularly to reflect the most current tariff policies and market conditions.
                 </p>
                 
+                <h2 id="ai-content">AI-Generated Content Disclaimer</h2>
+                <p>
+                  <strong>Important:</strong> Some content on TariffSmart is generated using artificial intelligence technologies. 
+                  While we strive for accuracy, AI-generated information may contain errors, inconsistencies, or outdated information.
+                </p>
+                <p>
+                  Our team reviews AI-generated content, but we cannot guarantee its complete accuracy. The tariff estimates, product information, 
+                  and market analyses should be used as general guidance rather than definitive financial advice. We recommend verifying critical 
+                  information with official government sources or consulting with a financial professional before making significant decisions.
+                </p>
+                <p>
+                  We are committed to transparency about our use of AI and continuously work to improve the quality and accuracy of all information on TariffSmart.
+                  If you identify any inaccuracies, please contact us immediately at corrections@tariffsmart.com.
+                </p>
+                
                 <h2 id="help">Help Center</h2>
                 <div className="not-prose">
                   <Card className="mb-6">
@@ -123,6 +138,12 @@ export default function About() {
                   By using TariffSmart, you agree to our Terms of Service, which outline the rules, guidelines, and 
                   limitations of your use of our platform. These terms are designed to ensure a positive, helpful 
                   experience for all users while protecting our intellectual property and services.
+                </p>
+                <p>
+                  <strong>AI Content Notice:</strong> TariffSmart utilizes artificial intelligence to generate certain content,
+                  including but not limited to product descriptions, tariff impact analyses, and market trends. By using our service,
+                  you acknowledge that such AI-generated content is provided "as is" without warranties of any kind, either express or implied,
+                  and may contain inaccuracies or errors. TariffSmart disclaims all liability for any damages arising from reliance on AI-generated content.
                 </p>
               </div>
             </div>
