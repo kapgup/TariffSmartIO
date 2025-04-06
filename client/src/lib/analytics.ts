@@ -18,26 +18,11 @@ class GoogleAnalyticsProvider implements AnalyticsProvider {
   initialize(): void {
     if (typeof window === 'undefined') return;
     
-    // Add Google Analytics script to the page
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
-    document.head.appendChild(script);
+    // Google Analytics tag is already loaded in index.html
+    // No need to dynamically add the script
 
-    // Initialize the dataLayer and gtag function
-    window.dataLayer = window.dataLayer || [];
-    function gtag(...args: any[]) {
-      window.dataLayer.push(arguments);
-    }
-    window.gtag = gtag;
-
-    gtag('js', new Date());
-    gtag('config', GA_TRACKING_ID);
-    
-    // After initialization, trigger a pageview for the current page
-    this.trackPageView(window.location.pathname + window.location.search);
-
-    console.log('Google Analytics initialized with ID:', GA_TRACKING_ID);
+    // Log initialization
+    console.log('Google Analytics code initialized');
   }
 
   trackPageView(url: string): void {
