@@ -22,12 +22,12 @@ export function Hero() {
                 </Button>
               </Link>
               <Link href="/products">
-                <Button variant="outline" className="mb-4 sm:mb-0 w-full sm:w-auto border-white text-white hover:bg-primary-dark hover:text-primary">
+                <Button className="mb-4 sm:mb-0 w-full sm:w-auto bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary">
                   Browse Products
                 </Button>
               </Link>
               <Link href="/countries">
-                <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-primary-dark hover:text-primary">
+                <Button className="w-full sm:w-auto bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary">
                   View Countries
                 </Button>
               </Link>
