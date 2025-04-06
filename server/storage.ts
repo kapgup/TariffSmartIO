@@ -3,14 +3,30 @@ import {
   productCategories, type ProductCategory, type InsertProductCategory,
   products, type Product, type InsertProduct,
   countries, type Country, type InsertCountry,
-  featureFlags, type FeatureFlag, type InsertFeatureFlag
+  featureFlags, type FeatureFlag, type InsertFeatureFlag,
+  subscriptions, type Subscription, type InsertSubscription,
+  featureAccess, type FeatureAccess, type InsertFeatureAccess
 } from "@shared/schema";
 
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserRole(userId: number, role: string): Promise<User | undefined>;
+  updateUserSubscription(userId: number, tier: string | null, expirationDate: Date | null): Promise<User | undefined>;
+  
+  // Subscriptions
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  getSubscription(id: number): Promise<Subscription | undefined>;
+  getUserSubscriptions(userId: number): Promise<Subscription[]>;
+  updateSubscriptionStatus(id: number, status: string): Promise<Subscription | undefined>;
+  
+  // Feature Access
+  getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined>;
+  getAllFeatureAccess(): Promise<FeatureAccess[]>;
+  setFeatureAccess(featureName: string, userRole: string, isEnabled: boolean): Promise<FeatureAccess>;
   
   // Product Categories
   getProductCategories(): Promise<ProductCategory[]>;
@@ -41,12 +57,16 @@ export class MemStorage implements IStorage {
   private products: Map<number, Product>;
   private countries: Map<number, Country>;
   private featureFlags: Map<number, FeatureFlag>;
+  private subscriptions: Map<number, Subscription>;
+  private featureAccessList: Map<number, FeatureAccess>;
   
   currentUserId: number;
   currentProductCategoryId: number;
   currentProductId: number;
   currentCountryId: number;
   currentFeatureFlagId: number;
+  currentSubscriptionId: number;
+  currentFeatureAccessId: number;
 
   constructor() {
     this.users = new Map();
@@ -54,12 +74,16 @@ export class MemStorage implements IStorage {
     this.products = new Map();
     this.countries = new Map();
     this.featureFlags = new Map();
+    this.subscriptions = new Map();
+    this.featureAccessList = new Map();
     
     this.currentUserId = 1;
     this.currentProductCategoryId = 1;
     this.currentProductId = 1;
     this.currentCountryId = 1;
     this.currentFeatureFlagId = 1;
+    this.currentSubscriptionId = 1;
+    this.currentFeatureAccessId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -68,15 +92,15 @@ export class MemStorage implements IStorage {
   private initializeData() {
     // Add countries with tariff information
     const countryData: InsertCountry[] = [
-      { name: "China", baseTariff: 10, reciprocalTariff: 50, effectiveDate: "April 9, 2025" },
-      { name: "European Union", baseTariff: 10, reciprocalTariff: 25, effectiveDate: "April 9, 2025" },
-      { name: "Mexico", baseTariff: 10, reciprocalTariff: 20, effectiveDate: "April 9, 2025" },
-      { name: "Canada", baseTariff: 10, reciprocalTariff: 15, effectiveDate: "April 9, 2025" },
-      { name: "Japan", baseTariff: 10, reciprocalTariff: 30, effectiveDate: "April 9, 2025" },
-      { name: "Vietnam", baseTariff: 10, reciprocalTariff: 15, effectiveDate: "April 9, 2025" },
-      { name: "South Korea", baseTariff: 10, reciprocalTariff: 25, effectiveDate: "April 9, 2025" },
-      { name: "Germany", baseTariff: 10, reciprocalTariff: 25, effectiveDate: "April 9, 2025" },
-      { name: "Bangladesh", baseTariff: 10, reciprocalTariff: 10, effectiveDate: "April 9, 2025" },
+      { name: "China", baseTariff: "10", reciprocalTariff: "50", effectiveDate: "April 9, 2025", impactLevel: "High" },
+      { name: "European Union", baseTariff: "10", reciprocalTariff: "25", effectiveDate: "April 9, 2025", impactLevel: "Medium" },
+      { name: "Mexico", baseTariff: "10", reciprocalTariff: "20", effectiveDate: "April 9, 2025", impactLevel: "Medium-Low" },
+      { name: "Canada", baseTariff: "10", reciprocalTariff: "15", effectiveDate: "April 9, 2025", impactLevel: "Low" },
+      { name: "Japan", baseTariff: "10", reciprocalTariff: "30", effectiveDate: "April 9, 2025", impactLevel: "Medium" },
+      { name: "Vietnam", baseTariff: "10", reciprocalTariff: "15", effectiveDate: "April 9, 2025", impactLevel: "Medium" },
+      { name: "South Korea", baseTariff: "10", reciprocalTariff: "25", effectiveDate: "April 9, 2025", impactLevel: "Medium-High" },
+      { name: "Germany", baseTariff: "10", reciprocalTariff: "25", effectiveDate: "April 9, 2025", impactLevel: "Medium" },
+      { name: "Bangladesh", baseTariff: "10", reciprocalTariff: "10", effectiveDate: "April 9, 2025", impactLevel: "Low" },
     ];
     
     countryData.forEach(country => this.createCountry(country));
@@ -94,12 +118,12 @@ export class MemStorage implements IStorage {
     
     // Add products
     const productData: InsertProduct[] = [
-      { name: "Smartphones", description: "Mobile phones, smartphones, and related accessories", categoryId: 1, originCountry: "China", currentPrice: 699, estimatedIncrease: 20, impactLevel: "high" },
-      { name: "Televisions", description: "TVs, smart displays, and home entertainment systems", categoryId: 1, originCountry: "Mexico", currentPrice: 499, estimatedIncrease: 15, impactLevel: "medium" },
-      { name: "Clothing & Apparel", description: "Fashion items, shoes, accessories, and sportswear", categoryId: 2, originCountry: "Vietnam", currentPrice: 0, estimatedIncrease: 15, impactLevel: "medium" },
-      { name: "Automobiles", description: "Cars, trucks, SUVs and automotive parts", categoryId: 5, originCountry: "Japan", currentPrice: 35000, estimatedIncrease: 20, impactLevel: "high" },
-      { name: "Furniture", description: "Home furniture, office furniture, and decor items", categoryId: 3, originCountry: "China", currentPrice: 0, estimatedIncrease: 20, impactLevel: "medium" },
-      { name: "Food & Beverages", description: "Imported foods, wines, spirits, and specialty items", categoryId: 4, originCountry: "European Union", currentPrice: 0, estimatedIncrease: 11, impactLevel: "low" }
+      { name: "Smartphones", description: "Mobile phones, smartphones, and related accessories", categoryId: 1, originCountry: "China", currentPrice: "699", estimatedIncrease: "20", impactLevel: "high" },
+      { name: "Televisions", description: "TVs, smart displays, and home entertainment systems", categoryId: 1, originCountry: "Mexico", currentPrice: "499", estimatedIncrease: "15", impactLevel: "medium" },
+      { name: "Clothing & Apparel", description: "Fashion items, shoes, accessories, and sportswear", categoryId: 2, originCountry: "Vietnam", currentPrice: "0", estimatedIncrease: "15", impactLevel: "medium" },
+      { name: "Automobiles", description: "Cars, trucks, SUVs and automotive parts", categoryId: 5, originCountry: "Japan", currentPrice: "35000", estimatedIncrease: "20", impactLevel: "high" },
+      { name: "Furniture", description: "Home furniture, office furniture, and decor items", categoryId: 3, originCountry: "China", currentPrice: "0", estimatedIncrease: "20", impactLevel: "medium" },
+      { name: "Food & Beverages", description: "Imported foods, wines, spirits, and specialty items", categoryId: 4, originCountry: "European Union", currentPrice: "0", estimatedIncrease: "11", impactLevel: "low" }
     ];
     
     productData.forEach(product => this.createProduct(product));
@@ -129,9 +153,118 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
+    // Add default values for new fields and ensure all required fields are properly set
+    const user: User = { 
+      id,
+      username: insertUser.username,
+      password: insertUser.password || null,
+      email: insertUser.email || null,
+      googleId: insertUser.googleId || null,
+      displayName: insertUser.displayName || null,
+      profilePicture: insertUser.profilePicture || null,
+      isSubscribed: insertUser.isSubscribed || false,
+      role: insertUser.role || "user",
+      subscriptionTier: null,
+      subscriptionExpiration: null,
+      createdAt: new Date(),
+      lastLogin: null
+    };
     this.users.set(id, user);
     return user;
+  }
+  
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.googleId === googleId
+    );
+  }
+  
+  async updateUserRole(userId: number, role: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (user) {
+      const updatedUser = { ...user, role };
+      this.users.set(userId, updatedUser);
+      return updatedUser;
+    }
+    return undefined;
+  }
+  
+  async updateUserSubscription(userId: number, tier: string | null, expirationDate: Date | null): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (user) {
+      const updatedUser = { 
+        ...user, 
+        subscriptionTier: tier,
+        subscriptionExpiration: expirationDate
+      };
+      this.users.set(userId, updatedUser);
+      return updatedUser;
+    }
+    return undefined;
+  }
+  
+  // Subscription methods
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const id = this.currentSubscriptionId++;
+    const newSubscription: Subscription = { 
+      id,
+      userId: subscription.userId,
+      plan: subscription.plan,
+      status: subscription.status,
+      startDate: subscription.startDate,
+      endDate: subscription.endDate || null,
+      autoRenew: subscription.autoRenew || null,
+      createdAt: new Date()
+    };
+    this.subscriptions.set(id, newSubscription);
+    return newSubscription;
+  }
+  
+  async getSubscription(id: number): Promise<Subscription | undefined> {
+    return this.subscriptions.get(id);
+  }
+  
+  async getUserSubscriptions(userId: number): Promise<Subscription[]> {
+    return Array.from(this.subscriptions.values()).filter(
+      (subscription) => subscription.userId === userId
+    );
+  }
+  
+  async updateSubscriptionStatus(id: number, status: string): Promise<Subscription | undefined> {
+    const subscription = await this.getSubscription(id);
+    if (subscription) {
+      const updatedSubscription = { ...subscription, status };
+      this.subscriptions.set(id, updatedSubscription);
+      return updatedSubscription;
+    }
+    return undefined;
+  }
+  
+  // Feature access methods
+  async getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined> {
+    return Array.from(this.featureAccessList.values()).find(
+      (access) => access.featureName === featureName && access.userRole === userRole
+    );
+  }
+  
+  async getAllFeatureAccess(): Promise<FeatureAccess[]> {
+    return Array.from(this.featureAccessList.values());
+  }
+  
+  async setFeatureAccess(featureName: string, userRole: string, isEnabled: boolean): Promise<FeatureAccess> {
+    const existingAccess = await this.getFeatureAccess(featureName, userRole);
+    
+    if (existingAccess) {
+      const updatedAccess = { ...existingAccess, isEnabled };
+      this.featureAccessList.set(existingAccess.id, updatedAccess);
+      return updatedAccess;
+    }
+    
+    // Create new feature access entry
+    const id = this.currentFeatureAccessId++;
+    const newAccess: FeatureAccess = { id, featureName, userRole, isEnabled };
+    this.featureAccessList.set(id, newAccess);
+    return newAccess;
   }
   
   // Product Category methods
@@ -145,7 +278,25 @@ export class MemStorage implements IStorage {
   
   async createProductCategory(insertCategory: InsertProductCategory): Promise<ProductCategory> {
     const id = this.currentProductCategoryId++;
-    const category: ProductCategory = { ...insertCategory, id };
+    
+    // Convert primaryCountries to proper string[] or null
+    let primaryCountries: string[] | null = null;
+    if (insertCategory.primaryCountries) {
+      // Make sure it's array of strings
+      if (Array.isArray(insertCategory.primaryCountries)) {
+        primaryCountries = [...insertCategory.primaryCountries];
+      } else if (typeof insertCategory.primaryCountries === 'object') {
+        // Handle case when it's an object with numeric keys
+        primaryCountries = Object.values(insertCategory.primaryCountries as Record<string, string>);
+      }
+    }
+    
+    const category: ProductCategory = { 
+      id,
+      name: insertCategory.name,
+      description: insertCategory.description || null,
+      primaryCountries
+    };
     this.productCategories.set(id, category);
     return category;
   }
@@ -167,7 +318,16 @@ export class MemStorage implements IStorage {
   
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = this.currentProductId++;
-    const product: Product = { ...insertProduct, id };
+    const product: Product = { 
+      id,
+      name: insertProduct.name,
+      categoryId: insertProduct.categoryId,
+      description: insertProduct.description || null,
+      originCountry: insertProduct.originCountry || null,
+      currentPrice: insertProduct.currentPrice || null,
+      estimatedIncrease: insertProduct.estimatedIncrease || null,
+      impactLevel: insertProduct.impactLevel || null
+    };
     this.products.set(id, product);
     return product;
   }
@@ -185,7 +345,14 @@ export class MemStorage implements IStorage {
   
   async createCountry(insertCountry: InsertCountry): Promise<Country> {
     const id = this.currentCountryId++;
-    const country: Country = { ...insertCountry, id };
+    const country: Country = { 
+      id,
+      name: insertCountry.name,
+      baseTariff: insertCountry.baseTariff,
+      reciprocalTariff: insertCountry.reciprocalTariff,
+      effectiveDate: insertCountry.effectiveDate || null,
+      impactLevel: insertCountry.impactLevel || null
+    };
     this.countries.set(id, country);
     return country;
   }
@@ -203,7 +370,12 @@ export class MemStorage implements IStorage {
   
   async createFeatureFlag(insertFeatureFlag: InsertFeatureFlag): Promise<FeatureFlag> {
     const id = this.currentFeatureFlagId++;
-    const featureFlag: FeatureFlag = { ...insertFeatureFlag, id };
+    const featureFlag: FeatureFlag = { 
+      id,
+      name: insertFeatureFlag.name,
+      isEnabled: insertFeatureFlag.isEnabled || false,
+      description: insertFeatureFlag.description || null
+    };
     this.featureFlags.set(id, featureFlag);
     return featureFlag;
   }

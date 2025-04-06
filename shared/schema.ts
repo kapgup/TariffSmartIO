@@ -1,22 +1,68 @@
-import { pgTable, text, serial, integer, boolean, numeric, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, numeric, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// User schema (kept from original but extended)
+// User schema with OAuth and role-based fields
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Can be null for OAuth users
   email: text("email"),
+  googleId: text("google_id").unique(), // For Google OAuth
+  displayName: text("display_name"),    // From Google profile
+  profilePicture: text("profile_picture"), // Profile picture URL
   isSubscribed: boolean("is_subscribed").default(false),
-  role: text("role").default("user")
+  role: text("role").default("user").notNull(), // "anonymous", "user", "premium", "editor", "admin"
+  subscriptionTier: text("subscription_tier"), // null, "basic", "premium"
+  subscriptionExpiration: timestamp("subscription_expiration"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastLogin: timestamp("last_login"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   email: true,
+  googleId: true,
+  displayName: true,
+  profilePicture: true,
   isSubscribed: true,
+  role: true,
+});
+
+// Subscriptions table for premium features
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  plan: text("plan").notNull(), // "basic", "premium"
+  status: text("status").notNull(), // "active", "cancelled", "expired"
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  autoRenew: boolean("auto_renew").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
+  userId: true,
+  plan: true,
+  status: true,
+  startDate: true,
+  endDate: true,
+  autoRenew: true,
+});
+
+// Feature access control
+export const featureAccess = pgTable("feature_access", {
+  id: serial("id").primaryKey(),
+  featureName: text("feature_name").notNull(),
+  userRole: text("user_role").notNull(), // "anonymous", "user", "premium", "editor", "admin"
+  isEnabled: boolean("is_enabled").default(false),
+});
+
+export const insertFeatureAccessSchema = createInsertSchema(featureAccess).pick({
+  featureName: true,
+  userRole: true,
+  isEnabled: true,
 });
 
 // Product Categories
@@ -62,6 +108,7 @@ export const countries = pgTable("countries", {
   baseTariff: numeric("base_tariff").notNull(),
   reciprocalTariff: numeric("reciprocal_tariff").notNull(),
   effectiveDate: text("effective_date"),
+  impactLevel: text("impact_level"),
 });
 
 export const insertCountrySchema = createInsertSchema(countries).pick({
@@ -69,6 +116,7 @@ export const insertCountrySchema = createInsertSchema(countries).pick({
   baseTariff: true,
   reciprocalTariff: true,
   effectiveDate: true,
+  impactLevel: true,
 });
 
 // Feature flags
@@ -88,6 +136,12 @@ export const insertFeatureFlagSchema = createInsertSchema(featureFlags).pick({
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+
+export type InsertFeatureAccess = z.infer<typeof insertFeatureAccessSchema>;
+export type FeatureAccess = typeof featureAccess.$inferSelect;
 
 export type InsertProductCategory = z.infer<typeof insertProductCategorySchema>;
 export type ProductCategory = typeof productCategories.$inferSelect;
