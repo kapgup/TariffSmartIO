@@ -17,6 +17,7 @@ export const NAV_ITEMS = [
   { name: "Home", path: "/" },
   { name: "Calculator", path: "/calculator" },
   { name: "Products", path: "/products" },
+  { name: "Countries", path: "/countries" },
   { name: "Timeline", path: "/timeline" },
   { name: "About", path: "/about" }
 ];
