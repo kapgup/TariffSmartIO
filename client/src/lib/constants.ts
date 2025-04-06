@@ -74,4 +74,4 @@ export const FEATURE_FLAGS = {
 };
 
 // Google Analytics ID
-export const GA_TRACKING_ID = import.meta.env.VITE_GA_TRACKING_ID || "UA-XXXXXXXXX-X";
+export const GA_TRACKING_ID = import.meta.env.VITE_GA_TRACKING_ID || "G-0EJNCJ1GWF";
