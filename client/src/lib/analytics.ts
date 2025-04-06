@@ -26,16 +26,18 @@ class GoogleAnalyticsProvider implements AnalyticsProvider {
 
     // Initialize the dataLayer and gtag function
     window.dataLayer = window.dataLayer || [];
-    window.gtag = function (...args) {
-      window.dataLayer.push(args);
-    };
+    function gtag(...args: any[]) {
+      window.dataLayer.push(arguments);
+    }
+    window.gtag = gtag;
 
-    window.gtag('js', new Date());
-    window.gtag('config', GA_TRACKING_ID, {
-      send_page_view: false // We'll handle page views manually
-    });
+    gtag('js', new Date());
+    gtag('config', GA_TRACKING_ID);
+    
+    // After initialization, trigger a pageview for the current page
+    this.trackPageView(window.location.pathname + window.location.search);
 
-    console.log('Google Analytics initialized');
+    console.log('Google Analytics initialized with ID:', GA_TRACKING_ID);
   }
 
   trackPageView(url: string): void {
