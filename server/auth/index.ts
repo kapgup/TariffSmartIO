@@ -50,6 +50,7 @@ export function configureAuth(app: Express) {
   app.use(attachUserRole);
 
   // Mount auth routes
+  console.log('Mounting auth routes at: /api/auth');
   app.use('/api/auth', authRoutes);
 }
 

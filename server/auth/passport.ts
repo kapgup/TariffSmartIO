@@ -21,7 +21,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: 'https://5a6bca4a-2b7c-4dbe-adbb-6c6324cb6c03-00-24h17hqacvzwc.spock.replit.dev/api/auth/google/callback',
+      callbackURL: '/api/auth/google/callback',  // Use relative path which will be resolved based on the request
       scope: ['profile', 'email'],
       proxy: true
     },
