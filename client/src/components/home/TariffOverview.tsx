@@ -21,32 +21,42 @@ export function TariffOverview() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-neutral-100 rounded-lg p-6">
-            <div className="w-12 h-12 bg-primary bg-opacity-20 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-7 h-7 text-primary" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                <path d="M12.31 11.14c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
+          {/* Baseline Tariff Card */}
+          <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
+            <div className="w-14 h-14 bg-primary/15 rounded-full flex items-center justify-center mb-4">
+              {/* Dollar Icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="6" x2="12" y2="12"></line>
+                <path d="M16 12H8"></path>
+                <path d="M12 16v2"></path>
+                <path d="M16 8h-1.5a2.5 2.5 0 0 0 0 5h1a2.5 2.5 0 0 1 0 5H8"></path>
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Baseline Tariff</h3>
             <p className="text-neutral-600">A 10% tariff will apply to all imported goods starting April 5th, 2025, regardless of origin country.</p>
           </div>
 
-          <div className="bg-neutral-100 rounded-lg p-6">
-            <div className="w-12 h-12 bg-secondary bg-opacity-20 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-7 h-7 text-secondary" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
+          {/* Country-Specific Tariffs Card */}
+          <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
+            <div className="w-14 h-14 bg-secondary/15 rounded-full flex items-center justify-center mb-4">
+              {/* Flag Icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                <line x1="4" y1="22" x2="4" y2="15"></line>
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Country-Specific Tariffs</h3>
             <p className="text-neutral-600">Additional "reciprocal" tariffs ranging from 10% to 54% will apply to specific countries starting April 9th, 2025.</p>
           </div>
 
-          <div className="bg-neutral-100 rounded-lg p-6">
-            <div className="w-12 h-12 bg-warning bg-opacity-20 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-7 h-7 text-warning" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
-                <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+          {/* Implementation Timeline Card */}
+          <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
+            <div className="w-14 h-14 bg-yellow-500/15 rounded-full flex items-center justify-center mb-4">
+              {/* Clock Icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Implementation Timeline</h3>
@@ -54,8 +64,8 @@ export function TariffOverview() {
           </div>
         </div>
 
-        <Card className="mt-12 overflow-hidden">
-          <CardHeader className="px-6 py-5 border-b border-neutral-200">
+        <Card className="mt-12 overflow-hidden shadow">
+          <CardHeader className="px-6 py-5 border-b border-neutral-200 bg-neutral-50">
             <h3 className="text-lg font-semibold text-neutral-900">Country-Specific Tariff Rates</h3>
           </CardHeader>
           <CardContent className="p-0">
