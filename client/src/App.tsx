@@ -11,6 +11,7 @@ import Products from "@/pages/Products";
 import Countries from "@/pages/Countries";
 import Timeline from "@/pages/Timeline";
 import About from "@/pages/About";
+import AdMockup from "@/pages/AdMockup";
 import NotFound from "@/pages/not-found";
 
 import { Header } from '@/components/layout/Header';
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/countries" component={Countries} />
         <Route path="/timeline" component={Timeline} />
         <Route path="/about" component={About} />
+        <Route path="/ad-mockup" component={AdMockup} />
         <Route component={NotFound} />
       </Switch>
     </div>

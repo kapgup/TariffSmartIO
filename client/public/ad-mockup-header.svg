@@ -1,0 +1,20 @@
+<svg width="800" height="100" viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="800" height="100" fill="#f8f9fa" stroke="#e9ecef" stroke-width="1" rx="4" ry="4"/>
+  
+  <!-- Ad Content Mockup -->
+  <rect x="10" y="10" width="120" height="80" fill="#e9ecef" rx="4" ry="4"/>
+  <text x="70" y="50" font-family="Arial" font-size="12" text-anchor="middle" fill="#6c757d">AD IMAGE</text>
+  
+  <!-- Ad Text Content -->
+  <text x="150" y="35" font-family="Arial" font-size="16" font-weight="bold" fill="#212529">Find the Best Tariff Management Tools</text>
+  <text x="150" y="60" font-family="Arial" font-size="14" fill="#495057">Optimize your international shipping costs with our premium tools and expert advice.</text>
+  <text x="150" y="80" font-family="Arial" font-size="12" fill="#6c757d">www.tarifftools.example.com</text>
+  
+  <!-- Ad Badge -->
+  <rect x="740" y="10" width="50" height="20" fill="#6c757d" rx="2" ry="2"/>
+  <text x="765" y="23" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Ad</text>
+  
+  <!-- Google Ad Indicator -->
+  <text x="720" y="80" font-family="Arial" font-size="10" fill="#adb5bd">Ad by Google</text>
+</svg>
