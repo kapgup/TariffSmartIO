@@ -30,19 +30,17 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/calculator" component={Calculator} />
-          <Route path="/products" component={Products} />
-          <Route path="/countries" component={Countries} />
-          <Route path="/timeline" component={Timeline} />
-          <Route path="/about" component={About} />
-          <Route path="/auth/register" component={Register} />
-          <Route path="/auth/login" component={Login} />
-          <Route component={NotFound} />
-        </Switch>
-      </main>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/calculator" component={Calculator} />
+        <Route path="/products" component={Products} />
+        <Route path="/countries" component={Countries} />
+        <Route path="/timeline" component={Timeline} />
+        <Route path="/about" component={About} />
+        <Route path="/auth/register" component={Register} />
+        <Route path="/auth/login" component={Login} />
+        <Route component={NotFound} />
+      </Switch>
     </div>
   );
 }
