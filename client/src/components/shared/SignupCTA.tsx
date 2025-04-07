@@ -127,7 +127,7 @@ export function SignupCTA() {
                   </FormControl>
                   <div className="text-sm text-white text-opacity-90 text-left">
                     I consent to receiving email communications about tariff changes and related updates. 
-                    See our <span onClick={() => window.location.href="/about"} className="underline hover:text-primary cursor-pointer">Privacy Policy</span>.
+                    See our <span onClick={() => window.location.href="/about#privacy"} className="underline hover:text-primary cursor-pointer">Privacy Policy</span>.
                     <FormMessage className="text-white text-opacity-90 block mt-1" />
                   </div>
                 </FormItem>
