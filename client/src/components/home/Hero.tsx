@@ -52,13 +52,13 @@ export function Hero() {
                     </div>
                     
                     <div className="mb-8">
-                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-secondary border-2 border-white shadow-lg z-10"></div>
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-indigo-600 border-2 border-white shadow-lg z-10"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RECIPROCAL_TARIFF_DATE}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Country-specific reciprocal tariffs (10-54%) go into effect</p>
                     </div>
                     
                     <div>
-                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-warning border-2 border-white shadow-lg z-10"></div>
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-amber-600 border-2 border-white shadow-lg z-10"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RETAIL_PRICE_CHANGE_PERIOD}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Expected retail price changes appear in stores</p>
                     </div>
