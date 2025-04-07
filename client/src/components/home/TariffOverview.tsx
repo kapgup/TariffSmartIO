@@ -33,7 +33,7 @@ export function TariffOverview() {
           {/* Country-Specific Tariffs Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="mb-4 flex items-center justify-center">
-              <span className="text-6xl">🌎</span>
+              <span className="text-[3.5rem]">🌎</span>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Country-Specific Tariffs</h3>
             <p className="text-neutral-600">Additional "reciprocal" tariffs ranging from 10% to 54% will apply to specific countries starting April 9th, 2025.</p>
