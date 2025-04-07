@@ -43,26 +43,26 @@ export function Hero() {
                 </div>
                 
                 <div className="mt-6 relative">
-                  {/* Main vertical line */}
-                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-neutral-200 h-full"></div>
+                  {/* Main vertical line - improved with gradient and shadow */}
+                  <div className="absolute left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/60 via-indigo-500/60 to-amber-500/60 h-full rounded-full shadow-md"></div>
                   <div className="relative pl-8">
                     <div className="mb-8">
-                      {/* Circle marker */}
-                      <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-primary border-4 border-white z-10"></div>
+                      {/* Circle marker - updated with shadow and glow effect */}
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-primary/30"></div>
                       <h4 className="text-base font-medium text-neutral-900">{BASELINE_TARIFF_DATE}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Baseline 10% tariff on all imports begins</p>
                     </div>
                     
                     <div className="mb-8">
-                      {/* Circle marker */}
-                      <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-secondary border-4 border-white z-10"></div>
+                      {/* Circle marker - updated with brighter color and shadow */}
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-indigo-500 border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-indigo-300"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RECIPROCAL_TARIFF_DATE}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Country-specific reciprocal tariffs (10-54%) go into effect</p>
                     </div>
                     
                     <div>
-                      {/* Circle marker */}
-                      <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-warning border-4 border-white z-10"></div>
+                      {/* Circle marker - updated with brighter color and shadow */}
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-amber-500 border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-amber-300"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RETAIL_PRICE_CHANGE_PERIOD}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Expected retail price changes appear in stores</p>
                     </div>

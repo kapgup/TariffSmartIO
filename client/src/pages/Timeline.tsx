@@ -32,16 +32,16 @@ export default function Timeline() {
                   <h2 className="text-xl font-semibold mb-6">Key Implementation Dates</h2>
                   
                   <div className="relative">
-                    {/* Main vertical line */}
-                    <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-neutral-200 h-full"></div>
+                    {/* Main vertical line - improved with gradient and shadow */}
+                    <div className="absolute left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/60 via-secondary/60 to-warning/60 h-full rounded-full shadow-md"></div>
                     
                     <div className="relative pl-12 mb-12">
-                      {/* Circle marker */}
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-white z-10"></div>
+                      {/* Circle marker - updated with shadow and glow effect */}
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-primary border-4 border-white z-10 shadow-[0_0_10px_rgba(0,0,0,0.2)] ring-2 ring-primary/30"></div>
                       
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{BASELINE_TARIFF_DATE}</h3>
                       <p className="text-neutral-600 mb-4">Baseline 10% tariff on all imports begins</p>
-                      <div className="bg-neutral-50 p-4 rounded-lg">
+                      <div className="bg-neutral-50 p-4 rounded-lg shadow-sm">
                         <h4 className="text-sm font-semibold text-neutral-900 mb-2">What This Means:</h4>
                         <ul className="list-disc list-inside text-sm text-neutral-600 space-y-1">
                           <li>All imported goods regardless of origin will see a 10% tariff</li>
@@ -52,12 +52,12 @@ export default function Timeline() {
                     </div>
                     
                     <div className="relative pl-12 mb-12">
-                      {/* Circle marker */}
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-secondary border-4 border-white z-10"></div>
+                      {/* Circle marker - updated with brighter color and shadow */}
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-indigo-500 border-4 border-white z-10 shadow-[0_0_10px_rgba(0,0,0,0.2)] ring-2 ring-indigo-300"></div>
                       
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RECIPROCAL_TARIFF_DATE}</h3>
                       <p className="text-neutral-600 mb-4">Country-specific "reciprocal" tariffs (10-54%) go into effect</p>
-                      <div className="bg-neutral-50 p-4 rounded-lg">
+                      <div className="bg-neutral-50 p-4 rounded-lg shadow-sm">
                         <h4 className="text-sm font-semibold text-neutral-900 mb-2">What This Means:</h4>
                         <ul className="list-disc list-inside text-sm text-neutral-600 space-y-1">
                           <li>Different countries face different tariff rates based on their existing policies</li>
@@ -68,12 +68,12 @@ export default function Timeline() {
                     </div>
                     
                     <div className="relative pl-12">
-                      {/* Circle marker */}
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-warning border-4 border-white z-10"></div>
+                      {/* Circle marker - updated with brighter color and shadow */}
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-amber-500 border-4 border-white z-10 shadow-[0_0_10px_rgba(0,0,0,0.2)] ring-2 ring-amber-300"></div>
                       
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RETAIL_PRICE_CHANGE_PERIOD}</h3>
                       <p className="text-neutral-600 mb-4">Expected retail price changes appear in stores</p>
-                      <div className="bg-neutral-50 p-4 rounded-lg">
+                      <div className="bg-neutral-50 p-4 rounded-lg shadow-sm">
                         <h4 className="text-sm font-semibold text-neutral-900 mb-2">What This Means:</h4>
                         <ul className="list-disc list-inside text-sm text-neutral-600 space-y-1">
                           <li>Full price impact will become visible to consumers</li>
