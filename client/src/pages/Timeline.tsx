@@ -35,7 +35,7 @@ export default function Timeline() {
                     <div className="absolute left-5 top-0 bottom-0 w-1.5 bg-primary/30 rounded-full"></div>
                     
                     <div className="relative pl-12 mb-12">
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-primary border-2 border-white shadow-md z-10"></div>
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-primary/90 border-2 border-white shadow-md z-10"></div>
                       <div className="absolute left-[18px] top-1 h-[calc(100%+3rem)] w-[1px] border-l-2 border-dashed border-primary/30 z-0"></div>
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{BASELINE_TARIFF_DATE}</h3>
                       <p className="text-neutral-600 mb-4">Baseline 10% tariff on all imports begins</p>
@@ -50,7 +50,7 @@ export default function Timeline() {
                     </div>
                     
                     <div className="relative pl-12 mb-12">
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-secondary border-2 border-white shadow-md z-10"></div>
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-secondary/90 border-2 border-white shadow-md z-10"></div>
                       <div className="absolute left-[18px] top-1 h-[calc(100%+3rem)] w-[1px] border-l-2 border-dashed border-primary/30 z-0"></div>
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RECIPROCAL_TARIFF_DATE}</h3>
                       <p className="text-neutral-600 mb-4">Country-specific "reciprocal" tariffs (10-54%) go into effect</p>
@@ -65,7 +65,7 @@ export default function Timeline() {
                     </div>
                     
                     <div className="relative pl-12">
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-warning border-2 border-white shadow-md z-10"></div>
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-5 h-5 rounded-full bg-warning/90 border-2 border-white shadow-md z-10"></div>
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RETAIL_PRICE_CHANGE_PERIOD}</h3>
                       <p className="text-neutral-600 mb-4">Expected retail price changes appear in stores</p>
                       <div className="bg-neutral-50 p-4 rounded-lg">
