@@ -12,7 +12,7 @@ import {
   trackDropdownSelection, 
   trackButtonClick 
 } from "@/lib/analytics";
-import { useFeatureFlag } from "@/lib/featureFlags";
+import { useFeatureFlags } from "@/lib/featureFlags";
 import { CalculationSummary, Country } from "@/lib/types";
 import { Link } from "wouter";
 import {
@@ -45,7 +45,7 @@ type CalculatorFormValues = z.infer<typeof calculatorSchema>;
 export function TariffCalculator() {
   const { toast } = useToast();
   const [results, setResults] = useState<CalculationSummary | null>(null);
-  const emailAlertsEnabled = useFeatureFlag('emailAlerts', false);
+  const featureFlags = useFeatureFlags();
   
   // Fetch countries for the dropdown
   const { data: countriesData, isLoading: isLoadingCountries } = useQuery<{ countries: Country[] }>({
@@ -122,9 +122,6 @@ export function TariffCalculator() {
     }));
   };
 
-  // Get calculator feature flag
-  const calculatorEnabled = useFeatureFlag('calculator', true);
-
   return (
     <section id="calculator" className="py-12 bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -137,7 +134,7 @@ export function TariffCalculator() {
           </p>
         </div>
 
-        {calculatorEnabled ? (
+        {featureFlags.isCalculatorEnabled ? (
           <Card className="overflow-hidden shadow-md">
             <div className="md:grid md:grid-cols-2">
               <div className="p-6 bg-primary text-white md:rounded-l-lg">
