@@ -12,8 +12,8 @@ import Countries from "@/pages/Countries";
 import Timeline from "@/pages/Timeline";
 import About from "@/pages/About";
 import NotFound from "@/pages/not-found";
-import Register from "@/pages/auth/Register";
-import Login from "@/pages/auth/Login";
+
+import { Header } from '@/components/layout/Header';
 
 function Router() {
   const [location] = useLocation();
@@ -25,17 +25,18 @@ function Router() {
   }, [location]);
 
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/calculator" component={Calculator} />
-      <Route path="/products" component={Products} />
-      <Route path="/countries" component={Countries} />
-      <Route path="/timeline" component={Timeline} />
-      <Route path="/about" component={About} />
-      <Route path="/auth/register" component={Register} />
-      <Route path="/auth/login" component={Login} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/calculator" component={Calculator} />
+        <Route path="/products" component={Products} />
+        <Route path="/countries" component={Countries} />
+        <Route path="/timeline" component={Timeline} />
+        <Route path="/about" component={About} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 

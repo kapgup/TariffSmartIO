@@ -147,19 +147,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProductCategory(insertCategory: InsertProductCategory): Promise<ProductCategory> {
-    // Ensure primaryCountries is properly formatted as string[] for jsonb
-    let formattedCategory = { ...insertCategory };
+    // Create a copy to avoid modifying the input
+    let formattedCategory: typeof insertCategory = { ...insertCategory };
     
-    // If primaryCountries exists but is not an array, convert it
-    if (formattedCategory.primaryCountries && !Array.isArray(formattedCategory.primaryCountries)) {
-      if (typeof formattedCategory.primaryCountries === 'object') {
-        formattedCategory.primaryCountries = Object.values(formattedCategory.primaryCountries as Record<string, string>);
+    // Convert primaryCountries to proper string[] format if needed
+    if (formattedCategory.primaryCountries) {
+      let countries: string[] = [];
+      
+      // Handle different input types
+      if (Array.isArray(formattedCategory.primaryCountries)) {
+        // Already an array, just copy it
+        countries = [...formattedCategory.primaryCountries];
+      } else if (typeof formattedCategory.primaryCountries === 'object') {
+        // Convert from object to array
+        countries = Object.values(formattedCategory.primaryCountries as Record<string, string>);
       } else if (typeof formattedCategory.primaryCountries === 'string') {
         // Handle comma-separated string case
-        formattedCategory.primaryCountries = formattedCategory.primaryCountries.split(',').map(s => s.trim());
+        const strValue = formattedCategory.primaryCountries as string;
+        countries = strValue.split(',').map((s: string) => s.trim());
       }
+      
+      // Update the value with properly formatted array
+      formattedCategory = {
+        ...formattedCategory,
+        primaryCountries: countries
+      };
     }
     
+    // Insert into database
     const [category] = await db.insert(productCategories).values(formattedCategory).returning();
     return category;
   }

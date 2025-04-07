@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { TariffCalculator } from "@/components/calculator/TariffCalculator";
 import { SignupCTA } from "@/components/shared/SignupCTA";
@@ -11,8 +10,7 @@ export default function Calculator() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
+    <>
       <main className="flex-1">
         <div className="bg-primary py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -29,6 +27,6 @@ export default function Calculator() {
         <SignupCTA />
       </main>
       <Footer />
-    </div>
+    </>
   );
 }
