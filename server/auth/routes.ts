@@ -2,21 +2,55 @@ import { Router } from 'express';
 import passport from './passport';
 import { isAuthenticated } from './middleware';
 
+// Extend Express Session interface to include our custom properties
+declare module 'express-session' {
+  interface SessionData {
+    returnTo?: string;
+  }
+}
+
 const router = Router();
+
+// Add logging middleware to track auth requests
+router.use((req, res, next) => {
+  console.log(`Auth request: ${req.method} ${req.path}`);
+  next();
+});
 
 // Google OAuth login route
 router.get(
   '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  (req, res, next) => {
+    console.log('Starting Google OAuth flow from:', req.headers.host);
+    // Set the redirect URL in session for callback to use
+    if (req.session) {
+      req.session.returnTo = req.query.returnTo as string || '/';
+    }
+    next();
+  },
+  passport.authenticate('google', { 
+    scope: ['profile', 'email']
+  })
 );
 
 // Google OAuth callback route
 router.get(
   '/google/callback',
-  passport.authenticate('google', {
-    successRedirect: '/',
+  (req, res, next) => {
+    console.log('Received callback from Google OAuth');
+    next();
+  },
+  passport.authenticate('google', { 
     failureRedirect: '/auth?error=authentication_failed'
-  })
+  }),
+  (req, res) => {
+    // Get the returnTo path from session or default to home
+    const returnTo = (req.session && req.session.returnTo) || '/';
+    delete req.session.returnTo;
+    
+    console.log('Authentication successful, redirecting to:', returnTo);
+    res.redirect(returnTo);
+  }
 );
 
 // Current user route - returns current user info or null
