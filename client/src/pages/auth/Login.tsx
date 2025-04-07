@@ -26,7 +26,7 @@ export default function Login() {
     
     try {
       // Redirect to Google OAuth endpoint
-      window.location.href = '/auth/google';
+      window.location.href = '/api/auth/google';
     } catch (err) {
       console.error('Login error:', err);
       setError('An error occurred during login. Please try again.');

@@ -6,12 +6,22 @@ import { eq } from 'drizzle-orm';
 import { storage } from '../storage';
 
 // Configure Google OAuth strategy
+console.log('Checking Google OAuth configuration...');
+console.log('GOOGLE_CLIENT_ID exists:', Boolean(process.env.GOOGLE_CLIENT_ID));
+console.log('GOOGLE_CLIENT_SECRET exists:', Boolean(process.env.GOOGLE_CLIENT_SECRET));
+
+// Only log first few characters of secrets
+if (process.env.GOOGLE_CLIENT_ID) {
+  const idPrefix = process.env.GOOGLE_CLIENT_ID.substring(0, 6);
+  console.log('GOOGLE_CLIENT_ID prefix:', `${idPrefix}...`);
+}
+
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: '/api/auth/google/callback',
+      callbackURL: 'https://5a6bca4a-2b7c-4dbe-adbb-6c6324cb6c03-00-24h17hqacvzwc.spock.replit.dev/api/auth/google/callback',
       scope: ['profile', 'email'],
       proxy: true
     },
