@@ -13,6 +13,7 @@ import Timeline from "@/pages/Timeline";
 import About from "@/pages/About";
 import AdMockup from "@/pages/AdMockup";
 import NotFound from "@/pages/not-found";
+import ComingSoon from "@/pages/ComingSoon";
 
 import { Header } from '@/components/layout/Header';
 import { AdManager } from '@/components/ads/AdManager';
@@ -39,6 +40,11 @@ function Router() {
           <Route path="/timeline" component={Timeline} />
           <Route path="/about" component={About} />
           <Route path="/ad-mockup" component={AdMockup} />
+          {/* Placeholder routes for unimplemented features */}
+          <Route path="/api-docs" component={ComingSoon} />
+          <Route path="/savings-tips" component={ComingSoon} />
+          <Route path="/help-center" component={ComingSoon} />
+          <Route path="/pricing" component={ComingSoon} />
           <Route component={NotFound} />
         </Switch>
       </div>
