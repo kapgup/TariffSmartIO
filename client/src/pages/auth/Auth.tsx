@@ -28,6 +28,8 @@ export default function Auth() {
     
     if (errorParam === 'authentication_failed') {
       setError('Authentication failed. Please try again.');
+    } else if (errorParam === 'login_failed') {
+      setError('Login failed. The server encountered an issue processing your login. Please try again.');
     }
   }, []);
   const { toast } = useToast();
@@ -43,7 +45,7 @@ export default function Auth() {
     
     try {
       // Redirect to Google OAuth endpoint
-      window.location.href = '/auth/google';
+      window.location.href = '/api/auth/google';
     } catch (err) {
       console.error('Authentication error:', err);
       setError('An error occurred during sign in. Please try again.');

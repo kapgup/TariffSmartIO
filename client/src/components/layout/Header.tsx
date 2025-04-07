@@ -67,9 +67,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-1 md:ml-0">
           <Link href="/">
             <span className="flex items-center space-x-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-6 w-6 text-primary">
+                <path fill="currentColor" d="M11.5 3a.5.5 0 01.5.5v16.998a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5V12.5H5.5a.5.5 0 01-.5-.5v-1a.5.5 0 01.5-.5H10V3.5a.5.5 0 01.5-.5h1zm3 0a.5.5 0 01.5.5v16.998a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5V3.5a.5.5 0 01.5-.5h1zm3 7a.5.5 0 01.5.5v.5h4v2h-4v7.998a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5V10.5a.5.5 0 01.5-.5h1z"/>
+              </svg>
               <span className="text-xl font-bold">TariffSmart</span>
             </span>
           </Link>
