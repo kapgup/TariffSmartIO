@@ -15,6 +15,7 @@ import AdMockup from "@/pages/AdMockup";
 import NotFound from "@/pages/not-found";
 
 import { Header } from '@/components/layout/Header';
+import { AdManager } from '@/components/ads/AdManager';
 
 function Router() {
   const [location] = useLocation();
@@ -28,16 +29,19 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/calculator" component={Calculator} />
-        <Route path="/products" component={Products} />
-        <Route path="/countries" component={Countries} />
-        <Route path="/timeline" component={Timeline} />
-        <Route path="/about" component={About} />
-        <Route path="/ad-mockup" component={AdMockup} />
-        <Route component={NotFound} />
-      </Switch>
+      <AdManager />
+      <div className="flex-grow">
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/calculator" component={Calculator} />
+          <Route path="/products" component={Products} />
+          <Route path="/countries" component={Countries} />
+          <Route path="/timeline" component={Timeline} />
+          <Route path="/about" component={About} />
+          <Route path="/ad-mockup" component={AdMockup} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
     </div>
   );
 }
