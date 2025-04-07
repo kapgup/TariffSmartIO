@@ -7,15 +7,6 @@ import { isAuthenticated, hasRole, isAdmin, isPremium, getCurrentUser } from "./
 import passport from "./auth/passport";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Google OAuth API Routes
-  app.get('/api/auth/google', passport.authenticate('google', { 
-    scope: ['profile', 'email'] 
-  }));
-  
-  app.get('/api/auth/google/callback', passport.authenticate('google', {
-    successRedirect: '/',
-    failureRedirect: '/auth/login?error=authentication_failed'
-  }));
   // API Routes - all prefixed with /api
   
   // User Authentication API

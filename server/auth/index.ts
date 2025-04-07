@@ -50,7 +50,24 @@ export function configureAuth(app: Express) {
   app.use(attachUserRole);
 
   // Mount auth routes
-  app.use('/auth', authRoutes);
+  app.use('/api/auth', authRoutes);
+  
+  // Configure Google OAuth endpoints
+  app.get('/api/auth/google', passport.authenticate('google', { 
+    scope: ['profile', 'email'] 
+  }));
+  
+  app.get('/api/auth/google/callback', 
+    // Add error handler to log any errors
+    (req, res, next) => {
+      console.log('Google OAuth callback received:', req.url);
+      next();
+    },
+    passport.authenticate('google', {
+      successRedirect: '/',
+      failureRedirect: '/auth/login?error=authentication_failed'
+    })
+  );
 }
 
 export { passport };
