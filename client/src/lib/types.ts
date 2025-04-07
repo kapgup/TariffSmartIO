@@ -6,6 +6,7 @@ export interface Country {
   baseTariff: number;
   reciprocalTariff: number;
   effectiveDate: string;
+  impactLevel?: string;
 }
 
 export interface ProductCategory {
