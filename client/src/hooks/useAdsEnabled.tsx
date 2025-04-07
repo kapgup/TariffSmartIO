@@ -3,7 +3,12 @@ import { useAuth } from "./useAuth";
 import { FeatureFlag } from "@shared/schema";
 
 interface FeatureFlagResponse {
-  flag: FeatureFlag;
+  flag: {
+    id: number;
+    name: string;
+    isEnabled: boolean;
+    description: string;
+  };
 }
 
 /**
@@ -20,13 +25,23 @@ export function useAdsEnabled() {
     retry: false
   });
 
+  // Debug logging
+  console.log("Ad visibility check:", { 
+    isLoading, 
+    isError, 
+    flagData: data?.flag,
+    isEnabled: data?.flag?.isEnabled
+  });
+
   // If user is premium, never show ads regardless of feature flag
   if (user && isPremium()) {
+    console.log("Ads disabled: Premium user");
     return false;
   }
 
   // During loading, error, or if feature flag explicitly disables ads
-  if (isLoading || isError || !data || !data.flag || data.flag.is_enabled === false) {
+  if (isLoading || isError || !data || !data.flag || data.flag.isEnabled === false) {
+    console.log("Ads disabled: Feature flag is off or loading");
     return false;
   }
 
