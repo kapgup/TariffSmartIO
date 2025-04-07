@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple T shape with a horizontal line representing a tariff chart -->
+  <path d="M30,20 H50 V55 M25,35 H55" 
+        stroke="#333333" 
+        stroke-width="3" 
+        fill="none" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+  
+  <!-- Text -->
+  <text x="70" y="40" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#333333" text-anchor="start">
+    TariffSmart
+  </text>
+</svg>
