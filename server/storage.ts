@@ -5,7 +5,8 @@ import {
   countries, type Country, type InsertCountry,
   featureFlags, type FeatureFlag, type InsertFeatureFlag,
   subscriptions, type Subscription, type InsertSubscription,
-  featureAccess, type FeatureAccess, type InsertFeatureAccess
+  featureAccess, type FeatureAccess, type InsertFeatureAccess,
+  emailSubscribers, type EmailSubscriber, type InsertEmailSubscriber
 } from "@shared/schema";
 
 export interface IStorage {
@@ -22,6 +23,12 @@ export interface IStorage {
   getSubscription(id: number): Promise<Subscription | undefined>;
   getUserSubscriptions(userId: number): Promise<Subscription[]>;
   updateSubscriptionStatus(id: number, status: string): Promise<Subscription | undefined>;
+  
+  // Email Subscribers
+  getEmailSubscribers(): Promise<EmailSubscriber[]>;
+  getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined>;
+  createEmailSubscriber(subscriber: InsertEmailSubscriber): Promise<EmailSubscriber>;
+  updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined>;
   
   // Feature Access
   getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined>;
@@ -59,6 +66,7 @@ export class MemStorage implements IStorage {
   private featureFlags: Map<number, FeatureFlag>;
   private subscriptions: Map<number, Subscription>;
   private featureAccessList: Map<number, FeatureAccess>;
+  private emailSubscribers: Map<number, EmailSubscriber>;
   
   currentUserId: number;
   currentProductCategoryId: number;
@@ -68,6 +76,8 @@ export class MemStorage implements IStorage {
   currentSubscriptionId: number;
   currentFeatureAccessId: number;
 
+  currentEmailSubscriberId: number;
+
   constructor() {
     this.users = new Map();
     this.productCategories = new Map();
@@ -76,6 +86,7 @@ export class MemStorage implements IStorage {
     this.featureFlags = new Map();
     this.subscriptions = new Map();
     this.featureAccessList = new Map();
+    this.emailSubscribers = new Map();
     
     this.currentUserId = 1;
     this.currentProductCategoryId = 1;
@@ -84,6 +95,7 @@ export class MemStorage implements IStorage {
     this.currentFeatureFlagId = 1;
     this.currentSubscriptionId = 1;
     this.currentFeatureAccessId = 1;
+    this.currentEmailSubscriberId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -386,6 +398,43 @@ export class MemStorage implements IStorage {
       const updatedFlag = { ...featureFlag, isEnabled };
       this.featureFlags.set(featureFlag.id, updatedFlag);
       return updatedFlag;
+    }
+    return undefined;
+  }
+  
+  // Email Subscriber methods
+  async getEmailSubscribers(): Promise<EmailSubscriber[]> {
+    return Array.from(this.emailSubscribers.values());
+  }
+  
+  async getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined> {
+    return Array.from(this.emailSubscribers.values()).find(
+      (subscriber) => subscriber.email === email
+    );
+  }
+  
+  async createEmailSubscriber(insertSubscriber: InsertEmailSubscriber): Promise<EmailSubscriber> {
+    const id = this.currentEmailSubscriberId++;
+    const subscriber: EmailSubscriber = {
+      id,
+      email: insertSubscriber.email,
+      status: "active",
+      source: insertSubscriber.source || null,
+      createdAt: new Date(),
+      gdprConsent: insertSubscriber.gdprConsent || true,
+      consentTimestamp: new Date(),
+      ipAddress: insertSubscriber.ipAddress || null
+    };
+    this.emailSubscribers.set(id, subscriber);
+    return subscriber;
+  }
+  
+  async updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined> {
+    const subscriber = await this.getEmailSubscriber(email);
+    if (subscriber) {
+      const updatedSubscriber = { ...subscriber, status };
+      this.emailSubscribers.set(subscriber.id, updatedSubscriber);
+      return updatedSubscriber;
     }
     return undefined;
   }

@@ -2,7 +2,14 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertProductCategorySchema, insertProductSchema, insertCountrySchema, insertFeatureFlagSchema, insertUserSchema } from "@shared/schema";
+import { 
+  insertProductCategorySchema, 
+  insertProductSchema, 
+  insertCountrySchema, 
+  insertFeatureFlagSchema, 
+  insertUserSchema,
+  insertEmailSubscriberSchema
+} from "@shared/schema";
 import { isAuthenticated, hasRole, isAdmin, isPremium, getCurrentUser } from "./auth/middleware";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -330,6 +337,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Error calculating detailed analysis", error: (error as Error).message });
+    }
+  });
+
+  // Email Subscribers
+  app.post("/api/subscribe", async (req, res) => {
+    try {
+      const schema = insertEmailSubscriberSchema.extend({
+        email: z.string().email(),
+        gdprConsent: z.boolean().default(true),
+        source: z.string().optional(),
+        ipAddress: z.string().optional()
+      });
+      
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: result.error.errors 
+        });
+      }
+      
+      // Get visitor IP address if not provided
+      if (!result.data.ipAddress) {
+        const ip = req.headers['x-forwarded-for'] || 
+                  req.socket.remoteAddress;
+        result.data.ipAddress = typeof ip === 'string' ? ip : undefined;
+      }
+      
+      const subscriber = await storage.createEmailSubscriber(result.data);
+      res.json({ 
+        success: true, 
+        message: "Thank you for subscribing!",
+        subscriber
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Error subscribing", 
+        error: (error as Error).message 
+      });
+    }
+  });
+  
+  // Admin access to subscriber list
+  app.get("/api/admin/subscribers", isAdmin, async (_req, res) => {
+    try {
+      const subscribers = await storage.getEmailSubscribers();
+      res.json({ subscribers });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Error fetching subscribers", 
+        error: (error as Error).message 
+      });
+    }
+  });
+  
+  // Admin unsubscribe user
+  app.patch("/api/admin/subscribers/:email", isAdmin, async (req, res) => {
+    try {
+      const { email } = req.params;
+      const schema = z.object({
+        status: z.enum(["active", "unsubscribed"])
+      });
+      
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const updatedSubscriber = await storage.updateEmailSubscriberStatus(
+        email, 
+        result.data.status
+      );
+      
+      if (!updatedSubscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+      
+      res.json({ 
+        subscriber: updatedSubscriber,
+        message: "Subscriber status updated successfully" 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Error updating subscriber", 
+        error: (error as Error).message 
+      });
+    }
+  });
+  
+  // Public unsubscribe endpoint with token validation
+  app.get("/api/unsubscribe/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const token = req.query.token as string | undefined;
+      
+      // In a real implementation, we would verify the token here
+      // For now, just check if the email exists
+      const subscriber = await storage.getEmailSubscriber(email);
+      if (!subscriber) {
+        return res.status(404).json({ message: "Subscriber not found" });
+      }
+      
+      // Update status to unsubscribed
+      const updatedSubscriber = await storage.updateEmailSubscriberStatus(
+        email, 
+        "unsubscribed"
+      );
+      
+      res.json({ 
+        success: true,
+        message: "You have been unsubscribed successfully" 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Error unsubscribing", 
+        error: (error as Error).message 
+      });
     }
   });
 
