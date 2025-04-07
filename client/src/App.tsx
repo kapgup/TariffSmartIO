@@ -29,7 +29,7 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <AdManager />
+      <AdManager showFooter={false} />
       <div className="flex-grow">
         <Switch>
           <Route path="/" component={Home} />
@@ -42,6 +42,7 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </div>
+      <AdManager showHeader={false} />
     </div>
   );
 }
