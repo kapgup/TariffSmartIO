@@ -18,8 +18,18 @@ if (process.env.GOOGLE_CLIENT_ID) {
 
 // Determine which host/domain to use for callbacks
 const getCallbackUrl = () => {
-  // Hard-code the correct callback URL for both production and development
-  const callbackUrl = 'https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback';
+  // Use environment variables to determine the correct host
+  let baseUrl = '';
+  
+  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+    // On Replit, use the Replit domain
+    baseUrl = `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`;
+  } else {
+    // For local development
+    baseUrl = 'http://localhost:3000';
+  }
+  
+  const callbackUrl = `${baseUrl}/api/auth/google/callback`;
   console.log('Using Google callback URL:', callbackUrl);
   return callbackUrl;
 };

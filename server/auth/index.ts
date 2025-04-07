@@ -34,13 +34,16 @@ export function configureAuth(app: Express) {
       secret: process.env.SESSION_SECRET || 'tariff-tracker-secret',
       resave: false,
       saveUninitialized: false,
+      proxy: true, // Trust the reverse proxy
       cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        // Set secure: true only on https connections
-        // Using process.env.REPL_SLUG to detect production environment on Replit
-        secure: process.env.REPL_SLUG ? true : false,
+        // IMPORTANT: On Replit, setting secure:true causes issues with cookies
+        // Setting secure:false allows cookies to work in Replit's environment
+        secure: false, // Force to false for Replit environment
         httpOnly: true,
-        sameSite: 'lax'
+        sameSite: 'lax',
+        // Explicitly set the path to ensure the cookie is available throughout the app
+        path: '/'
       }
     })
   );
