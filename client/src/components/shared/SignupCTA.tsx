@@ -116,18 +116,20 @@ export function SignupCTA() {
               control={form.control}
               name="gdprConsent"
               render={({ field }) => (
-                <FormItem className="flex items-start space-x-2 space-y-0 mt-2">
+                <FormItem className="flex items-start space-x-3 space-y-0 mt-2">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      id="gdpr-consent"
-                      className="bg-white border-white border-2 data-[state=checked]:bg-primary-foreground"
-                    />
+                    <div className="rounded-sm overflow-hidden">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        id="gdpr-consent"
+                        className="h-5 w-5 text-primary bg-white border-primary border-2 data-[state=checked]:bg-primary data-[state=checked]:border-white"
+                      />
+                    </div>
                   </FormControl>
                   <div className="text-sm text-white text-opacity-90 text-left">
                     I consent to receiving email communications about tariff changes and related updates. 
-                    See our <Link to="/about" className="underline hover:text-primary">Privacy Policy</Link>.
+                    See our <span onClick={() => window.location.href="/about"} className="underline hover:text-primary cursor-pointer">Privacy Policy</span>.
                     <FormMessage className="text-white text-opacity-90 block mt-1" />
                   </div>
                 </FormItem>
