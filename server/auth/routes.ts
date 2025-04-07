@@ -14,10 +14,12 @@ router.get(
 router.get(
   '/google/callback',
   (req, res, next) => {
+    console.log('Google callback route hit - processing authentication');
     // Custom passport authenticate with error handling
     passport.authenticate('google', (err: any, user: Express.User | false | null, info: any) => {
       if (err) {
         console.error('Google OAuth Error:', err);
+        console.error('Google OAuth Error details:', JSON.stringify(err, null, 2));
         // Send client-side redirect script that preserves the stored redirect
         return res.send(`
           <html>
@@ -40,6 +42,7 @@ router.get(
       
       if (!user) {
         console.error('Authentication failed - no user returned');
+        console.error('Authentication info:', JSON.stringify(info, null, 2));
         // Send client-side redirect script that preserves the stored redirect
         return res.send(`
           <html>
@@ -60,10 +63,18 @@ router.get(
         `);
       }
       
+      console.log('Authentication successful, user:', JSON.stringify({
+        id: user.id,
+        username: (user as any).username,
+        email: (user as any).email,
+        role: (user as any).role
+      }, null, 2));
+      
       // Log in the user
       req.logIn(user, (loginErr) => {
         if (loginErr) {
           console.error('Login error:', loginErr);
+          console.error('Login error details:', JSON.stringify(loginErr, null, 2));
           // Send client-side redirect script that preserves the stored redirect
           return res.send(`
             <html>

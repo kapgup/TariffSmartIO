@@ -23,6 +23,14 @@ passport.use(
           displayName: profile.displayName,
           hasEmails: Boolean(profile.emails && profile.emails.length)
         });
+        
+        console.log('Full Google profile for debugging:', JSON.stringify({
+          id: profile.id,
+          displayName: profile.displayName,
+          emails: profile.emails,
+          photos: profile.photos,
+          provider: profile.provider,
+        }, null, 2));
         // Check if user already exists
         const [existingUser] = await db
           .select()
@@ -78,20 +86,34 @@ passport.use(
 
 // Serialize user to the session
 passport.serializeUser((user: Express.User, done) => {
+  console.log('Serializing user to session:', JSON.stringify({
+    id: user.id,
+    username: (user as any).username,
+    role: (user as any).role
+  }, null, 2));
   done(null, user.id);
 });
 
 // Deserialize user from the session
 passport.deserializeUser(async (id: number, done) => {
   try {
+    console.log('Deserializing user with ID:', id);
     const user = await storage.getUser(id);
     if (user) {
+      console.log('User found during deserialization:', JSON.stringify({
+        id: user.id,
+        username: user.username,
+        role: user.role
+      }, null, 2));
       // Use as Express.User type which is more compatible with Passport
       done(null, user as Express.User);
     } else {
+      console.error(`User with ID ${id} not found during deserialization`);
       done(new Error(`User with ID ${id} not found`), null);
     }
   } catch (error) {
+    console.error('Error during deserialization:', error);
+    console.error('Deserialization error details:', JSON.stringify(error, null, 2));
     done(error, null);
   }
 });
