@@ -39,22 +39,17 @@ export default function Auth() {
     pageView("/auth");
   }, []);
 
-  const handleGoogleAuth = async () => {
+  const handleGoogleAuth = () => {
     setIsLoading(true);
     setError(null);
     
-    try {
-      // Create a form and submit it directly to avoid any client-side URL manipulation issues
-      const form = document.createElement('form');
-      form.method = 'GET';
-      form.action = '/api/auth/google';
-      document.body.appendChild(form);
-      form.submit();
-    } catch (err) {
-      console.error('Authentication error:', err);
-      setError('An error occurred during sign in. Please try again.');
-      setIsLoading(false);
-    }
+    // Store current location for redirect after login
+    // We already stored the redirect path in useEffect if it was in the URL
+    
+    console.log('Initiating Google authentication');
+    
+    // Use direct window location change for simplicity
+    window.location.href = '/api/auth/google';
   };
 
   // Redirect if auth is disabled
