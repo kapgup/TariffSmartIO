@@ -24,9 +24,7 @@ export function TariffOverview() {
           {/* Baseline Tariff Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="w-14 h-14 bg-primary/15 rounded-full flex items-center justify-center mb-4">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-2xl">💵</span>
-              </div>
+              <span className="text-4xl">💵</span>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Baseline Tariff</h3>
             <p className="text-neutral-600">A 10% tariff will apply to all imported goods starting April 5th, 2025, regardless of origin country.</p>
@@ -35,9 +33,7 @@ export function TariffOverview() {
           {/* Country-Specific Tariffs Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="w-14 h-14 bg-secondary/15 rounded-full flex items-center justify-center mb-4">
-              <div className="w-10 h-10 bg-indigo-300 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🌎</span>
-              </div>
+              <span className="text-5xl">🌎</span>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Country-Specific Tariffs</h3>
             <p className="text-neutral-600">Additional "reciprocal" tariffs ranging from 10% to 54% will apply to specific countries starting April 9th, 2025.</p>
@@ -46,9 +42,7 @@ export function TariffOverview() {
           {/* Implementation Timeline Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="w-14 h-14 bg-yellow-500/15 rounded-full flex items-center justify-center mb-4">
-              <div className="w-10 h-10 bg-yellow-600 rounded-full flex items-center justify-center">
-                <span className="text-2xl">📅</span>
-              </div>
+              <span className="text-4xl">📅</span>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Implementation Timeline</h3>
             <p className="text-neutral-600">Tariffs begin April 5-9, 2025, but retail price changes may occur gradually as inventories are replaced.</p>
