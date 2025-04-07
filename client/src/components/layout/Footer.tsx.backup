@@ -1,18 +1,13 @@
 import { Link } from "wouter";
 import { APP_NAME } from "@/lib/constants";
-import { useFeatureFlag } from "@/lib/featureFlags";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-  const showSocialLinks = useFeatureFlag("showSocialLinks", false);
-  
-  // Determine grid columns based on whether social links are shown
-  const gridCols = showSocialLinks ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-3";
 
   return (
     <footer className="bg-neutral-800 text-neutral-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className={`grid ${gridCols} gap-8`}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-white font-medium mb-4">{APP_NAME}</h3>
             <ul className="space-y-2">
@@ -44,17 +39,15 @@ export function Footer() {
             </ul>
           </div>
           
-          {showSocialLinks && (
-            <div>
-              <h3 className="text-white font-medium mb-4">Connect</h3>
-              <ul className="space-y-2">
-                <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Twitter</a></li>
-                <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">LinkedIn</a></li>
-                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Facebook</a></li>
-                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Instagram</a></li>
-              </ul>
-            </div>
-          )}
+          <div>
+            <h3 className="text-white font-medium mb-4">Connect</h3>
+            <ul className="space-y-2">
+              <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Twitter</a></li>
+              <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">LinkedIn</a></li>
+              <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Facebook</a></li>
+              <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Instagram</a></li>
+            </ul>
+          </div>
         </div>
         
         <div className="mt-8 pt-8 border-t border-neutral-700 flex flex-col items-center">
