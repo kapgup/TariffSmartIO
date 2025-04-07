@@ -43,26 +43,26 @@ export function Hero() {
                 </div>
                 
                 <div className="mt-6 relative">
-                  {/* Main vertical line - improved with gradient and shadow */}
-                  <div className="absolute left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/60 via-indigo-500/60 to-amber-500/60 h-full rounded-full shadow-md"></div>
+                  {/* Main vertical line - improved with smooth color transition */}
+                  <div className="absolute left-5 top-0 bottom-0 w-1 bg-gradient-to-b from-sky-500/80 via-purple-500/70 to-rose-500/80 h-full rounded-full shadow-md"></div>
                   <div className="relative pl-8">
                     <div className="mb-8">
-                      {/* Circle marker - updated with shadow and glow effect */}
-                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-primary/30"></div>
+                      {/* Circle marker - updated with smooth color scheme */}
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-sky-500 border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-sky-300"></div>
                       <h4 className="text-base font-medium text-neutral-900">{BASELINE_TARIFF_DATE}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Baseline 10% tariff on all imports begins</p>
                     </div>
                     
                     <div className="mb-8">
-                      {/* Circle marker - updated with brighter color and shadow */}
-                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-indigo-500 border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-indigo-300"></div>
+                      {/* Circle marker - updated with middle gradient color */}
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-purple-500 border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-purple-300"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RECIPROCAL_TARIFF_DATE}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Country-specific reciprocal tariffs (10-54%) go into effect</p>
                     </div>
                     
                     <div>
-                      {/* Circle marker - updated with brighter color and shadow */}
-                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-amber-500 border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-amber-300"></div>
+                      {/* Circle marker - updated with smooth transition end color */}
+                      <div className="absolute left-4 -translate-x-1/2 w-4 h-4 rounded-full bg-rose-500 border-3 border-white z-10 shadow-[0_0_8px_rgba(0,0,0,0.2)] ring-2 ring-rose-300"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RETAIL_PRICE_CHANGE_PERIOD}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Expected retail price changes appear in stores</p>
                     </div>
