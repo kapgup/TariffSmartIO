@@ -38,7 +38,11 @@ export function SignupCTA() {
   });
 
   const onSubmit = async (data: EmailFormValues) => {
+    console.log("Form submission attempted. Email alerts enabled:", isEmailAlertsEnabled);
+    console.log("Form data:", data);
+    
     if (!isEmailAlertsEnabled) {
+      console.log("Email alerts disabled, showing toast message");
       toast({
         title: "Email alerts coming soon",
         description: "This feature is not available yet. Please check back later.",
@@ -49,8 +53,10 @@ export function SignupCTA() {
     setIsSubmitting(true);
     
     try {
+      console.log("Sending API request to /api/subscribe");
       // Call our API endpoint to store the email
-      await apiRequest("POST", "/api/subscribe", data);
+      const response = await apiRequest("POST", "/api/subscribe", data);
+      console.log("API response:", response);
       
       toast({
         title: "Success!",
@@ -60,6 +66,7 @@ export function SignupCTA() {
       form.reset();
       trackSignupAttempt(true);
     } catch (error) {
+      console.error("Error submitting form:", error);
       toast({
         title: "Something went wrong",
         description: "Failed to sign up. Please try again later.",
