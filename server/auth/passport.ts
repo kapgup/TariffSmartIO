@@ -16,12 +16,22 @@ if (process.env.GOOGLE_CLIENT_ID) {
   console.log('GOOGLE_CLIENT_ID prefix:', `${idPrefix}...`);
 }
 
+// Determine which host/domain to use for callbacks
+const getCallbackUrl = () => {
+  // If we're in production on Replit's domain
+  if (process.env.REPL_SLUG) {
+    return `https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback`;
+  }
+  // Default to relative URL for development
+  return '/api/auth/google/callback';
+};
+
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: '/api/auth/google/callback',  // Use relative path which will be resolved based on the request
+      callbackURL: getCallbackUrl(),
       scope: ['profile', 'email'],
       proxy: true
     },

@@ -29,6 +29,14 @@ router.get(
     console.log('Google callback route hit - processing authentication');
     console.log('Callback URL query params:', req.query);
     console.log('Full callback URL:', req.protocol + '://' + req.get('host') + req.originalUrl);
+    console.log('Request headers:', req.headers);
+    // Additional debugging for environment
+    console.log('Environment variables:', {
+      NODE_ENV: process.env.NODE_ENV,
+      REPL_SLUG: process.env.REPL_SLUG,
+      REPL_OWNER: process.env.REPL_OWNER,
+      HOSTNAME: process.env.HOSTNAME
+    });
     // Custom passport authenticate with error handling
     passport.authenticate('google', (err: any, user: Express.User | false | null, info: any) => {
       if (err) {

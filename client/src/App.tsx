@@ -42,6 +42,12 @@ function Router() {
         <Route path="/auth/login" component={AuthRedirect} />
         <Route path="/auth/register" component={AuthRedirect} />
         <Route path="/profile" component={Profile} />
+        {/* Special route to handle Google OAuth callback errors */}
+        <Route path="/api/auth/google/callback" component={() => {
+          // Redirect to auth page with error
+          window.location.href = '/auth?error=authentication_failed';
+          return <div>Redirecting to login page...</div>;
+        }} />
         <Route component={NotFound} />
       </Switch>
     </div>
