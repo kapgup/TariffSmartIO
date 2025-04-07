@@ -1,124 +1,97 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { Helmet } from 'react-helmet';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { useFeatureFlag } from '@/lib/featureFlags';
 import { pageView } from '@/lib/analytics';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function Register() {
+const Register = () => {
   const [, setLocation] = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const authEnabled = useFeatureFlag('authentication', true);
+  const { user, isLoading } = useAuth();
+  const [googleAuthUrl, setGoogleAuthUrl] = useState('');
   
   useEffect(() => {
-    pageView("/auth/register");
-  }, []);
-
-  const handleGoogleSignup = async () => {
-    setIsLoading(true);
-    setError(null);
+    pageView('/auth/register');
     
-    try {
-      // Redirect to Google OAuth endpoint
-      window.location.href = '/api/auth/google';
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError('An error occurred during registration. Please try again.');
-      setIsLoading(false);
+    // If user is already logged in, redirect to home
+    if (user && !isLoading) {
+      setLocation('/');
+    }
+    
+    // Fetch Google OAuth URL (same as login but with register=true param)
+    const fetchGoogleAuthUrl = async () => {
+      try {
+        const response = await fetch('/api/auth/google/url?register=true');
+        if (response.ok) {
+          const data = await response.json();
+          setGoogleAuthUrl(data.url);
+        } else {
+          console.error('Failed to fetch Google auth URL');
+        }
+      } catch (error) {
+        console.error('Error fetching Google auth URL:', error);
+      }
+    };
+    
+    fetchGoogleAuthUrl();
+  }, [user, isLoading, setLocation]);
+  
+  const handleGoogleRegister = () => {
+    if (googleAuthUrl) {
+      window.location.href = googleAuthUrl;
     }
   };
-
-  // Redirect if auth is disabled
-  if (!authEnabled) {
-    toast({
-      title: 'Authentication Disabled',
-      description: 'The authentication feature is currently disabled.',
-      variant: 'destructive',
-    });
-    setLocation('/');
-    return null;
-  }
-
+  
   return (
     <>
       <Helmet>
-        <title>Create Account | TariffSmart</title>
+        <title>Register | TariffSmart</title>
       </Helmet>
       
-      <div className="container max-w-md py-16">
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-            <CardDescription className="text-center">
-              Sign up for TariffSmart to track tariffs and get custom alerts
+      <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-8">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
+            <CardDescription>
+              Join TariffSmart to access advanced tariff calculation tools and personalized features
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="space-y-4">
-              <Button 
-                variant="outline" 
-                className="w-full flex items-center justify-center gap-2"
-                onClick={handleGoogleSignup}
-                disabled={isLoading}
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 24 24" 
-                  className="w-5 h-5"
-                >
-                  <path 
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" 
-                    fill="#4285F4" 
-                  />
-                  <path 
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" 
-                    fill="#34A853" 
-                  />
-                  <path 
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" 
-                    fill="#FBBC05" 
-                  />
-                  <path 
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" 
-                    fill="#EA4335" 
-                  />
-                </svg>
-                {isLoading ? 'Signing up...' : 'Sign up with Google'}
-              </Button>
-            </div>
-            
-            <div className="space-y-2">
-              <p className="text-xs text-center text-gray-500">
-                By signing up, you agree to our Terms and Privacy Policy.
-              </p>
-            </div>
+            <Button 
+              className="w-full flex items-center justify-center space-x-2" 
+              onClick={handleGoogleRegister}
+              disabled={!googleAuthUrl}
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+                <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
+                  <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
+                  <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
+                  <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
+                  <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+                </g>
+              </svg>
+              <span>Sign up with Google</span>
+            </Button>
           </CardContent>
           
-          <Separator className="my-2" />
-          
-          <CardFooter className="flex flex-col space-y-2 items-center">
-            <p className="text-sm text-center text-gray-500">
+          <CardFooter className="flex flex-col space-y-2">
+            <div className="text-sm text-center text-gray-500">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-primary hover:underline">
-                Sign in
-              </Link>
-            </p>
+              <Button
+                variant="link"
+                className="p-0 h-auto font-semibold"
+                onClick={() => setLocation('/auth/login')}
+              >
+                Login
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </div>
     </>
   );
-}
+};
+
+export default Register;
