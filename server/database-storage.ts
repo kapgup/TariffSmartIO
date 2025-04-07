@@ -5,7 +5,8 @@ import {
   countries, type Country, type InsertCountry,
   featureFlags, type FeatureFlag, type InsertFeatureFlag,
   subscriptions, type Subscription, type InsertSubscription,
-  featureAccess, type FeatureAccess, type InsertFeatureAccess
+  featureAccess, type FeatureAccess, type InsertFeatureAccess,
+  emailSubscribers, type EmailSubscriber, type InsertEmailSubscriber
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, and } from "drizzle-orm";
@@ -239,6 +240,46 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedFlag;
+  }
+  
+  // Email Subscriber methods
+  async getEmailSubscribers(): Promise<EmailSubscriber[]> {
+    return await db.select().from(emailSubscribers);
+  }
+  
+  async getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined> {
+    const results = await db.select().from(emailSubscribers).where(eq(emailSubscribers.email, email));
+    return results.length > 0 ? results[0] : undefined;
+  }
+  
+  async createEmailSubscriber(insertSubscriber: InsertEmailSubscriber): Promise<EmailSubscriber> {
+    // Check if email already exists to avoid duplicates
+    const existing = await this.getEmailSubscriber(insertSubscriber.email);
+    if (existing) {
+      return existing;
+    }
+    
+    const [subscriber] = await db.insert(emailSubscribers).values({
+      ...insertSubscriber,
+      status: "active",
+      createdAt: new Date(),
+      consentTimestamp: new Date()
+    }).returning();
+    
+    return subscriber;
+  }
+  
+  async updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined> {
+    const subscriber = await this.getEmailSubscriber(email);
+    if (!subscriber) return undefined;
+    
+    const [updatedSubscriber] = await db
+      .update(emailSubscribers)
+      .set({ status })
+      .where(eq(emailSubscribers.email, email))
+      .returning();
+    
+    return updatedSubscriber;
   }
 
   // Initialize data if needed

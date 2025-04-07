@@ -2,6 +2,25 @@ import { pgTable, text, serial, integer, boolean, numeric, jsonb, timestamp } fr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Email subscribers
+export const emailSubscribers = pgTable("email_subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  status: text("status").default("active").notNull(), // "active", "unsubscribed"
+  source: text("source"), // where the subscriber signed up (e.g., "homepage", "calculator")
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  gdprConsent: boolean("gdpr_consent").default(true), // GDPR compliance
+  consentTimestamp: timestamp("consent_timestamp").defaultNow(),
+  ipAddress: text("ip_address"), // Store for compliance records
+});
+
+export const insertEmailSubscriberSchema = createInsertSchema(emailSubscribers).pick({
+  email: true,
+  source: true, 
+  gdprConsent: true,
+  ipAddress: true,
+});
+
 // User schema with OAuth and role-based fields
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -134,6 +153,9 @@ export const insertFeatureFlagSchema = createInsertSchema(featureFlags).pick({
 });
 
 // Types
+export type InsertEmailSubscriber = z.infer<typeof insertEmailSubscriberSchema>;
+export type EmailSubscriber = typeof emailSubscribers.$inferSelect;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 

@@ -6,11 +6,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { trackSignupAttempt } from "@/lib/analytics";
 import { useFeatureFlag } from "@/lib/featureFlags";
+import { apiRequest } from "@/lib/queryClient";
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
+  gdprConsent: z.boolean().default(true),
+  source: z.string().optional(),
 });
 
 type EmailFormValues = z.infer<typeof emailSchema>;
@@ -24,6 +28,8 @@ export function SignupCTA() {
     resolver: zodResolver(emailSchema),
     defaultValues: {
       email: "",
+      gdprConsent: true,
+      source: "website_cta"
     },
   });
 
@@ -39,8 +45,8 @@ export function SignupCTA() {
     setIsSubmitting(true);
     
     try {
-      // In a real implementation, this would send the email to a backend endpoint
-      // await apiRequest("POST", "/api/subscribe", { email: data.email });
+      // Call our API endpoint to store the email
+      await apiRequest("POST", "/api/subscribe", data);
       
       toast({
         title: "Success!",
@@ -72,33 +78,56 @@ export function SignupCTA() {
         </p>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-md mx-auto flex flex-col sm:flex-row gap-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-md mx-auto flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormControl>
+                      <Input 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        className="px-4 py-3 rounded-md bg-white text-gray-900 w-full" 
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-white text-opacity-90 text-xs mt-1" />
+                  </FormItem>
+                )}
+              />
+              
+              <Button 
+                type="submit" 
+                variant="secondary" 
+                className="py-3 px-6" 
+                disabled={isSubmitting || !isEmailAlertsEnabled}
+              >
+                {isSubmitting ? "Signing Up..." : "Sign Up"}
+              </Button>
+            </div>
+            
             <FormField
               control={form.control}
-              name="email"
+              name="gdprConsent"
               render={({ field }) => (
-                <FormItem className="flex-grow">
+                <FormItem className="flex items-start space-x-2 space-y-0 mt-2">
                   <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder="Enter your email" 
-                      className="px-4 py-3 rounded-md bg-white text-gray-900 w-full" 
-                      {...field}
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="gdpr-consent"
+                      className="bg-white data-[state=checked]:bg-white"
                     />
                   </FormControl>
-                  <FormMessage className="text-white text-opacity-90 text-xs mt-1" />
+                  <div className="text-sm text-white text-opacity-90 text-left">
+                    I consent to receiving email communications about tariff changes and related updates. 
+                    See our <a href="#" className="underline">Privacy Policy</a>.
+                  </div>
                 </FormItem>
               )}
             />
-            
-            <Button 
-              type="submit" 
-              variant="secondary" 
-              className="py-3 px-6" 
-              disabled={isSubmitting || !isEmailAlertsEnabled}
-            >
-              {isSubmitting ? "Signing Up..." : "Sign Up"}
-            </Button>
           </form>
         </Form>
         
