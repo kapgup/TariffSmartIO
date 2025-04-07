@@ -32,11 +32,13 @@ export default function Timeline() {
                   <h2 className="text-xl font-semibold mb-6">Key Implementation Dates</h2>
                   
                   <div className="relative">
-                    <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-neutral-200"></div>
+                    {/* Main vertical line */}
+                    <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-neutral-200 h-full"></div>
                     
                     <div className="relative pl-12 mb-12">
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-white"></div>
-                      <div className="absolute left-[18px] top-1 h-[calc(100%+3rem)] w-[1px] border-l-2 border-dashed border-neutral-200"></div>
+                      {/* Circle marker */}
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-primary border-4 border-white z-10"></div>
+                      
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{BASELINE_TARIFF_DATE}</h3>
                       <p className="text-neutral-600 mb-4">Baseline 10% tariff on all imports begins</p>
                       <div className="bg-neutral-50 p-4 rounded-lg">
@@ -50,8 +52,9 @@ export default function Timeline() {
                     </div>
                     
                     <div className="relative pl-12 mb-12">
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-secondary border-4 border-white"></div>
-                      <div className="absolute left-[18px] top-1 h-[calc(100%+3rem)] w-[1px] border-l-2 border-dashed border-neutral-200"></div>
+                      {/* Circle marker */}
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-secondary border-4 border-white z-10"></div>
+                      
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RECIPROCAL_TARIFF_DATE}</h3>
                       <p className="text-neutral-600 mb-4">Country-specific "reciprocal" tariffs (10-54%) go into effect</p>
                       <div className="bg-neutral-50 p-4 rounded-lg">
@@ -65,7 +68,9 @@ export default function Timeline() {
                     </div>
                     
                     <div className="relative pl-12">
-                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-warning border-4 border-white"></div>
+                      {/* Circle marker */}
+                      <div className="absolute left-4 top-1 -translate-x-1/2 w-4 h-4 rounded-full bg-warning border-4 border-white z-10"></div>
+                      
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RETAIL_PRICE_CHANGE_PERIOD}</h3>
                       <p className="text-neutral-600 mb-4">Expected retail price changes appear in stores</p>
                       <div className="bg-neutral-50 p-4 rounded-lg">
