@@ -9,3 +9,4 @@ id,name,base_tariff,reciprocal_tariff,effective_date,impact_level
 3,"Mexico",10,15,"April 9, 2025","Low"
 5,"South Korea",10,30,"April 9, 2025","High"
 2,"Vietnam",10,25,"April 9, 2025","Medium"
+11,"Australia",10,18,"April 9, 2025","Low"
