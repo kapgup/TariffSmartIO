@@ -50,7 +50,7 @@ export function configureAuth(app: Express) {
   app.use(attachUserRole);
 
   // Mount auth routes
-  app.use('/auth', authRoutes);
+  app.use('/api/auth', authRoutes);
 }
 
 export { passport };
