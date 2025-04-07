@@ -44,8 +44,12 @@ export default function Auth() {
     setError(null);
     
     try {
-      // Redirect to Google OAuth endpoint
-      window.location.href = '/api/auth/google';
+      // Create a form and submit it directly to avoid any client-side URL manipulation issues
+      const form = document.createElement('form');
+      form.method = 'GET';
+      form.action = '/api/auth/google';
+      document.body.appendChild(form);
+      form.submit();
     } catch (err) {
       console.error('Authentication error:', err);
       setError('An error occurred during sign in. Please try again.');

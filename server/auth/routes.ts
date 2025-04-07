@@ -37,8 +37,16 @@ router.get(
       REPL_OWNER: process.env.REPL_OWNER,
       HOSTNAME: process.env.HOSTNAME
     });
+    
+    // Check if we received an error from Google
+    if (req.query.error) {
+      console.error('Google returned an error:', req.query.error);
+      // Handle the error with a redirect
+      return res.redirect('/auth?error=authentication_failed');
+    }
+    
     // Custom passport authenticate with error handling
-    passport.authenticate('google', (err: any, user: Express.User | false | null, info: any) => {
+    passport.authenticate('google', { failureRedirect: '/auth?error=authentication_failed' }, (err: any, user: Express.User | false | null, info: any) => {
       if (err) {
         console.error('Google OAuth Error:', err);
         console.error('Google OAuth Error details:', JSON.stringify(err, null, 2));
