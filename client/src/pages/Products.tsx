@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { ProductBrowser } from "@/components/products/ProductBrowser";
 import { SignupCTA } from "@/components/shared/SignupCTA";
+import { PreFooterAd } from "@/components/ads/PreFooterAd";
 import { pageView } from "@/lib/analytics";
 
 export default function Products() {
@@ -25,6 +26,7 @@ export default function Products() {
         
         <ProductBrowser />
         <SignupCTA />
+        <PreFooterAd />
       </main>
       <Footer />
     </>

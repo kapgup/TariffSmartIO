@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { SignupCTA } from "@/components/shared/SignupCTA";
+import { PreFooterAd } from "@/components/ads/PreFooterAd";
 import { Card, CardContent } from "@/components/ui/card";
 import { BASELINE_TARIFF_DATE, RECIPROCAL_TARIFF_DATE, RETAIL_PRICE_CHANGE_PERIOD } from "@/lib/constants";
 import { pageView } from "@/lib/analytics";
@@ -118,6 +119,7 @@ export default function Timeline() {
         </section>
         
         <SignupCTA />
+        <PreFooterAd />
       </main>
       <Footer />
     </>

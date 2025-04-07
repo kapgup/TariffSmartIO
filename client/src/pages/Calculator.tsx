@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { TariffCalculator } from "@/components/calculator/TariffCalculator";
 import { SignupCTA } from "@/components/shared/SignupCTA";
+import { PreFooterAd } from "@/components/ads/PreFooterAd";
 import { pageView } from "@/lib/analytics";
 
 export default function Calculator() {
@@ -25,6 +26,7 @@ export default function Calculator() {
         
         <TariffCalculator />
         <SignupCTA />
+        <PreFooterAd />
       </main>
       <Footer />
     </>

@@ -42,7 +42,6 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </div>
-      <AdManager showHeader={false} />
     </div>
   );
 }
