@@ -1,14 +1,6 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   Table,
   TableBody,
@@ -39,6 +31,7 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
   const [tariffRange, setTariffRange] = useState("All Tariff Rates");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [sortBy, setSortBy] = useState<"name" | "baseTariff" | "reciprocalTariff">("name");
+  const [impactFilter, setImpactFilter] = useState<string>("all");
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,6 +42,12 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
   const handleTariffRangeChange = (value: string) => {
     setTariffRange(value);
     trackFilterUsage("tariffRange", value);
+  };
+
+  // Handle impact level filter change
+  const handleImpactFilterChange = (value: string) => {
+    setImpactFilter(value);
+    trackFilterUsage("impactLevel", value);
   };
 
   // Handle sort toggle
@@ -71,9 +70,42 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
     };
   };
 
-  // Filter countries based on search and tariff range
+  // Organize countries by impact level
+  const countriesByImpact = useMemo(() => {
+    const result = {
+      high: [] as Country[],
+      medium: [] as Country[],
+      low: [] as Country[]
+    };
+    
+    countries.forEach(country => {
+      const impactLevel = country.impactLevel?.toLowerCase() || 'medium';
+      if (impactLevel in result) {
+        result[impactLevel as keyof typeof result].push(country);
+      }
+    });
+    
+    return result;
+  }, [countries]);
+
+  // Count number of countries in each impact level
+  const impactCounts = useMemo(() => {
+    return {
+      high: countriesByImpact.high.length,
+      medium: countriesByImpact.medium.length,
+      low: countriesByImpact.low.length,
+      all: countries.length
+    };
+  }, [countriesByImpact, countries]);
+
+  // Filter countries based on search, tariff range and impact level
   const filteredCountries = useMemo(() => {
-    return countries.filter(country => {
+    // First filter by impact level if not "all"
+    const impactFiltered = impactFilter === "all" 
+      ? countries 
+      : countriesByImpact[impactFilter as keyof typeof countriesByImpact] || [];
+    
+    return impactFiltered.filter(country => {
       // Search filter
       const matchesSearch = country.name.toLowerCase().includes(searchQuery.toLowerCase());
       
@@ -95,7 +127,7 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
       
       return matchesSearch && matchesTariffRange;
     });
-  }, [countries, searchQuery, tariffRange]);
+  }, [countries, countriesByImpact, impactFilter, searchQuery, tariffRange]);
 
   // Sort countries
   const sortedCountries = useMemo(() => {
@@ -114,17 +146,34 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
     });
   }, [filteredCountries, sortBy, sortOrder]);
 
-  // Get impact level based on tariff increase
-  const getImpactLevel = (percentage: number) => {
-    if (percentage < 25) return "low";
-    if (percentage < 75) return "medium";
-    return "high";
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Impact level filter */}
+        <div className="w-full">
+          <Select value={impactFilter} onValueChange={handleImpactFilterChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by impact level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                All Impact Levels ({impactCounts.all})
+              </SelectItem>
+              <SelectItem value="high">
+                High Impact ({impactCounts.high})
+              </SelectItem>
+              <SelectItem value="medium">
+                Medium Impact ({impactCounts.medium})
+              </SelectItem>
+              <SelectItem value="low">
+                Low Impact ({impactCounts.low})
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Search */}
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search countries..."
@@ -133,7 +182,9 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
             className="pl-10"
           />
         </div>
-        <div className="w-full md:w-64">
+        
+        {/* Tariff range filter */}
+        <div className="w-full">
           <Select value={tariffRange} onValueChange={handleTariffRangeChange}>
             <SelectTrigger>
               <Filter className="mr-2 h-4 w-4" />
@@ -196,7 +247,10 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
                   country.baseTariff, 
                   country.reciprocalTariff
                 );
-                const impactLevel = getImpactLevel(parseFloat(percentage));
+                
+                // Use the stored impact level or calculate if not available
+                const impactLevel = country.impactLevel?.toLowerCase() || 
+                  (parseFloat(percentage) < 50 ? "low" : parseFloat(percentage) < 150 ? "medium" : "high");
                 
                 return (
                   <TableRow key={country.id}>
