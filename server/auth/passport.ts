@@ -11,7 +11,8 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: 'https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback', 
+      callbackURL: '/api/auth/google/callback',
+      proxy: true,
       scope: ['profile', 'email'],
     },
     async (accessToken, refreshToken, profile, done) => {
