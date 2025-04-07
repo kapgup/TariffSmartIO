@@ -65,7 +65,7 @@ export default function About() {
                 </p>
                 <p>
                   We are committed to transparency about our use of AI and continuously work to improve the quality and accuracy of all information on TariffSmart.
-                  If you identify any inaccuracies, please contact us immediately at corrections@tariffsmart.com.
+                  If you identify any inaccuracies, please contact us immediately at support@tariffsmart.io.
                 </p>
                 
                 <h2 id="help">Help Center</h2>
@@ -118,8 +118,7 @@ export default function About() {
                   Have questions, feedback, or need personalized assistance? Our team is here to help:
                 </p>
                 <ul>
-                  <li>Email: support@tariffsmart.com</li>
-                  <li>Phone: (555) 123-4567</li>
+                  <li>Email: support@tariffsmart.io</li>
                   <li>Business Hours: Monday-Friday, 9am-5pm ET</li>
                 </ul>
                 
