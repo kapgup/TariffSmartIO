@@ -1,65 +1,57 @@
-import { useQuery } from "@tanstack/react-query";
-import { FEATURE_FLAGS } from "./constants";
-import { FeatureFlag } from "./types";
+import { useQuery } from '@tanstack/react-query';
+import { FeatureFlag } from '@shared/schema';
+import { queryClient } from './queryClient';
 
-// Feature flag hook to check if a feature is enabled
-export function useFeatureFlag(flagName: string): boolean {
-  const { data } = useQuery<{ flag: FeatureFlag }>({ 
-    queryKey: [`/api/feature-flags/${flagName}`],
-    suspense: false,
-    retry: false,
-    staleTime: 60000 // 1 minute
+/**
+ * Hook to check if a feature flag is enabled
+ * 
+ * @param featureName The name of the feature flag to check
+ * @param defaultValue Optional default value if the flag doesn't exist (defaults to false)
+ * @returns Boolean indicating if the feature is enabled
+ */
+export function useFeatureFlag(featureName: string, defaultValue: boolean = false): boolean {
+  const { data, isLoading } = useQuery<{ flag: FeatureFlag }>({
+    queryKey: [`/api/feature-flags/${featureName}`],
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
-  
-  return data?.flag?.isEnabled ?? false;
+
+  // If loading or error, return the default value
+  if (isLoading || !data) {
+    return defaultValue;
+  }
+
+  return data.flag?.isEnabled ?? defaultValue;
 }
 
-// Hook to check if the calculator feature is enabled
-export function useCalculatorFeature(): boolean {
-  return useFeatureFlag(FEATURE_FLAGS.TARIFF_CALCULATOR);
+/**
+ * Function to fetch all feature flags
+ * 
+ * @returns Promise with an array of feature flags
+ */
+export async function fetchAllFeatureFlags(): Promise<FeatureFlag[]> {
+  try {
+    const response = await fetch('/api/feature-flags');
+    if (!response.ok) {
+      throw new Error('Failed to fetch feature flags');
+    }
+    const data = await response.json();
+    return data.flags;
+  } catch (error) {
+    console.error('Error fetching feature flags:', error);
+    return [];
+  }
 }
 
-// Hook to check if product filtering is enabled
-export function useProductFilteringFeature(): boolean {
-  return useFeatureFlag(FEATURE_FLAGS.PRODUCT_FILTERING);
-}
-
-// Hook to check if authentication is enabled
-export function useAuthenticationFeature(): boolean {
-  return useFeatureFlag(FEATURE_FLAGS.AUTHENTICATION);
-}
-
-// Hook to check if email alerts are enabled
-export function useEmailAlertsFeature(): boolean {
-  return useFeatureFlag(FEATURE_FLAGS.EMAIL_ALERTS);
-}
-
-// Hook to check if alternative products are enabled
-export function useAlternativeProductsFeature(): boolean {
-  return useFeatureFlag(FEATURE_FLAGS.ALTERNATIVE_PRODUCTS);
-}
-
-// All features hook
-export function useFeatureFlags() {
-  const { data } = useQuery<{ flags: FeatureFlag[] }>({
-    queryKey: ['/api/feature-flags'],
-    suspense: false
-  });
-  
-  const flags = data?.flags || [];
-  
-  // Convert array to object for easier access
-  const flagsMap = flags.reduce((acc, flag) => {
-    acc[flag.name] = flag.isEnabled;
-    return acc;
-  }, {} as Record<string, boolean>);
-  
-  return {
-    flags: flagsMap,
-    isCalculatorEnabled: flagsMap[FEATURE_FLAGS.TARIFF_CALCULATOR] ?? true,
-    isProductFilteringEnabled: flagsMap[FEATURE_FLAGS.PRODUCT_FILTERING] ?? true,
-    isAuthenticationEnabled: flagsMap[FEATURE_FLAGS.AUTHENTICATION] ?? false,
-    isEmailAlertsEnabled: flagsMap[FEATURE_FLAGS.EMAIL_ALERTS] ?? false,
-    isAlternativeProductsEnabled: flagsMap[FEATURE_FLAGS.ALTERNATIVE_PRODUCTS] ?? false
-  };
+/**
+ * Function to invalidate feature flag cache
+ * 
+ * @param featureName Optional specific feature flag to invalidate, or all if not provided
+ */
+export function invalidateFeatureFlags(featureName?: string): void {
+  if (featureName) {
+    queryClient.invalidateQueries({ queryKey: [`/api/feature-flags/${featureName}`] });
+  } else {
+    queryClient.invalidateQueries({ queryKey: ['/api/feature-flags'] });
+  }
 }

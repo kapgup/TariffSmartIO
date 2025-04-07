@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trackFilterUsage, trackProductView } from "@/lib/analytics";
-import { useProductFilteringFeature } from "@/lib/featureFlags";
+import { useFeatureFlag } from "@/lib/featureFlags";
 import { ProductCategory, Product, Country } from "@/lib/types";
 import { PRODUCT_CATEGORIES, COUNTRIES, TARIFF_RANGES } from "@/lib/constants";
 import { Search } from "lucide-react";
@@ -90,7 +90,7 @@ const ProductCard = ({ product, categories }: ProductCardProps) => {
 };
 
 export function ProductBrowser() {
-  const isFilteringEnabled = useProductFilteringFeature();
+  const isFilteringEnabled = useFeatureFlag('productFiltering', true);
   const [category, setCategory] = useState("All Categories");
   const [country, setCountry] = useState("All Countries");
   const [tariffRange, setTariffRange] = useState("All Tariff Rates");
