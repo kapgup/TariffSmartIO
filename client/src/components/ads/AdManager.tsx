@@ -1,6 +1,7 @@
 import { HeaderAd } from './HeaderAd';
 import { FooterAd } from './FooterAd';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdsEnabled } from '@/hooks/useAdsEnabled';
 
 interface AdManagerProps {
   showHeader?: boolean;
@@ -13,9 +14,10 @@ export const AdManager = ({
 }: AdManagerProps) => {
   const { user } = useAuth();
   const isPremiumUser = user?.subscriptionTier === 'premium';
+  const adsEnabled = useAdsEnabled();
 
-  // Don't show ads to premium users
-  if (isPremiumUser) {
+  // Don't show ads to premium users or when ads are disabled globally
+  if (isPremiumUser || !adsEnabled) {
     return null;
   }
 
