@@ -18,18 +18,10 @@ if (process.env.GOOGLE_CLIENT_ID) {
 
 // Determine which host/domain to use for callbacks
 const getCallbackUrl = () => {
-  // Use environment variables to determine the correct host
-  let baseUrl = '';
+  // Use the exact URL that is registered in Google Cloud Console
+  // This must match the authorized redirect URIs in the Google Cloud Console settings
+  const callbackUrl = 'https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback';
   
-  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-    // On Replit, use the Replit domain
-    baseUrl = `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`;
-  } else {
-    // For local development
-    baseUrl = 'http://localhost:3000';
-  }
-  
-  const callbackUrl = `${baseUrl}/api/auth/google/callback`;
   console.log('Using Google callback URL:', callbackUrl);
   return callbackUrl;
 };
