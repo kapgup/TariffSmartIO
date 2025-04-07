@@ -343,6 +343,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Email Subscribers
   app.post("/api/subscribe", async (req, res) => {
     try {
+      console.log("POST /api/subscribe received with body:", req.body);
+      
       const schema = insertEmailSubscriberSchema.extend({
         email: z.string().email(),
         gdprConsent: z.boolean().default(true),
@@ -350,8 +352,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ipAddress: z.string().optional()
       });
       
+      console.log("Validating request data with schema");
       const result = schema.safeParse(req.body);
       if (!result.success) {
+        console.log("Schema validation failed:", result.error.errors);
         return res.status(400).json({ 
           message: "Invalid input", 
           errors: result.error.errors 
@@ -365,13 +369,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         result.data.ipAddress = typeof ip === 'string' ? ip : undefined;
       }
       
-      const subscriber = await storage.createEmailSubscriber(result.data);
-      res.json({ 
-        success: true, 
-        message: "Thank you for subscribing!",
-        subscriber
-      });
+      console.log("Creating email subscriber with data:", result.data);
+      try {
+        const subscriber = await storage.createEmailSubscriber(result.data);
+        console.log("Subscriber created successfully:", subscriber);
+        res.json({ 
+          success: true, 
+          message: "Thank you for subscribing!",
+          subscriber
+        });
+      } catch (storageError) {
+        console.error("Error in storage.createEmailSubscriber:", storageError);
+        throw storageError;
+      }
     } catch (error) {
+      console.error("Error in /api/subscribe handler:", error);
       res.status(500).json({ 
         message: "Error subscribing", 
         error: (error as Error).message 
