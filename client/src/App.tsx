@@ -15,7 +15,6 @@ import About from "@/pages/About";
 import NotFound from "@/pages/not-found";
 import Register from "@/pages/auth/Register";
 import Login from "@/pages/auth/Login";
-import OAuth2Callback from "@/pages/auth/OAuth2Callback";
 
 import { Header } from '@/components/layout/Header';
 
@@ -40,7 +39,6 @@ function Router() {
         <Route path="/about" component={About} />
         <Route path="/auth/register" component={Register} />
         <Route path="/auth/login" component={Login} />
-        <Route path="/auth/callback" component={OAuth2Callback} />
         <Route component={NotFound} />
       </Switch>
     </div>

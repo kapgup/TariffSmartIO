@@ -49,8 +49,8 @@ export function configureAuth(app: Express) {
   // Attach user role to response
   app.use(attachUserRole);
 
-  // Mount auth routes - all managed through authRoutes now
-  app.use('/api/auth', authRoutes);
+  // Mount auth routes
+  app.use('/auth', authRoutes);
 }
 
 export { passport };
