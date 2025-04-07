@@ -1,52 +1,50 @@
-import { useEffect } from 'react';
 import { HeaderAd } from './HeaderAd';
 import { FooterAd } from './FooterAd';
 import { useAuth } from '@/hooks/useAuth';
 
-export const AdManager = () => {
+interface AdManagerProps {
+  showHeader?: boolean;
+  showFooter?: boolean;
+}
+
+export const AdManager = ({ 
+  showHeader = true, 
+  showFooter = true 
+}: AdManagerProps) => {
   const { user } = useAuth();
-  const isPremium = user?.subscriptionTier === 'premium';
+  const isPremiumUser = user?.subscriptionTier === 'premium';
 
-  // Load Google AdSense script
-  useEffect(() => {
-    if (isPremium) return; // Don't load AdSense for premium users
-    
-    const clientId = import.meta.env.VITE_ADSENSE_CLIENT_ID;
-    if (!clientId) {
-      console.warn('AdSense Client ID not found. Ads will not be displayed.');
-      return;
-    }
-
-    // Check if script is already added
-    if (document.querySelector(`script[src*="adsbygoogle"]`)) return;
-
-    // Load AdSense script
-    const script = document.createElement('script');
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}`;
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
-
-    // Cleanup on unmount
-    return () => {
-      try {
-        const scriptElement = document.querySelector(`script[src*="adsbygoogle"]`);
-        if (scriptElement) {
-          document.head.removeChild(scriptElement);
-        }
-      } catch (e) {
-        console.error('Error removing AdSense script:', e);
-      }
-    };
-  }, [isPremium]);
-
-  // Don't render anything for premium users
-  if (isPremium) return null;
+  // Don't show ads to premium users
+  if (isPremiumUser) {
+    return null;
+  }
 
   return (
     <>
-      <HeaderAd />
-      <FooterAd />
+      {showHeader && (
+        <div className="w-full bg-gradient-to-r from-indigo-50 to-amber-50 p-2 border-b">
+          <div className="max-w-7xl mx-auto">
+            <div className="w-full h-[90px] rounded-md overflow-hidden shadow-sm bg-white/60 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <p className="font-semibold">Advertisement</p>
+                <p className="text-xs">Top Banner Ad (728×90)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showFooter && (
+        <div className="w-full bg-gradient-to-r from-amber-50 to-indigo-50 p-2 border-t mt-auto">
+          <div className="max-w-7xl mx-auto">
+            <div className="w-full h-[90px] rounded-md overflow-hidden shadow-sm bg-white/60 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <p className="font-semibold">Advertisement</p>
+                <p className="text-xs">Bottom Banner Ad (728×90)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
