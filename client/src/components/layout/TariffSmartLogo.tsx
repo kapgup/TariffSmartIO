@@ -9,17 +9,40 @@ export function TariffSmartLogo() {
     >
       <rect width="32" height="32" rx="6" fill="currentColor" fillOpacity="0.1" />
       <path 
-        d="M6 8H26M10 8V24M22 8V24M14 12L18 12M14 16L18 16M14 20L18 20M26 14L30 18M26 22L30 18M6 14L2 18M6 22L2 18" 
+        d="M8 6H24C25.1046 6 26 6.89543 26 8V24C26 25.1046 25.1046 26 24 26H8C6.89543 26 6 25.1046 6 24V8C6 6.89543 6.89543 6 8 6Z" 
         stroke="currentColor" 
-        strokeWidth="2.5" 
+        strokeWidth="2" 
         strokeLinecap="round" 
-        strokeLinejoin="round" 
       />
       <path 
-        d="M8 26L24 26" 
+        d="M10 12H22" 
         stroke="currentColor" 
-        strokeWidth="2.5" 
-        strokeLinecap="round"
+        strokeWidth="2" 
+        strokeLinecap="round" 
+      />
+      <path 
+        d="M10 16H14" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+      />
+      <path 
+        d="M18 16H22" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+      />
+      <path 
+        d="M10 20H14" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+      />
+      <path 
+        d="M18 20H22" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
       />
     </svg>
   );

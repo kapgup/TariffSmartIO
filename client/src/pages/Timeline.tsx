@@ -36,7 +36,7 @@ export default function Timeline() {
                     
                     <div className="relative pl-12 mb-12">
                       <div className="absolute left-4 top-1 -translate-x-1/2 w-6 h-6 rounded-full bg-primary border-4 border-white shadow-md z-10 flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-2 h-2 bg-primary/30 rounded-full"></div>
                       </div>
                       <div className="absolute left-[18px] top-1 h-[calc(100%+3rem)] w-[1px] border-l-2 border-dashed border-primary/30 z-0"></div>
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{BASELINE_TARIFF_DATE}</h3>
@@ -53,7 +53,7 @@ export default function Timeline() {
                     
                     <div className="relative pl-12 mb-12">
                       <div className="absolute left-4 top-1 -translate-x-1/2 w-6 h-6 rounded-full bg-secondary border-4 border-white shadow-md z-10 flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-2 h-2 bg-secondary/30 rounded-full"></div>
                       </div>
                       <div className="absolute left-[18px] top-1 h-[calc(100%+3rem)] w-[1px] border-l-2 border-dashed border-primary/30 z-0"></div>
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RECIPROCAL_TARIFF_DATE}</h3>
@@ -70,7 +70,7 @@ export default function Timeline() {
                     
                     <div className="relative pl-12">
                       <div className="absolute left-4 top-1 -translate-x-1/2 w-6 h-6 rounded-full bg-warning border-4 border-white shadow-md z-10 flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="w-2 h-2 bg-warning/30 rounded-full"></div>
                       </div>
                       <h3 className="text-lg font-medium text-neutral-900 mb-2">{RETAIL_PRICE_CHANGE_PERIOD}</h3>
                       <p className="text-neutral-600 mb-4">Expected retail price changes appear in stores</p>
