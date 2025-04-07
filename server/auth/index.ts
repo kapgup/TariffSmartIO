@@ -36,8 +36,11 @@ export function configureAuth(app: Express) {
       saveUninitialized: false,
       cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true
+        // Set secure: true only on https connections
+        // Using process.env.REPL_SLUG to detect production environment on Replit
+        secure: process.env.REPL_SLUG ? true : false,
+        httpOnly: true,
+        sameSite: 'lax'
       }
     })
   );

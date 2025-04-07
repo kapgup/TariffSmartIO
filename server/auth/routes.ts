@@ -123,16 +123,40 @@ router.get(
           <head>
             <title>Authentication Successful</title>
             <script>
-              // Check if we have a stored redirect location
-              const redirectPath = sessionStorage.getItem('auth_redirect');
-              // Clear stored redirect
-              sessionStorage.removeItem('auth_redirect');
-              // Redirect to stored path or home if none
-              window.location.href = redirectPath || '/';
+              try {
+                // Attempt to get the stored redirect path - wrap in try/catch for cross-origin issues
+                const redirectPath = sessionStorage.getItem('auth_redirect');
+                console.log('Retrieved redirect path:', redirectPath);
+                
+                // Clear stored redirect
+                sessionStorage.removeItem('auth_redirect');
+                
+                // Force a reload to ensure the authentication state is refreshed
+                setTimeout(() => {
+                  // Redirect to stored path or home if none
+                  window.location.href = redirectPath || '/';
+                }, 500);
+              } catch (err) {
+                console.error('Error during redirect:', err);
+                // Default fallback if anything goes wrong
+                window.location.href = '/';
+              }
             </script>
           </head>
           <body>
-            <p>Authentication successful. Redirecting...</p>
+            <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif;">
+              <div style="text-align: center;">
+                <h2 style="color: #555;">Authentication Successful!</h2>
+                <p>You are now signed in. Redirecting...</p>
+                <div style="margin: 20px; width: 40px; height: 40px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block;"></div>
+              </div>
+            </div>
+            <style>
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
           </body>
           </html>
         `);
@@ -166,11 +190,31 @@ router.get('/me', (req, res) => {
 
 // Logout route
 router.post('/logout', (req, res, next) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
+  console.log('Logout route hit, user was:', req.user ? JSON.stringify({
+    id: (req.user as any).id,
+    username: (req.user as any).username,
+    role: (req.user as any).role
+  }, null, 2) : 'Not authenticated');
+  
+  // Destroy the session
+  req.session.destroy((sessionErr) => {
+    if (sessionErr) {
+      console.error('Error destroying session:', sessionErr);
     }
-    res.json({ success: true });
+    
+    // Also call logout to clear passport data
+    req.logout((logoutErr) => {
+      if (logoutErr) {
+        console.error('Error during logout:', logoutErr);
+        return next(logoutErr);
+      }
+      
+      // Set cookie expiration to clean up client state
+      res.clearCookie('connect.sid');
+      
+      // Return success response
+      res.json({ success: true, message: 'Logged out successfully' });
+    });
   });
 });
 
