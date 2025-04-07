@@ -1,6 +1,16 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import passport from './passport';
 import { isAuthenticated } from './middleware';
+import session from 'express-session';
+
+// Add module augmentation for the Express session
+declare module 'express-session' {
+  interface SessionData {
+    passport: {
+      user: number;
+    }
+  }
+}
 
 const router = Router();
 
@@ -106,30 +116,15 @@ router.get(
         role: (user as any).role
       }, null, 2));
       
-      // Log in the user
+      // Use traditional callback-based login for consistency
       req.logIn(user, (loginErr) => {
         if (loginErr) {
           console.error('Login error:', loginErr);
-          console.error('Login error details:', JSON.stringify(loginErr, null, 2));
-          // Send client-side redirect script that preserves the stored redirect
-          return res.send(`
-            <html>
-            <head>
-              <title>Login Failed</title>
-              <script>
-                // Get the stored redirect to pass along
-                const redirectPath = sessionStorage.getItem('auth_redirect');
-                const redirectParam = redirectPath ? '&from=' + encodeURIComponent(redirectPath) : '';
-                // Redirect with error and preserved 'from' param
-                window.location.href = '/auth?error=login_failed' + redirectParam;
-              </script>
-            </head>
-            <body>
-              <p>Login failed. Redirecting...</p>
-            </body>
-            </html>
-          `);
+          // Redirect with error
+          return res.redirect('/auth?error=login_failed');
         }
+        
+        console.log('Login successful, session:', req.sessionID);
         
         // Send client-side redirect script that checks for stored redirect path
         return res.send(`
