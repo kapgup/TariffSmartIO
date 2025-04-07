@@ -1,12 +1,11 @@
 import { GoogleAd } from './GoogleAd';
-import { useAuth } from '@/hooks/useAuth';
+import { useAdsEnabled } from '@/hooks/useAdsEnabled';
 
 export const HeaderAd = () => {
-  const { user } = useAuth();
-  const isPremiumUser = user?.subscriptionTier === 'premium';
+  const adsEnabled = useAdsEnabled();
 
-  if (isPremiumUser) {
-    return null; // Don't show ads to premium users
+  if (!adsEnabled) {
+    return null; // Don't show ads when disabled
   }
 
   return (

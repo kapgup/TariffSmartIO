@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAdsEnabled } from '@/hooks/useAdsEnabled';
 
 interface GoogleAdProps {
   className?: string;
@@ -12,14 +12,11 @@ interface GoogleAdProps {
 
 export const GoogleAd = ({ className, slot, format = 'auto', responsive = true, style, layout = 'in-article' }: GoogleAdProps) => {
   const adRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-
-  // Don't show ads to premium users
-  const isPremiumUser = user?.subscriptionTier === 'premium';
+  const adsEnabled = useAdsEnabled();
 
   useEffect(() => {
-    // Skip ad loading for premium users
-    if (isPremiumUser) return;
+    // Skip ad loading if ads are disabled
+    if (!adsEnabled) return;
 
     // Handle ads after the component mounts
     const adsbygoogle = (window as any).adsbygoogle || [];
@@ -37,10 +34,10 @@ export const GoogleAd = ({ className, slot, format = 'auto', responsive = true, 
     return () => {
       // Optional: Add cleanup if needed
     };
-  }, [slot, isPremiumUser]);
+  }, [slot, adsEnabled]);
 
-  if (isPremiumUser) {
-    return null; // Don't render anything for premium users
+  if (!adsEnabled) {
+    return null; // Don't render anything when ads are disabled
   }
 
   return (
