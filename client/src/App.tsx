@@ -15,6 +15,7 @@ import About from "@/pages/About";
 import NotFound from "@/pages/not-found";
 import Auth from "@/pages/auth/Auth";
 import AuthRedirect from "@/pages/auth/Redirect";
+import Profile from "@/pages/auth/Profile";
 
 import { Header } from '@/components/layout/Header';
 
@@ -40,6 +41,7 @@ function Router() {
         <Route path="/auth" component={Auth} />
         <Route path="/auth/login" component={AuthRedirect} />
         <Route path="/auth/register" component={AuthRedirect} />
+        <Route path="/profile" component={Profile} />
         <Route component={NotFound} />
       </Switch>
     </div>
