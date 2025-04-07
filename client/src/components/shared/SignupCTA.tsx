@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { trackSignupAttempt } from "@/lib/analytics";
-import { useEmailAlertsFeature } from "@/lib/featureFlags";
+import { useFeatureFlag } from "@/lib/featureFlags";
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -18,7 +18,7 @@ type EmailFormValues = z.infer<typeof emailSchema>;
 export function SignupCTA() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isEmailAlertsEnabled = useEmailAlertsFeature();
+  const isEmailAlertsEnabled = useFeatureFlag('emailAlerts', false);
 
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
