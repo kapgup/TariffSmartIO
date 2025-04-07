@@ -1,0 +1,20 @@
+<svg width="800" height="90" viewBox="0 0 800 90" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="800" height="90" fill="#f8f9fa" stroke="#e9ecef" stroke-width="1" rx="4" ry="4"/>
+  
+  <!-- Ad Content Layout - Horizontal Banner -->
+  <rect x="50" y="15" width="700" height="60" fill="#e9ecef" rx="4" ry="4"/>
+  
+  <!-- Ad Text Overlay -->
+  <rect x="230" y="25" width="500" height="40" fill="#f8f9fa" rx="2" ry="2" opacity="0.9"/>
+  <text x="240" y="40" font-family="Arial" font-size="16" font-weight="bold" fill="#212529">Stay Updated on International Trade Policy Changes</text>
+  <text x="240" y="58" font-family="Arial" font-size="12" fill="#495057">Subscribe to our newsletter for the latest tariff updates and economic insights</text>
+  
+  <!-- Call to Action Button -->
+  <rect x="640" y="35" width="80" height="24" fill="#0d6efd" rx="4" ry="4"/>
+  <text x="680" y="51" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Sign Up</text>
+  
+  <!-- Ad Badge -->
+  <rect x="740" y="15" width="40" height="18" fill="#6c757d" rx="2" ry="2"/>
+  <text x="760" y="27" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Ad</text>
+</svg>
