@@ -62,7 +62,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pl-2">
           <Link href="/">
             <span className="flex items-center space-x-2">
               <img src="/logo.svg" alt="TariffSmart Logo" className="h-8 w-auto" />
@@ -92,7 +92,7 @@ export function Header() {
               </SheetTrigger>
               <SheetContent side="right" className="flex flex-col">
                 <SheetHeader>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 pl-1">
                     <img src="/logo.svg" alt="TariffSmart Logo" className="h-6 w-auto" />
                     <SheetTitle>TariffSmart</SheetTitle>
                   </div>
