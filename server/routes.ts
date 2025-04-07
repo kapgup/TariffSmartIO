@@ -4,9 +4,52 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { insertProductCategorySchema, insertProductSchema, insertCountrySchema, insertFeatureFlagSchema, insertUserSchema } from "@shared/schema";
 import { isAuthenticated, hasRole, isAdmin, isPremium, getCurrentUser } from "./auth/middleware";
+import passport from "./auth/passport";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Google OAuth API Routes
+  app.get('/api/auth/google', passport.authenticate('google', { 
+    scope: ['profile', 'email'] 
+  }));
+  
+  app.get('/api/auth/google/callback', passport.authenticate('google', {
+    successRedirect: '/',
+    failureRedirect: '/auth/login?error=authentication_failed'
+  }));
   // API Routes - all prefixed with /api
+  
+  // User Authentication API
+  app.get("/api/auth/me", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.json({ user: null });
+    }
+    
+    // Don't send sensitive information
+    const { id, username, role, email, displayName, profilePicture, subscriptionTier } = req.user as any;
+    
+    res.json({
+      user: {
+        id,
+        username,
+        role,
+        email,
+        displayName,
+        profilePicture,
+        subscriptionTier,
+        isAuthenticated: true
+      }
+    });
+  });
+  
+  // Logout route
+  app.post("/api/auth/logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) {
+        return next(err);
+      }
+      res.json({ success: true });
+    });
+  });
   
   // Countries
   app.get("/api/countries", async (_req, res) => {
