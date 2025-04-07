@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '@/hooks/useAuth';
-import { UserMenu } from '@/components/auth/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useFeatureFlag } from '@/lib/featureFlags';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,8 +32,6 @@ const navItems = [
 export function Header() {
   const [location] = useLocation();
   const isMobile = useIsMobile();
-  const { user } = useAuth();
-  const authEnabled = useFeatureFlag('authentication');
   const [isOpen, setIsOpen] = useState(false);
   
   // Close mobile menu when navigation happens
@@ -85,9 +80,6 @@ export function Header() {
         )}
 
         <div className="flex items-center gap-2">
-          {/* User Menu / Auth Buttons */}
-          {authEnabled && <UserMenu />}
-
           {/* Mobile Menu Button */}
           {isMobile && (
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
