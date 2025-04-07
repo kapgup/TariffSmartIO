@@ -20,7 +20,9 @@ if (process.env.GOOGLE_CLIENT_ID) {
 const getCallbackUrl = () => {
   // If we're in production on Replit's domain
   if (process.env.REPL_SLUG) {
-    return `https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback`;
+    // This should match exactly what's configured in the Google Cloud Console
+    // The URL should be "https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback"
+    return 'https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback';
   }
   // Default to relative URL for development
   return '/api/auth/google/callback';
@@ -33,7 +35,9 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       callbackURL: getCallbackUrl(),
       scope: ['profile', 'email'],
-      proxy: true
+      proxy: true,
+      // Add state parameter for CSRF protection
+      state: true
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
