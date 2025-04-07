@@ -24,17 +24,17 @@ export function Footer() {
               <li><Link href="/calculator" className="hover:text-white">Impact Calculator</Link></li>
               <li><Link href="/products" className="hover:text-white">Product Database</Link></li>
               <li><Link href="/timeline" className="hover:text-white">Tariff Timeline</Link></li>
-              <li><Link href="/products#alternatives" className="hover:text-white">Savings Tips</Link></li>
+              <li><Link href="/savings-tips" className="hover:text-white">Savings Tips</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="text-white font-medium mb-4">Resources</h3>
             <ul className="space-y-2">
-              <li><Link href="/about#help" className="hover:text-white">Help Center</Link></li>
+              <li><Link href="/help-center" className="hover:text-white">Help Center</Link></li>
               <li><Link href="/about#data-sources" className="hover:text-white">Data Sources</Link></li>
               <li><Link href="/about#ai-content" className="hover:text-white">AI Content Disclaimer</Link></li>
-              <li><Link href="/about#api" className="hover:text-white">API Documentation</Link></li>
+              <li><Link href="/api-docs" className="hover:text-white">API Documentation</Link></li>
               <li><Link href="/about#privacy" className="hover:text-white">Privacy Policy</Link></li>
             </ul>
           </div>

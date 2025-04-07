@@ -10,10 +10,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { trackSignupAttempt } from "@/lib/analytics";
 import { useFeatureFlag } from "@/lib/featureFlags";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  gdprConsent: z.boolean().default(true),
+  gdprConsent: z.boolean()
+    .refine((val) => val === true, {
+      message: "You must consent to receive email communications",
+    }),
   source: z.string().optional(),
 });
 
@@ -118,12 +122,13 @@ export function SignupCTA() {
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       id="gdpr-consent"
-                      className="bg-white data-[state=checked]:bg-white"
+                      className="bg-white border-white border-2 data-[state=checked]:bg-primary-foreground"
                     />
                   </FormControl>
                   <div className="text-sm text-white text-opacity-90 text-left">
                     I consent to receiving email communications about tariff changes and related updates. 
-                    See our <a href="#" className="underline">Privacy Policy</a>.
+                    See our <Link to="/about" className="underline hover:text-primary">Privacy Policy</Link>.
+                    <FormMessage className="text-white text-opacity-90 block mt-1" />
                   </div>
                 </FormItem>
               )}
