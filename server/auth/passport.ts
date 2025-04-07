@@ -6,53 +6,16 @@ import { eq } from 'drizzle-orm';
 import { storage } from '../storage';
 
 // Configure Google OAuth strategy
-console.log('Checking Google OAuth configuration...');
-console.log('GOOGLE_CLIENT_ID exists:', Boolean(process.env.GOOGLE_CLIENT_ID));
-console.log('GOOGLE_CLIENT_SECRET exists:', Boolean(process.env.GOOGLE_CLIENT_SECRET));
-
-// Only log first few characters of secrets
-if (process.env.GOOGLE_CLIENT_ID) {
-  const idPrefix = process.env.GOOGLE_CLIENT_ID.substring(0, 6);
-  console.log('GOOGLE_CLIENT_ID prefix:', `${idPrefix}...`);
-}
-
-// Determine which host/domain to use for callbacks
-const getCallbackUrl = () => {
-  // Use the exact URL that is registered in Google Cloud Console
-  // This must match the authorized redirect URIs in the Google Cloud Console settings
-  const callbackUrl = 'https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback';
-  
-  console.log('Using Google callback URL:', callbackUrl);
-  return callbackUrl;
-};
-
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: getCallbackUrl(),
+      callbackURL: '/auth/google/callback',
       scope: ['profile', 'email'],
-      proxy: true,
-      // Disable state parameter if it's causing issues
-      state: false
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Log authentication process for debugging
-        console.log('Google authentication in progress for profile:', {
-          id: profile.id,
-          displayName: profile.displayName,
-          hasEmails: Boolean(profile.emails && profile.emails.length)
-        });
-        
-        console.log('Full Google profile for debugging:', JSON.stringify({
-          id: profile.id,
-          displayName: profile.displayName,
-          emails: profile.emails,
-          photos: profile.photos,
-          provider: profile.provider,
-        }, null, 2));
         // Check if user already exists
         const [existingUser] = await db
           .select()
@@ -99,7 +62,6 @@ passport.use(
         // Use as Express.User type which is more compatible with Passport
         return done(null, newUser as Express.User);
       } catch (error) {
-        console.error('Error in Google authentication process:', error);
         return done(error as Error);
       }
     }
@@ -108,34 +70,20 @@ passport.use(
 
 // Serialize user to the session
 passport.serializeUser((user: Express.User, done) => {
-  console.log('Serializing user to session:', JSON.stringify({
-    id: user.id,
-    username: (user as any).username,
-    role: (user as any).role
-  }, null, 2));
   done(null, user.id);
 });
 
 // Deserialize user from the session
 passport.deserializeUser(async (id: number, done) => {
   try {
-    console.log('Deserializing user with ID:', id);
     const user = await storage.getUser(id);
     if (user) {
-      console.log('User found during deserialization:', JSON.stringify({
-        id: user.id,
-        username: user.username,
-        role: user.role
-      }, null, 2));
       // Use as Express.User type which is more compatible with Passport
       done(null, user as Express.User);
     } else {
-      console.error(`User with ID ${id} not found during deserialization`);
       done(new Error(`User with ID ${id} not found`), null);
     }
   } catch (error) {
-    console.error('Error during deserialization:', error);
-    console.error('Deserialization error details:', JSON.stringify(error, null, 2));
     done(error, null);
   }
 });

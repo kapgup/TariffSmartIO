@@ -175,11 +175,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Insert into database
-    const [category] = await db.insert(productCategories).values([{
-      name: formattedCategory.name,
-      description: formattedCategory.description,
-      primaryCountries: formattedCategory.primaryCountries ? [...formattedCategory.primaryCountries] : undefined
-    }]).returning();
+    const [category] = await db.insert(productCategories).values(formattedCategory).returning();
     return category;
   }
 

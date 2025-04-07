@@ -34,16 +34,10 @@ export function configureAuth(app: Express) {
       secret: process.env.SESSION_SECRET || 'tariff-tracker-secret',
       resave: false,
       saveUninitialized: false,
-      proxy: true, // Trust the reverse proxy
       cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        // IMPORTANT: On Replit, setting secure:true causes issues with cookies
-        // Setting secure:false allows cookies to work in Replit's environment
-        secure: false, // Force to false for Replit environment
-        httpOnly: true,
-        sameSite: 'lax',
-        // Explicitly set the path to ensure the cookie is available throughout the app
-        path: '/'
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true
       }
     })
   );
@@ -56,8 +50,7 @@ export function configureAuth(app: Express) {
   app.use(attachUserRole);
 
   // Mount auth routes
-  console.log('Mounting auth routes at: /api/auth');
-  app.use('/api/auth', authRoutes);
+  app.use('/auth', authRoutes);
 }
 
 export { passport };

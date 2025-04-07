@@ -26,7 +26,7 @@ export default function Register() {
     
     try {
       // Redirect to Google OAuth endpoint
-      window.location.href = '/api/auth/google';
+      window.location.href = '/auth/google';
     } catch (err) {
       console.error('Registration error:', err);
       setError('An error occurred during registration. Please try again.');
