@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Country } from "@/lib/types";
 import { Footer } from "@/components/layout/Footer";
 import { SignupCTA } from "@/components/shared/SignupCTA";
+import { PreFooterAd } from "@/components/ads/PreFooterAd";
 import { CountryBrowser } from "@/components/countries/CountryBrowser";
 import { pageView } from "@/lib/analytics";
 
@@ -43,6 +44,7 @@ export default function Countries() {
         </section>
 
         <SignupCTA />
+        <PreFooterAd />
       </main>
       <Footer />
     </>
