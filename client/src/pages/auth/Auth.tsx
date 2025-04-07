@@ -15,10 +15,16 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Check for error parameter in URL
+  // Check for parameters in URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
+    const fromParam = urlParams.get('from');
+    
+    // Store referrer page in session storage for redirect after auth
+    if (fromParam) {
+      sessionStorage.setItem('auth_redirect', fromParam);
+    }
     
     if (errorParam === 'authentication_failed') {
       setError('Authentication failed. Please try again.');

@@ -36,7 +36,7 @@ export function UserMenu() {
     return (
       <div className="flex gap-2">
         <Button asChild>
-          <Link href="/auth">Sign in / Sign up</Link>
+          <Link href={`/auth?from=${window.location.pathname}`}>Sign in</Link>
         </Button>
       </div>
     );
@@ -89,9 +89,11 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <UserCircle className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+          <DropdownMenuItem asChild>
+            <Link href="/profile">
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span>My Account</span>
+            </Link>
           </DropdownMenuItem>
           {(user.role === 'premium' || user.role === 'admin') && (
             <DropdownMenuItem>

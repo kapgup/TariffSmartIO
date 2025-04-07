@@ -18,23 +18,91 @@ router.get(
     passport.authenticate('google', (err: any, user: Express.User | false | null, info: any) => {
       if (err) {
         console.error('Google OAuth Error:', err);
-        return res.redirect('/auth?error=authentication_failed');
+        // Send client-side redirect script that preserves the stored redirect
+        return res.send(`
+          <html>
+          <head>
+            <title>Authentication Failed</title>
+            <script>
+              // Get the stored redirect to pass along
+              const redirectPath = sessionStorage.getItem('auth_redirect');
+              const redirectParam = redirectPath ? '&from=' + encodeURIComponent(redirectPath) : '';
+              // Redirect with error and preserved 'from' param
+              window.location.href = '/auth?error=authentication_failed' + redirectParam;
+            </script>
+          </head>
+          <body>
+            <p>Authentication failed. Redirecting...</p>
+          </body>
+          </html>
+        `);
       }
       
       if (!user) {
         console.error('Authentication failed - no user returned');
-        return res.redirect('/auth?error=authentication_failed');
+        // Send client-side redirect script that preserves the stored redirect
+        return res.send(`
+          <html>
+          <head>
+            <title>Authentication Failed</title>
+            <script>
+              // Get the stored redirect to pass along
+              const redirectPath = sessionStorage.getItem('auth_redirect');
+              const redirectParam = redirectPath ? '&from=' + encodeURIComponent(redirectPath) : '';
+              // Redirect with error and preserved 'from' param
+              window.location.href = '/auth?error=authentication_failed' + redirectParam;
+            </script>
+          </head>
+          <body>
+            <p>Authentication failed. Redirecting...</p>
+          </body>
+          </html>
+        `);
       }
       
       // Log in the user
       req.logIn(user, (loginErr) => {
         if (loginErr) {
           console.error('Login error:', loginErr);
-          return res.redirect('/auth?error=login_failed');
+          // Send client-side redirect script that preserves the stored redirect
+          return res.send(`
+            <html>
+            <head>
+              <title>Login Failed</title>
+              <script>
+                // Get the stored redirect to pass along
+                const redirectPath = sessionStorage.getItem('auth_redirect');
+                const redirectParam = redirectPath ? '&from=' + encodeURIComponent(redirectPath) : '';
+                // Redirect with error and preserved 'from' param
+                window.location.href = '/auth?error=login_failed' + redirectParam;
+              </script>
+            </head>
+            <body>
+              <p>Login failed. Redirecting...</p>
+            </body>
+            </html>
+          `);
         }
         
-        // Success - redirect to home
-        return res.redirect('/');
+        // Send client-side redirect script that checks for stored redirect path
+        return res.send(`
+          <html>
+          <head>
+            <title>Authentication Successful</title>
+            <script>
+              // Check if we have a stored redirect location
+              const redirectPath = sessionStorage.getItem('auth_redirect');
+              // Clear stored redirect
+              sessionStorage.removeItem('auth_redirect');
+              // Redirect to stored path or home if none
+              window.location.href = redirectPath || '/';
+            </script>
+          </head>
+          <body>
+            <p>Authentication successful. Redirecting...</p>
+          </body>
+          </html>
+        `);
       });
     })(req, res, next);
   }
