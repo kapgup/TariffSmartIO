@@ -31,15 +31,12 @@ export function UserMenu() {
     }
   };
   
-  // Render login/register buttons if user is not authenticated
+  // Render combined login/signup button if user is not authenticated
   if (!user) {
     return (
       <div className="flex gap-2">
-        <Button variant="outline" asChild>
-          <Link href="/auth/login">Sign in</Link>
-        </Button>
         <Button asChild>
-          <Link href="/auth/register">Sign up</Link>
+          <Link href="/auth">Sign in / Sign up</Link>
         </Button>
       </div>
     );

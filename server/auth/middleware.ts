@@ -31,14 +31,24 @@ export const isAuthenticated = (req: Request, res: Response, next: NextFunction)
     return next();
   }
   
-  res.status(401).json({ message: 'Unauthorized' });
+  // Log authentication failure for debugging
+  console.log('Authentication required but user is not authenticated');
+  
+  res.status(401).json({ 
+    error: 'Unauthorized', 
+    message: 'You must be signed in to access this resource' 
+  });
 };
 
 // Check if user has required role
 export const hasRole = (requiredRole: string) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      console.log(`Role ${requiredRole} required but user is not authenticated`);
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'You must be signed in to access this resource' 
+      });
     }
     
     const userRole = req.user?.role || 'anonymous';
@@ -47,14 +57,22 @@ export const hasRole = (requiredRole: string) => {
       return next();
     }
     
-    res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
+    console.log(`Insufficient permissions: user has role ${userRole}, but ${requiredRole} is required`);
+    res.status(403).json({ 
+      error: 'Forbidden', 
+      message: `This action requires ${requiredRole} permissions` 
+    });
   };
 };
 
 // Check if user is premium
 export const isPremium = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    console.log('Premium access required but user is not authenticated');
+    return res.status(401).json({ 
+      error: 'Unauthorized', 
+      message: 'You must be signed in to access this resource' 
+    });
   }
   
   const user = req.user as User;
@@ -63,7 +81,11 @@ export const isPremium = (req: Request, res: Response, next: NextFunction) => {
     return next();
   }
   
-  res.status(403).json({ message: 'Forbidden: Premium subscription required' });
+  console.log(`Premium access denied for user with role ${user.role}`);
+  res.status(403).json({ 
+    error: 'Forbidden', 
+    message: 'This feature requires a premium subscription' 
+  });
 };
 
 // Role check helpers

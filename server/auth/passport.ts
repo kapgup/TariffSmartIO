@@ -13,9 +13,16 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       callbackURL: '/auth/google/callback',
       scope: ['profile', 'email'],
+      proxy: true
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        // Log authentication process for debugging
+        console.log('Google authentication in progress for profile:', {
+          id: profile.id,
+          displayName: profile.displayName,
+          hasEmails: Boolean(profile.emails && profile.emails.length)
+        });
         // Check if user already exists
         const [existingUser] = await db
           .select()
@@ -62,6 +69,7 @@ passport.use(
         // Use as Express.User type which is more compatible with Passport
         return done(null, newUser as Express.User);
       } catch (error) {
+        console.error('Error in Google authentication process:', error);
         return done(error as Error);
       }
     }
