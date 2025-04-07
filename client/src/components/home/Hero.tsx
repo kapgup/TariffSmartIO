@@ -46,25 +46,19 @@ export function Hero() {
                   <div className="absolute left-5 top-0 bottom-0 w-1 bg-primary/20"></div>
                   <div className="relative pl-8">
                     <div className="mb-8">
-                      <div className="absolute left-4 -translate-x-1/2 w-5 h-5 rounded-full bg-primary border-4 border-white shadow-md z-10 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                      </div>
+                      <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-primary border-4 border-white z-10"></div>
                       <h4 className="text-base font-medium text-neutral-900">{BASELINE_TARIFF_DATE}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Baseline 10% tariff on all imports begins</p>
                     </div>
                     
                     <div className="mb-8">
-                      <div className="absolute left-4 -translate-x-1/2 w-5 h-5 rounded-full bg-secondary border-4 border-white shadow-md z-10 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                      </div>
+                      <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-secondary border-4 border-white z-10"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RECIPROCAL_TARIFF_DATE}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Country-specific reciprocal tariffs (10-54%) go into effect</p>
                     </div>
                     
                     <div>
-                      <div className="absolute left-4 -translate-x-1/2 w-5 h-5 rounded-full bg-warning border-4 border-white shadow-md z-10 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                      </div>
+                      <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-warning border-4 border-white z-10"></div>
                       <h4 className="text-base font-medium text-neutral-900">{RETAIL_PRICE_CHANGE_PERIOD}</h4>
                       <p className="mt-1 text-sm text-neutral-600">Expected retail price changes appear in stores</p>
                     </div>

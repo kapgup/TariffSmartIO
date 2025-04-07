@@ -18,8 +18,7 @@ import {
   NavigationMenuLink,
 } from '@/components/ui/navigation-menu';
 import { Separator } from '@/components/ui/separator';
-import { Menu } from 'lucide-react';
-import { TariffSmartLogo } from './TariffSmartLogo';
+import { Menu, X, BarChart3 } from 'lucide-react';
 
 const navItems = [
   { title: 'Home', href: '/' },
@@ -66,9 +65,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <Link href="/">
             <span className="flex items-center space-x-2">
-              <div className="text-primary">
-                <TariffSmartLogo />
-              </div>
+              <BarChart3 className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">TariffSmart</span>
             </span>
           </Link>
