@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Helmet } from 'react-helmet';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useFeatureFlag } from '@/lib/featureFlags';
+import { pageView } from '@/lib/analytics';
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -14,6 +15,10 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const authEnabled = useFeatureFlag('authentication', true);
+  
+  useEffect(() => {
+    pageView("/auth/login");
+  }, []);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
