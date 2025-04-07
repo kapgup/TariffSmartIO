@@ -24,7 +24,7 @@ export function TariffOverview() {
           {/* Baseline Tariff Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="w-14 h-14 bg-primary/15 rounded-full flex items-center justify-center mb-4">
-              <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                 <span className="text-2xl">💵</span>
               </div>
             </div>
@@ -35,7 +35,7 @@ export function TariffOverview() {
           {/* Country-Specific Tariffs Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="w-14 h-14 bg-secondary/15 rounded-full flex items-center justify-center mb-4">
-              <div className="w-9 h-9 bg-indigo-300 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-indigo-300 rounded-full flex items-center justify-center">
                 <span className="text-2xl">🌎</span>
               </div>
             </div>
@@ -46,7 +46,7 @@ export function TariffOverview() {
           {/* Implementation Timeline Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="w-14 h-14 bg-yellow-500/15 rounded-full flex items-center justify-center mb-4">
-              <div className="w-9 h-9 bg-yellow-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-yellow-600 rounded-full flex items-center justify-center">
                 <span className="text-2xl">📅</span>
               </div>
             </div>
