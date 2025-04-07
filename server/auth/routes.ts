@@ -13,10 +13,31 @@ router.get(
 // Google OAuth callback route
 router.get(
   '/google/callback',
-  passport.authenticate('google', {
-    successRedirect: '/',
-    failureRedirect: '/auth?error=authentication_failed'
-  })
+  (req, res, next) => {
+    // Custom passport authenticate with error handling
+    passport.authenticate('google', (err: any, user: Express.User | false | null, info: any) => {
+      if (err) {
+        console.error('Google OAuth Error:', err);
+        return res.redirect('/auth?error=authentication_failed');
+      }
+      
+      if (!user) {
+        console.error('Authentication failed - no user returned');
+        return res.redirect('/auth?error=authentication_failed');
+      }
+      
+      // Log in the user
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error('Login error:', loginErr);
+          return res.redirect('/auth?error=login_failed');
+        }
+        
+        // Success - redirect to home
+        return res.redirect('/');
+      });
+    })(req, res, next);
+  }
 );
 
 // Current user route - returns current user info or null
