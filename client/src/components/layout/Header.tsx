@@ -45,7 +45,7 @@ export function Header() {
           
           <div className="flex items-center">
             {isAuthEnabled && (
-              <Button variant="secondary" className="bg-secondary hover:bg-secondary-600 text-white">
+              <Button variant="secondary" className="bg-secondary hover:bg-secondary/80 text-white font-medium">
                 Sign Up
               </Button>
             )}
