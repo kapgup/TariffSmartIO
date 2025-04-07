@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductBrowser } from "@/components/products/ProductBrowser";
 import { SignupCTA } from "@/components/shared/SignupCTA";
@@ -10,7 +11,8 @@ export default function Products() {
   }, []);
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
+      <Header />
       <main className="flex-1">
         <div className="bg-primary py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -27,6 +29,6 @@ export default function Products() {
         <SignupCTA />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }
