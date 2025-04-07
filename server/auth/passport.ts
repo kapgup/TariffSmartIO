@@ -36,8 +36,8 @@ passport.use(
       callbackURL: getCallbackUrl(),
       scope: ['profile', 'email'],
       proxy: true,
-      // Add state parameter for CSRF protection
-      state: true
+      // Disable state parameter if it's causing issues
+      state: false
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
