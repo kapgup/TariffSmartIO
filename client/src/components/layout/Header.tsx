@@ -45,9 +45,11 @@ export function Header() {
           
           <div className="flex items-center">
             {isAuthEnabled && (
-              <Button variant="secondary" className="bg-secondary hover:bg-secondary/80 text-white font-medium">
-                Sign Up
-              </Button>
+              <Link href="/auth/register">
+                <Button variant="default" className="bg-primary hover:bg-primary/80 text-white font-semibold shadow-sm">
+                  Sign Up
+                </Button>
+              </Link>
             )}
             
             <button
