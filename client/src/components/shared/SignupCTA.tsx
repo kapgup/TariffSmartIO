@@ -32,7 +32,7 @@ export function SignupCTA() {
     resolver: zodResolver(emailSchema),
     defaultValues: {
       email: "",
-      gdprConsent: true,
+      gdprConsent: false,
       source: "website_cta"
     },
   });
