@@ -40,27 +40,27 @@ export default function NotFound() {
 
       <Card className="w-full max-w-3xl mx-4">
         <CardContent className="pt-6 pb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">TariffSmart Logo Options</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">TariffSmart Logo Options - Minimalist Design</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col items-center">
-              <h3 className="text-md font-semibold mb-2">Option 1: Modern Graph with Arrow</h3>
+              <h3 className="text-md font-semibold mb-2">Option 4: T with Chart Line</h3>
               <div className="border rounded-lg p-4 bg-white w-full">
-                <img src="/logo-options/logo-option1.svg" alt="Logo Option 1" className="w-full h-auto" />
+                <img src="/logo-options/logo-option4.svg" alt="Logo Option 4" className="w-full h-auto" />
               </div>
             </div>
             
             <div className="flex flex-col items-center">
-              <h3 className="text-md font-semibold mb-2">Option 2: Shield with Globe</h3>
+              <h3 className="text-md font-semibold mb-2">Option 5: Square with Arrows</h3>
               <div className="border rounded-lg p-4 bg-white w-full">
-                <img src="/logo-options/logo-option2.svg" alt="Logo Option 2" className="w-full h-auto" />
+                <img src="/logo-options/logo-option5.svg" alt="Logo Option 5" className="w-full h-auto" />
               </div>
             </div>
             
             <div className="flex flex-col items-center">
-              <h3 className="text-md font-semibold mb-2">Option 3: Document with Customs Symbol</h3>
+              <h3 className="text-md font-semibold mb-2">Option 6: Circular T</h3>
               <div className="border rounded-lg p-4 bg-white w-full">
-                <img src="/logo-options/logo-option3.svg" alt="Logo Option 3" className="w-full h-auto" />
+                <img src="/logo-options/logo-option6.svg" alt="Logo Option 6" className="w-full h-auto" />
               </div>
             </div>
           </div>
