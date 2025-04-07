@@ -53,12 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Update user state when data changes
   useEffect(() => {
-    console.log('Auth data received:', data);
     if (data && typeof data === 'object' && 'user' in data && data.user) {
-      console.log('Setting authenticated user:', data.user);
       setUser(data.user as User);
     } else {
-      console.log('No authenticated user found in response');
       setUser(null);
     }
   }, [data]);
@@ -101,13 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // Refetch user data
   const refetchUser = async (): Promise<void> => {
-    console.log('Manually refetching user data...');
-    try {
-      const result = await refetch();
-      console.log('Refetch result:', result);
-    } catch (error) {
-      console.error('Error refetching user:', error);
-    }
+    await refetch();
   };
 
   return (
