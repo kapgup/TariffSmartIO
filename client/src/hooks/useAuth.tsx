@@ -21,7 +21,6 @@ interface AuthContextType {
   checkRole: (requiredRole: string) => boolean;
   isPremium: () => boolean;
   refetchUser: () => Promise<void>;
-  attemptedAuth: boolean; // Flag to indicate if we've tried to authenticate
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,7 +31,6 @@ const AuthContext = createContext<AuthContextType>({
   checkRole: () => false,
   isPremium: () => false,
   refetchUser: async () => {},
-  attemptedAuth: false,
 });
 
 // Role hierarchy for authorization checks
@@ -47,39 +45,25 @@ const roleHierarchy: Record<string, number> = {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  // Fetch current user data with retry logic for intermittent session issues
+  // Fetch current user data
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/auth/me'],
     enabled: true, // Always fetch on mount
-    retry: 3, // Retry failed requests up to 3 times
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
-
-  // Track authentication status with a flag for debugging
-  const [attemptedAuth, setAttemptedAuth] = useState(false);
 
   // Update user state when data changes
   useEffect(() => {
-    console.log("Auth data received:", data);
-    
     if (data && typeof data === 'object' && 'user' in data && data.user) {
-      console.log("Setting authenticated user:", data.user);
       setUser(data.user as User);
     } else {
-      console.log("No authenticated user found");
       setUser(null);
     }
-    
-    // Mark that we've attempted authentication
-    setAttemptedAuth(true);
   }, [data]);
 
   // Logout function
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch('/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -126,8 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         checkRole,
         isPremium,
-        refetchUser,
-        attemptedAuth // Include the attempted auth flag
+        refetchUser
       }}
     >
       {children}

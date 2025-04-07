@@ -31,12 +31,15 @@ export function UserMenu() {
     }
   };
   
-  // Render combined login/signup button if user is not authenticated
+  // Render login/register buttons if user is not authenticated
   if (!user) {
     return (
       <div className="flex gap-2">
+        <Button variant="outline" asChild>
+          <Link href="/auth/login">Sign in</Link>
+        </Button>
         <Button asChild>
-          <Link href={`/auth?from=${window.location.pathname}`}>Sign in</Link>
+          <Link href="/auth/register">Sign up</Link>
         </Button>
       </div>
     );
@@ -89,11 +92,9 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <Link href="/profile">
-              <UserCircle className="mr-2 h-4 w-4" />
-              <span>My Account</span>
-            </Link>
+          <DropdownMenuItem>
+            <UserCircle className="mr-2 h-4 w-4" />
+            <span>Profile</span>
           </DropdownMenuItem>
           {(user.role === 'premium' || user.role === 'admin') && (
             <DropdownMenuItem>
