@@ -18,14 +18,10 @@ if (process.env.GOOGLE_CLIENT_ID) {
 
 // Determine which host/domain to use for callbacks
 const getCallbackUrl = () => {
-  // If we're in production on Replit's domain
-  if (process.env.REPL_SLUG) {
-    // This should match exactly what's configured in the Google Cloud Console
-    // The URL should be "https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback"
-    return 'https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback';
-  }
-  // Default to relative URL for development
-  return '/api/auth/google/callback';
+  // Hard-code the correct callback URL for both production and development
+  const callbackUrl = 'https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback';
+  console.log('Using Google callback URL:', callbackUrl);
+  return callbackUrl;
 };
 
 passport.use(

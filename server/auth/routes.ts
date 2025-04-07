@@ -14,10 +14,16 @@ router.get(
       origin: req.headers.origin
     });
     console.log('Full request URL:', req.protocol + '://' + req.get('host') + req.originalUrl);
-    console.log('Effective callback URL will be:', req.protocol + '://' + req.get('host') + '/api/auth/google/callback');
+    console.log('Effective callback URL will be: https://tariff-smart-kapilgupta15.replit.app/api/auth/google/callback');
     
+    // Use more options to ensure we get a fresh OAuth flow
     return passport.authenticate('google', { 
-      scope: ['profile', 'email']
+      scope: ['profile', 'email'],
+      // Always request fresh consent
+      prompt: 'consent',
+      // Include the email hint if available to make login smoother
+      // Force approval to avoid caching issues
+      accessType: 'online'
     })(req, res, next);
   }
 );
