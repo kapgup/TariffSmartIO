@@ -7,7 +7,19 @@ const router = Router();
 // Google OAuth login route
 router.get(
   '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  (req, res, next) => {
+    console.log('Google OAuth login route hit with headers:', {
+      host: req.headers.host,
+      referer: req.headers.referer,
+      origin: req.headers.origin
+    });
+    console.log('Full request URL:', req.protocol + '://' + req.get('host') + req.originalUrl);
+    console.log('Effective callback URL will be:', req.protocol + '://' + req.get('host') + '/api/auth/google/callback');
+    
+    return passport.authenticate('google', { 
+      scope: ['profile', 'email']
+    })(req, res, next);
+  }
 );
 
 // Google OAuth callback route
@@ -15,6 +27,8 @@ router.get(
   '/google/callback',
   (req, res, next) => {
     console.log('Google callback route hit - processing authentication');
+    console.log('Callback URL query params:', req.query);
+    console.log('Full callback URL:', req.protocol + '://' + req.get('host') + req.originalUrl);
     // Custom passport authenticate with error handling
     passport.authenticate('google', (err: any, user: Express.User | false | null, info: any) => {
       if (err) {
