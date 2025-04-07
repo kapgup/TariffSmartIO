@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface User {
   id: number;
@@ -25,7 +25,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  isLoading: false,
+  isLoading: true,
   error: null,
   logout: async () => {},
   checkRole: () => false,
@@ -33,86 +33,51 @@ const AuthContext = createContext<AuthContextType>({
   refetchUser: async () => {},
 });
 
-// Role hierarchy for authorization checks
-const roleHierarchy: Record<string, number> = {
-  'anonymous': 0,
-  'user': 1,
-  'premium': 2,
-  'editor': 3,
-  'admin': 4
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-
-  // Fetch current user data
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['/api/auth/me'],
-    enabled: true, // Always fetch on mount
+  const { 
+    data: user, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useQuery<User>({
+    queryKey: ['/api/auth/session'],
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
-  // Update user state when data changes
-  useEffect(() => {
-    if (data && typeof data === 'object' && 'user' in data && data.user) {
-      setUser(data.user as User);
-    } else {
-      setUser(null);
-    }
-  }, [data]);
-
-  // Logout function
-  const logout = async () => {
-    try {
-      await fetch('/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      
-      // Clear user from state
-      setUser(null);
-      
-      // Invalidate user data in cache
-      await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      
-      // Reload page to ensure clean state
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-  
-  // Check if user has required role
-  const checkRole = (requiredRole: string): boolean => {
-    if (!user) return false;
-    
-    const userRoleLevel = roleHierarchy[user.role] || 0;
-    const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
-    
-    return userRoleLevel >= requiredRoleLevel;
-  };
-  
-  // Check if user has premium access
-  const isPremium = (): boolean => {
-    return checkRole('premium');
-  };
-  
-  // Refetch user data
-  const refetchUser = async (): Promise<void> => {
+  const refetchUser = useCallback(async () => {
     await refetch();
-  };
+  }, [refetch]);
+
+  const logout = useCallback(async () => {
+    try {
+      await apiRequest('POST', '/api/auth/logout');
+      await refetch();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  }, [refetch]);
+
+  const checkRole = useCallback((requiredRole: string) => {
+    if (!user) return false;
+    return user.role === requiredRole || user.role === 'admin';
+  }, [user]);
+
+  const isPremium = useCallback(() => {
+    if (!user) return false;
+    return user.subscriptionTier === 'premium';
+  }, [user]);
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isLoading, 
-        error: error as Error | null, 
-        logout,
-        checkRole,
-        isPremium,
-        refetchUser
-      }}
-    >
+    <AuthContext.Provider value={{ 
+      user: user || null, 
+      isLoading, 
+      error: error as Error | null,
+      logout,
+      checkRole,
+      isPremium,
+      refetchUser
+    }}>
       {children}
     </AuthContext.Provider>
   );
