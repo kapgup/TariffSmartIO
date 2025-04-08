@@ -96,7 +96,7 @@ export function ProductBrowser() {
   const [tariffRange, setTariffRange] = useState("All Tariff Rates");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 12; // Changed from 6 to 12 to show all products on a single page
 
   // Fetch all products
   const { data: productsData, isLoading: isLoadingProducts } = useQuery<{ products: Product[] }>({
@@ -230,11 +230,27 @@ export function ProductBrowser() {
                 <SelectTrigger className="py-2 px-3 border border-neutral-300 rounded-md text-sm">
                   <SelectValue placeholder="All Countries" />
                 </SelectTrigger>
-                <SelectContent>
-                  {COUNTRIES.map((country) => (
-                    <SelectItem key={country} value={country}>
-                      {country}
-                    </SelectItem>
+                <SelectContent className="max-h-72">
+                  <div className="px-3 py-2">
+                    <Input
+                      placeholder="Search countries..."
+                      className="h-8 w-full"
+                      onChange={e => {
+                        // This is just for filtering the dropdown - not the actual filtering functionality
+                        const list = document.querySelector('[cmdk-list]');
+                        if (list) {
+                          list.setAttribute('data-filter', e.target.value);
+                        }
+                      }}
+                    />
+                  </div>
+                  <SelectItem value="All Countries">All Countries</SelectItem>
+                  {countriesData?.countries
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((country) => (
+                      <SelectItem key={country.id} value={country.name}>
+                        {country.name}
+                      </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -269,7 +285,7 @@ export function ProductBrowser() {
         {/* Product Grid */}
         {isLoadingProducts || isLoadingCategories ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array(6).fill(0).map((_, index) => (
+            {Array(12).fill(0).map((_, index) => (
               <Card key={index}>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-3">
