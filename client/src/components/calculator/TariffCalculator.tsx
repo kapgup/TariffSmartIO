@@ -74,8 +74,8 @@ export function TariffCalculator() {
   // Calculate tariff impact mutation
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: CalculatorFormValues) => {
-      const response = await apiRequest("POST", "/api/calculate-tariff-impact", data);
-      return response.json();
+      // apiRequest already returns the parsed JSON data
+      return await apiRequest("POST", "/api/calculate-tariff-impact", data);
     },
     onSuccess: (data: CalculationSummary) => {
       setResults(data);
@@ -194,11 +194,13 @@ export function TariffCalculator() {
                                           {isLoadingCountries ? (
                                             <SelectItem value="loading">Loading...</SelectItem>
                                           ) : (
-                                            countriesData?.countries.map((country) => (
-                                              <SelectItem key={country.id} value={country.name}>
-                                                {country.name}
-                                              </SelectItem>
-                                            ))
+                                            countriesData?.countries
+                                              .sort((a, b) => a.name.localeCompare(b.name))
+                                              .map((country) => (
+                                                <SelectItem key={country.id} value={country.name}>
+                                                  {country.name}
+                                                </SelectItem>
+                                              ))
                                           )}
                                         </SelectContent>
                                       </Select>
