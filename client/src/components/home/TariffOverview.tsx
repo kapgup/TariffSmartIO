@@ -8,10 +8,13 @@ export function TariffOverview() {
     queryKey: ['/api/countries'],
   });
   
-  // Sort countries alphabetically by name
+  // Sort countries alphabetically by name and ensure we show all of them
   const sortedCountries = data?.countries ? [...data.countries].sort((a, b) => 
     a.name.localeCompare(b.name)
   ) : [];
+  
+  // For debugging
+  console.log(`Total countries in database: ${sortedCountries.length}`);
 
   return (
     <section className="py-12 bg-white">
