@@ -7,6 +7,11 @@ export function TariffOverview() {
   const { data, isLoading, error } = useQuery<{ countries: Country[] }>({
     queryKey: ['/api/countries'],
   });
+  
+  // Sort countries alphabetically by name
+  const sortedCountries = data?.countries ? [...data.countries].sort((a, b) => 
+    a.name.localeCompare(b.name)
+  ) : [];
 
   return (
     <section className="py-12 bg-white">
@@ -87,7 +92,7 @@ export function TariffOverview() {
                       <td colSpan={5} className="px-6 py-4 text-center text-red-500">Error loading country data</td>
                     </tr>
                   ) : (
-                    data?.countries.map((country) => (
+                    sortedCountries.map((country) => (
                       <tr key={country.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
                           {country.name}
