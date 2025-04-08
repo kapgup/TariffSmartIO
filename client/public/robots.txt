@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Sitemap: https://tariffsmart.io/sitemap.xml
+
+# Disallow admin routes
+Disallow: /admin/
