@@ -148,6 +148,25 @@ export function CountryBrowser({ countries }: CountryBrowserProps) {
 
   return (
     <div className="space-y-6">
+      {/* Impact Level Legend */}
+      <div className="bg-neutral-50 p-4 rounded-md border mb-4">
+        <h3 className="text-sm font-medium mb-2">Impact Level Legend:</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="flex items-center">
+            <Badge variant="destructive" className="mr-2">High</Badge>
+            <span className="text-sm text-neutral-600">35% or higher reciprocal tariff</span>
+          </div>
+          <div className="flex items-center">
+            <Badge variant="secondary" className="mr-2">Medium</Badge>
+            <span className="text-sm text-neutral-600">25% to 34.9% reciprocal tariff</span>
+          </div>
+          <div className="flex items-center">
+            <Badge variant="outline" className="mr-2">Low</Badge>
+            <span className="text-sm text-neutral-600">Below 25% reciprocal tariff</span>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Impact level filter */}
         <div className="w-full">
