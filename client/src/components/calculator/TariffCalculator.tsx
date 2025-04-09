@@ -135,6 +135,9 @@ export function TariffCalculator() {
           <p className="mt-4 text-lg text-neutral-600 max-w-3xl mx-auto">
             Enter your typical monthly purchases to see how the new tariffs might affect your household budget.
           </p>
+          <div className="mt-4 p-3 bg-neutral-100 rounded-md border border-neutral-200 text-sm text-neutral-600 max-w-3xl mx-auto">
+            <p><strong>Disclaimer:</strong> Calculations are illustrative and do not take into account category-specific tariffs, product exclusions, or 'de minimis' requirements. Actual tariff impacts may vary.</p>
+          </div>
         </div>
 
         {calculatorEnabled ? (
