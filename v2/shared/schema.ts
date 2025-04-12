@@ -2,6 +2,30 @@ import { pgTable, serial, text, boolean, timestamp, integer } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Users for v2 platform
+export const users = pgTable("v2_users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password"),
+  displayName: text("display_name"),
+  profilePicture: text("profile_picture"),
+  googleId: text("google_id").unique(),
+  role: text("role", { enum: ["admin", "editor", "premium", "basic"] }).notNull().default("basic"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  email: true,
+  password: true,
+  displayName: true,
+  profilePicture: true,
+  googleId: true,
+  role: true
+});
+
 // Feature flags for the v2 platform
 export const featureFlags = pgTable("v2_feature_flags", {
   id: serial("id").primaryKey(),
@@ -145,6 +169,9 @@ export const insertUserProgressSchema = createInsertSchema(userProgress).pick({
 });
 
 // Export types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 export type InsertFeatureFlag = z.infer<typeof insertFeatureFlagSchema>;
 export type FeatureFlag = typeof featureFlags.$inferSelect;
 

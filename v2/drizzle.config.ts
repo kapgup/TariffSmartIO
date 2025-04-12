@@ -1,15 +1,11 @@
-import type { Config } from 'drizzle-kit';
-import * as dotenv from 'dotenv';
+import type { Config } from "drizzle-kit";
 
-// Load environment variables
-dotenv.config();
-
-// Use DATABASE_URL from environment
 export default {
-  schema: './shared/schema.ts',
-  driver: 'pg',
+  schema: "./shared/schema.ts",
+  out: "./drizzle",
+  driver: "pg",
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL!,
+    connectionString: process.env.DATABASE_URL || "",
   },
-  out: './drizzle',
+  tablesFilter: "v2_*", // Only target tables that begin with 'v2_'
 } satisfies Config;
