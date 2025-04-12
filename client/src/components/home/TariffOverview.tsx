@@ -26,9 +26,12 @@ export function TariffOverview() {
           <p className="mt-4 text-lg text-neutral-600 max-w-3xl mx-auto">
             The new US reciprocal tariffs will affect product prices differently based on country of origin and product category.
           </p>
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800 max-w-3xl mx-auto">
+            <p><strong>Disclaimer:</strong> Tariff rates are changing frequently. Please check authoritative sources before making any decisions involving the tariff rates shown here.</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Baseline Tariff Card */}
           <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
             <div className="mb-4">
@@ -48,7 +51,7 @@ export function TariffOverview() {
               </div>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Country-Specific Tariffs</h3>
-            <p className="text-neutral-600">Additional "reciprocal" tariffs ranging from 10% to 54% will apply to specific countries starting April 9th, 2025.</p>
+            <p className="text-neutral-600">Additional "reciprocal" tariffs ranging from 10% to 125% will apply to specific countries. Most updated to start July 8, 2025.</p>
           </div>
 
           {/* Implementation Timeline Card */}
@@ -59,7 +62,18 @@ export function TariffOverview() {
               </div>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Implementation Timeline</h3>
-            <p className="text-neutral-600">Tariffs begin April 5-9, 2025, but retail price changes may occur gradually as inventories are replaced.</p>
+            <p className="text-neutral-600">China tariffs start April 9th, 2025. All other countries now start July 8th, 2025. Retail price changes may occur gradually.</p>
+          </div>
+          
+          {/* Exempt Products Card */}
+          <div className="bg-neutral-100 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
+            <div className="mb-4">
+              <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                <span className="text-2xl">🔄</span>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-2">Exempt Products</h3>
+            <p className="text-neutral-600">Certain tech products are exempt from reciprocal tariffs: smartphones, computers, chips, solar cells, displays, and storage devices.</p>
           </div>
         </div>
 
