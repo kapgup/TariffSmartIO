@@ -1,77 +1,116 @@
 import express, { Express, Request, Response, NextFunction } from "express";
+import cors from "cors";
 import session from "express-session";
-import { createServer } from "http";
-import { initializeDatabase } from "./db";
-import { registerV2Routes } from "./routes";
-import passport from "passport";
-import memorystore from "memorystore";
+import { registerRoutes } from "./routes";
+import { storage } from "./storage";
+import { createServer, Server } from "http";
+import { db } from "./db";
+import { featureFlags } from "../shared/schema";
+import { eq } from "drizzle-orm";
 
-const MemoryStore = memorystore(session);
-
-export function log(message: string, source = "express") {
-  const time = new Date().toLocaleTimeString();
-  console.log(`${time} [${source}] ${message}`);
-}
-
-// Set up Express with integrated Vite for development
-async function setupServer() {
-  // Set up Express
-  const app = express();
-  const server = createServer(app);
-  const port = process.env.PORT || 5000;
-
-  // Session setup for authentication
+/**
+ * Initialize the v2 platform's Express application
+ */
+async function init() {
+  const app: Express = express();
+  
+  // Enable CORS
+  app.use(cors());
+  
+  // Parse JSON request bodies
+  app.use(express.json());
+  
+  // Configure sessions
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "tariffsmart-v2-development-secret",
+      secret: process.env.SESSION_SECRET || "local-dev-secret",
       resave: false,
-      saveUninitialized: false,
-      store: new MemoryStore({
-        checkPeriod: 86400000, // prune expired entries every 24h
-      }),
+      saveUninitialized: true,
       cookie: {
         secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
       },
     })
   );
-
-  // Initialize passport for authentication
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  // Parse JSON bodies and URL-encoded bodies
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-
-  // Initialize the database
+  
+  // Initialize database with defaults if needed
   await initializeDatabase();
-
-  // Register v2 API routes
-  registerV2Routes(app);
-
+  
+  // Register all v2 routes
+  const server = await registerRoutes(app);
+  
   // Error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error("Error:", err);
-    res.status(err.status || 500).json({
-      error: {
-        message: err.message || "An unexpected error occurred",
-        status: err.status || 500,
-      },
+    console.error("Unhandled error:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      message: process.env.NODE_ENV === "production" ? undefined : err.message,
     });
   });
-
-  // Start the server
-  server.listen(port, () => {
-    log(`serving on port ${port}`);
-  });
-
-  return { app, server };
+  
+  return server;
 }
 
-// Only run the server if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  setupServer();
+/**
+ * Initialize the database with default feature flags
+ */
+async function initializeDatabase() {
+  try {
+    // Check if default feature flags exist
+    const existingFlags = await db.select().from(featureFlags);
+    
+    if (existingFlags.length === 0) {
+      console.log("Initializing v2 database with default feature flags...");
+      
+      // Insert default feature flags
+      await db.insert(featureFlags).values([
+        {
+          name: "enable_dictionary",
+          description: "Enable the Trade Dictionary feature",
+          isEnabled: true,
+        },
+        {
+          name: "enable_modules",
+          description: "Enable the Learning Modules feature",
+          isEnabled: true,
+        },
+        {
+          name: "enable_quizzes",
+          description: "Enable the Quizzes feature",
+          isEnabled: true,
+        },
+        {
+          name: "enable_agreements",
+          description: "Enable the Trade Agreements Database feature",
+          isEnabled: false, // Disabled initially
+        },
+        {
+          name: "enable_challenges",
+          description: "Enable the Daily Challenges feature",
+          isEnabled: false, // Disabled initially
+        },
+        {
+          name: "enable_badges",
+          description: "Enable the Badges & Achievements feature",
+          isEnabled: false, // Disabled initially
+        },
+        {
+          name: "enable_certificates",
+          description: "Enable the Certificates feature",
+          isEnabled: false, // Disabled initially
+        },
+        {
+          name: "enable_user_progress",
+          description: "Enable user progress tracking",
+          isEnabled: true,
+        },
+      ]);
+      
+      console.log("Default feature flags initialized successfully.");
+    }
+  } catch (error) {
+    console.error("Error initializing v2 database:", error);
+  }
 }
 
-export default setupServer;
+export default init;
