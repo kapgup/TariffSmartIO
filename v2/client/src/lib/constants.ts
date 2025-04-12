@@ -1,77 +1,75 @@
-export const APP_NAME = "TariffSmart";
-export const APP_VERSION = "v2";
-export const APP_FULL_NAME = `${APP_NAME} ${APP_VERSION}`;
-
-// Navigation items
-export const NAV_ITEMS = [
-  { name: "Home", path: "/v2" },
-  { name: "Learning Modules", path: "/v2/modules" },
-  { name: "Trade Dictionary", path: "/v2/dictionary" },
-  { name: "Trade Agreements", path: "/v2/agreements" },
-  { name: "Daily Challenge", path: "/v2/challenge" },
-];
-
-// Learning module difficulty levels
-export const MODULE_LEVELS = {
-  BEGINNER: "beginner",
-  INTERMEDIATE: "intermediate", 
-  ADVANCED: "advanced"
-};
-
-// Quiz types
-export const QUIZ_TYPES = {
-  MULTIPLE_CHOICE: "multiple-choice",
-  TRUE_FALSE: "true-false",
-  MYTH_VS_FACT: "myth-vs-fact"
-};
-
-// Dictionary categories
-export const DICTIONARY_CATEGORIES = [
-  "All Categories",
-  "Basic Concepts",
-  "Trade Policies",
-  "Trade Restrictions",
-  "International Organizations",
-  "Trade Agreements",
-  "Import/Export"
-];
-
-// Simulation types
-export const SIMULATION_TYPES = {
-  TARIFF_IMPACT: "tariff-impact",
-  SUPPLY_DEMAND: "supply-demand",
-  TRADE_BALANCE: "trade-balance"
-};
-
-// Challenge types
+// Challenge Types
 export const CHALLENGE_TYPES = {
-  TERM: "term",
-  QUIZ: "quiz",
-  FACT: "fact"
+  QUIZ: 'quiz',
+  TERM: 'term',
+  FACT: 'fact'
 };
 
-// Analytics events
-export const ANALYTICS_EVENTS = {
-  MODULE_START: "module_start",
-  MODULE_COMPLETE: "module_complete",
-  QUIZ_START: "quiz_start",
-  QUIZ_COMPLETE: "quiz_complete",
-  DICTIONARY_TERM_VIEW: "dictionary_term_view",
-  CHALLENGE_COMPLETE: "challenge_complete"
+// User Roles
+export const USER_ROLES = {
+  USER: 'user',
+  PREMIUM: 'premium',
+  EDITOR: 'editor',
+  ADMIN: 'admin'
 };
 
-// Sample module topics (for MVP)
-export const MVP_MODULE_TOPICS = [
-  "What are Tariffs?",
-  "Understanding Free Trade",
-  "Protectionism vs. Open Markets",
-  "Supply Chains 101",
-  "How Trade Affects Prices"
-];
+// Quiz Types
+export const QUIZ_TYPES = {
+  MODULE: 'module',
+  STANDALONE: 'standalone',
+  CERTIFICATION: 'certification'
+};
 
-// Content license information
-export const CONTENT_LICENSE = "Creative Commons Attribution-NonCommercial 4.0 International License";
-export const CONTENT_LICENSE_URL = "https://creativecommons.org/licenses/by-nc/4.0/";
+// Module Categories
+export const MODULE_CATEGORIES = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  SPECIALIZED: 'specialized'
+};
 
-// Support contact
-export const SUPPORT_EMAIL = "support@tariffsmart.io";
+// API Endpoints
+export const API_ENDPOINTS = {
+  MODULES: '/modules',
+  QUIZZES: '/quizzes',
+  DICTIONARY: '/dictionary',
+  TRADE_AGREEMENTS: '/trade-agreements',
+  PROGRESS: '/progress',
+  DAILY_CHALLENGE: '/daily-challenge',
+  SIMULATIONS: '/simulations'
+};
+
+// Dictionary Term Categories
+export const DICTIONARY_CATEGORIES = {
+  TARIFFS: 'tariffs',
+  TRADE_POLICY: 'trade policy',
+  SHIPPING: 'shipping',
+  CUSTOMS: 'customs',
+  REGULATIONS: 'regulations',
+  AGREEMENTS: 'agreements'
+};
+
+// Progress Status
+export const PROGRESS_STATUS = {
+  NOT_STARTED: 'not_started',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed'
+};
+
+// Routes
+export const ROUTES = {
+  HOME: '/v2',
+  MODULES: '/v2/modules',
+  MODULE_DETAIL: '/v2/modules/:id',
+  QUIZ: '/v2/quiz/:id',
+  DICTIONARY: '/v2/dictionary',
+  DICTIONARY_TERM: '/v2/dictionary/:id',
+  DICTIONARY_TERM_BY_NAME: '/v2/dictionary/term/:name',
+  AGREEMENTS: '/v2/agreements',
+  AGREEMENT_DETAIL: '/v2/agreements/:id',
+  CHALLENGE: '/v2/challenge',
+  SIMULATION: '/v2/simulations/:id',
+  PROFILE: '/v2/profile',
+  LOGIN: '/v2/login',
+  REGISTER: '/v2/register'
+};
