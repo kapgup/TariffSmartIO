@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { configureAuth } from "./auth";
 import { storage } from "./storage";
-import startV2Platform from "../v2/server/index"; // Import the v2 platform
+import * as v2 from "../v2/server/index"; // Import the v2 platform
 
 // Initialize the app
 const app = express();
@@ -48,7 +48,7 @@ app.use((req, res, next) => {
 
   // Initialize the v2 platform and mount it to the main Express app
   try {
-    const v2App = await startV2Platform();
+    const v2App = await v2.default();
     // Mount v2 routes to the main app
     app.use((req, res, next) => {
       if (req.path.startsWith('/v2')) {

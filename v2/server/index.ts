@@ -5,7 +5,7 @@ import cors from 'cors';
 import { configureAuth } from './auth';
 import { setupRoutes } from './routes';
 import { db } from './db';
-import { featureFlags } from '../shared/schema';
+import { featureFlags } from './db';
 import { eq } from 'drizzle-orm';
 import { pool } from './db';
 
@@ -108,7 +108,7 @@ async function initializeDatabase() {
 /**
  * Start the v2 platform
  */
-export default async function startV2Platform() {
+export async function startV2Platform() {
   try {
     // Initialize database
     await initializeDatabase();
