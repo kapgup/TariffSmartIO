@@ -26,6 +26,10 @@ export default function Countries() {
               Browse and compare tariff rates by country to understand how reciprocal tariffs
               will affect imported goods from different regions.
             </p>
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800 max-w-3xl mx-auto">
+              <p><strong>Disclaimer:</strong> Tariff rates are changing frequently. Please check authoritative sources before making any decisions involving the tariff rates shown here. All countries (except China) now have an effective date of July 8, 2025.</p>
+              <p className="mt-2"><strong>Exempt Products:</strong> Smartphones, computers, chips, solar cells, flat-panel TV displays, flash drives, memory cards, and solid-state drives are exempt from reciprocal tariffs.</p>
+            </div>
           </div>
 
           {isLoading ? (
