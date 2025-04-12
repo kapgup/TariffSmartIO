@@ -1,6 +1,6 @@
 import { Express, Request, Response } from 'express';
 import { db } from './db';
-import { featureFlags } from '../shared/schema';
+import { db } from './db';
 import { eq } from 'drizzle-orm';
 
 /**
