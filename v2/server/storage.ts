@@ -1,132 +1,86 @@
-import { db } from "./db";
-import { 
-  modules, Module, InsertModule,
-  quizzes, Quiz, InsertQuiz,
-  quizQuestions, QuizQuestion, InsertQuizQuestion,
-  quizOptions, QuizOption, InsertQuizOption,
-  dictionaryTerms, DictionaryTerm, InsertDictionaryTerm,
-  tradeAgreements, TradeAgreement, InsertTradeAgreement,
-  dailyChallenges, DailyChallenge, InsertDailyChallenge,
-  challengeCompletions, ChallengeCompletion,
-  users, User, InsertUser,
-  userModuleProgress, UserModuleProgress,
-  userQuizProgress, UserQuizProgress,
-  badges, Badge, InsertBadge,
-  userBadges, UserBadge,
-  featureFlags, FeatureFlag, InsertFeatureFlag,
-  featureAccess, FeatureAccess, InsertFeatureAccess,
-  emailSubscribers, EmailSubscriber, InsertEmailSubscriber,
-  certificates, Certificate
+import {
+  User,
+  InsertUser,
+  Module,
+  InsertModule,
+  Quiz,
+  InsertQuiz,
+  QuizQuestion,
+  InsertQuizQuestion,
+  QuizOption,
+  InsertQuizOption,
+  UserModuleProgress,
+  InsertUserModuleProgress,
+  UserQuizProgress,
+  InsertUserQuizProgress,
+  DictionaryTerm,
+  InsertDictionaryTerm,
+  TradeAgreement,
+  InsertTradeAgreement,
+  DailyChallenge,
+  InsertDailyChallenge,
+  ChallengeCompletion,
+  InsertChallengeCompletion,
+  Badge,
+  InsertBadge,
+  UserBadge,
+  InsertUserBadge,
+  FeatureFlag,
+  InsertFeatureFlag,
+  FeatureAccess,
+  InsertFeatureAccess,
+  EmailSubscriber,
+  InsertEmailSubscriber,
+  Certificate,
+  InsertCertificate,
+  users,
+  modules,
+  quizzes,
+  quizQuestions,
+  quizOptions,
+  userModuleProgress,
+  userQuizProgress,
+  dictionaryTerms,
+  tradeAgreements,
+  dailyChallenges,
+  challengeCompletions,
+  badges,
+  userBadges,
+  featureFlags,
+  featureAccess,
+  emailSubscribers,
+  certificates,
+  moduleCategoryEnum,
+  difficultyEnum,
+  userRoleEnum,
+  tradeAgreementStatusEnum,
+  emailSubscriberStatusEnum
 } from "../shared/schema";
-import { and, asc, desc, eq, like, sql } from "drizzle-orm";
+import { db } from "./db";
+import { eq, and, like, desc, sql, asc } from "drizzle-orm";
 
 /**
- * Interface for all storage operations in the v2 platform
+ * Storage interface for the v2 platform
  */
-export interface IStorage {
-  // Users
-  getUser(id: number): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByGoogleId(googleId: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUserRole(userId: number, role: string): Promise<User | undefined>;
-  
-  // Modules
-  getModules(options?: { category?: string, published?: boolean, limit?: number, offset?: number }): Promise<Module[]>;
-  getModuleById(id: number): Promise<Module | undefined>;
-  getModuleBySlug(slug: string): Promise<Module | undefined>;
-  getModuleCategories(): Promise<string[]>;
-  createModule(module: InsertModule): Promise<Module>;
-  updateModule(id: number, module: Partial<Module>): Promise<Module | undefined>;
-  
-  // Quizzes
-  getQuizzes(options?: { moduleId?: number, limit?: number, offset?: number }): Promise<Quiz[]>;
-  getQuizById(id: number): Promise<Quiz | undefined>;
-  getQuizBySlug(slug: string): Promise<Quiz | undefined>;
-  createQuiz(quiz: InsertQuiz): Promise<Quiz>;
-  
-  // Quiz Questions
-  getQuizQuestions(quizId: number): Promise<QuizQuestion[]>;
-  getQuizQuestion(id: number): Promise<QuizQuestion | undefined>;
-  createQuizQuestion(question: InsertQuizQuestion): Promise<QuizQuestion>;
-  
-  // Quiz Options
-  getQuizOptions(questionId: number): Promise<QuizOption[]>;
-  createQuizOption(option: InsertQuizOption): Promise<QuizOption>;
-  
-  // Dictionary Terms
-  getDictionaryTerms(options?: { category?: string, searchQuery?: string, limit?: number, offset?: number }): Promise<DictionaryTerm[]>;
-  getDictionaryTermById(id: number): Promise<DictionaryTerm | undefined>;
-  getDictionaryTermBySlug(slug: string): Promise<DictionaryTerm | undefined>;
-  getDictionaryCategories(): Promise<string[]>;
-  createDictionaryTerm(term: InsertDictionaryTerm): Promise<DictionaryTerm>;
-  updateDictionaryTermViewCount(id: number): Promise<DictionaryTerm | undefined>;
-  
-  // Trade Agreements
-  getTradeAgreements(options?: { status?: string, limit?: number, offset?: number }): Promise<TradeAgreement[]>;
-  getTradeAgreementById(id: number): Promise<TradeAgreement | undefined>;
-  getTradeAgreementBySlug(slug: string): Promise<TradeAgreement | undefined>;
-  createTradeAgreement(agreement: InsertTradeAgreement): Promise<TradeAgreement>;
-  
-  // User Progress
-  getUserModuleProgress(userId: number, moduleId: number): Promise<UserModuleProgress | undefined>;
-  updateUserModuleProgress(userId: number, moduleId: number, progress: number, completed?: boolean): Promise<UserModuleProgress>;
-  getUserQuizProgress(userId: number, quizId: number): Promise<UserQuizProgress | undefined>;
-  updateUserQuizProgress(userId: number, quizId: number, score: number, passed: boolean): Promise<UserQuizProgress>;
-  
-  // Daily Challenges
-  getDailyChallenge(date?: string): Promise<DailyChallenge | undefined>;
-  createDailyChallenge(challenge: InsertDailyChallenge): Promise<DailyChallenge>;
-  checkChallengeCompletion(userId: number, challengeId: number): Promise<boolean>;
-  completeChallenge(userId: number, challengeId: number): Promise<ChallengeCompletion>;
-  
-  // Badges
-  getBadges(): Promise<Badge[]>;
-  getBadgeById(id: number): Promise<Badge | undefined>;
-  createBadge(badge: InsertBadge): Promise<Badge>;
-  getUserBadges(userId: number): Promise<Badge[]>;
-  awardBadgeToUser(userId: number, badgeId: number): Promise<UserBadge>;
-  
-  // Feature Flags
-  getFeatureFlags(): Promise<FeatureFlag[]>;
-  getFeatureFlag(name: string): Promise<FeatureFlag | undefined>;
-  createFeatureFlag(featureFlag: InsertFeatureFlag): Promise<FeatureFlag>;
-  updateFeatureFlag(name: string, isEnabled: boolean): Promise<FeatureFlag | undefined>;
-  
-  // Feature Access
-  getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined>;
-  getAllFeatureAccess(): Promise<FeatureAccess[]>;
-  setFeatureAccess(featureName: string, userRole: string, isEnabled: boolean): Promise<FeatureAccess>;
-  
-  // Email Subscribers
-  getEmailSubscribers(): Promise<EmailSubscriber[]>;
-  getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined>;
-  createEmailSubscriber(subscriber: InsertEmailSubscriber): Promise<EmailSubscriber>;
-  updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined>;
-  
-  // Certificates
-  getUserCertificates(userId: number): Promise<Certificate[]>;
-  generateCertificate(userId: number, moduleId: number): Promise<Certificate>;
-}
+export class DatabaseStorage {
+  constructor() {
+    // Initialize storage
+  }
 
-/**
- * Implementation of the IStorage interface using PostgreSQL and Drizzle ORM
- */
-export class DatabaseStorage implements IStorage {
-  // Users
+  // User related methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    return user || undefined;
   }
 
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
-    return user;
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -134,17 +88,17 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserRole(userId: number, role: string): Promise<User | undefined> {
-    const [updatedUser] = await db
+  async updateUserRole(userId: number, role: keyof typeof userRoleEnum.enumValues): Promise<User | undefined> {
+    const [user] = await db
       .update(users)
       .set({ role })
       .where(eq(users.id, userId))
       .returning();
-    return updatedUser;
+    return user || undefined;
   }
 
-  // Modules
-  async getModules(options?: { category?: string; published?: boolean; limit?: number; offset?: number }): Promise<Module[]> {
+  // Module related methods
+  async getModules(options?: { category?: string; published?: boolean; }): Promise<Module[]> {
     let query = db.select().from(modules);
     
     if (options?.category) {
@@ -155,81 +109,56 @@ export class DatabaseStorage implements IStorage {
       query = query.where(eq(modules.published, options.published));
     }
     
-    query = query.orderBy(asc(modules.id));
-    
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-    
-    return await query;
+    return await query.orderBy(desc(modules.createdAt));
   }
 
   async getModuleById(id: number): Promise<Module | undefined> {
     const [module] = await db.select().from(modules).where(eq(modules.id, id));
-    return module;
+    return module || undefined;
   }
 
   async getModuleBySlug(slug: string): Promise<Module | undefined> {
     const [module] = await db.select().from(modules).where(eq(modules.slug, slug));
-    return module;
+    return module || undefined;
   }
-
-  async getModuleCategories(): Promise<string[]> {
-    const result = await db
-      .select({ category: modules.category })
-      .from(modules)
-      .groupBy(modules.category);
-    
-    return result.map(item => item.category);
-  }
-
+  
   async createModule(insertModule: InsertModule): Promise<Module> {
     const [module] = await db.insert(modules).values(insertModule).returning();
     return module;
   }
 
-  async updateModule(id: number, moduleData: Partial<Module>): Promise<Module | undefined> {
-    const [updatedModule] = await db
+  async updateModule(id: number, moduleData: Partial<InsertModule>): Promise<Module | undefined> {
+    const [module] = await db
       .update(modules)
       .set({ ...moduleData, updatedAt: new Date() })
       .where(eq(modules.id, id))
       .returning();
-    return updatedModule;
+    return module || undefined;
   }
 
-  // Quizzes
-  async getQuizzes(options?: { moduleId?: number; limit?: number; offset?: number }): Promise<Quiz[]> {
+  // Quiz related methods
+  async getQuizzes(options?: { moduleId?: number; published?: boolean }): Promise<Quiz[]> {
     let query = db.select().from(quizzes);
     
     if (options?.moduleId) {
       query = query.where(eq(quizzes.moduleId, options.moduleId));
     }
     
-    query = query.orderBy(asc(quizzes.id));
-    
-    if (options?.limit) {
-      query = query.limit(options.limit);
+    if (options?.published !== undefined) {
+      query = query.where(eq(quizzes.published, options.published));
     }
     
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-    
-    return await query;
+    return await query.orderBy(desc(quizzes.createdAt));
   }
 
   async getQuizById(id: number): Promise<Quiz | undefined> {
     const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
-    return quiz;
+    return quiz || undefined;
   }
 
   async getQuizBySlug(slug: string): Promise<Quiz | undefined> {
     const [quiz] = await db.select().from(quizzes).where(eq(quizzes.slug, slug));
-    return quiz;
+    return quiz || undefined;
   }
 
   async createQuiz(insertQuiz: InsertQuiz): Promise<Quiz> {
@@ -237,7 +166,16 @@ export class DatabaseStorage implements IStorage {
     return quiz;
   }
 
-  // Quiz Questions
+  async updateQuiz(id: number, quizData: Partial<InsertQuiz>): Promise<Quiz | undefined> {
+    const [quiz] = await db
+      .update(quizzes)
+      .set({ ...quizData, updatedAt: new Date() })
+      .where(eq(quizzes.id, id))
+      .returning();
+    return quiz || undefined;
+  }
+
+  // Quiz questions and options
   async getQuizQuestions(quizId: number): Promise<QuizQuestion[]> {
     return await db
       .select()
@@ -247,155 +185,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuizQuestion(id: number): Promise<QuizQuestion | undefined> {
-    const [question] = await db
-      .select()
-      .from(quizQuestions)
-      .where(eq(quizQuestions.id, id));
-    return question;
+    const [question] = await db.select().from(quizQuestions).where(eq(quizQuestions.id, id));
+    return question || undefined;
   }
 
   async createQuizQuestion(insertQuestion: InsertQuizQuestion): Promise<QuizQuestion> {
-    const [question] = await db
-      .insert(quizQuestions)
-      .values(insertQuestion)
-      .returning();
+    const [question] = await db.insert(quizQuestions).values(insertQuestion).returning();
     return question;
   }
 
-  // Quiz Options
   async getQuizOptions(questionId: number): Promise<QuizOption[]> {
     return await db
       .select()
       .from(quizOptions)
-      .where(eq(quizOptions.questionId, questionId));
+      .where(eq(quizOptions.questionId, questionId))
+      .orderBy(asc(quizOptions.order));
   }
 
   async createQuizOption(insertOption: InsertQuizOption): Promise<QuizOption> {
-    const [option] = await db
-      .insert(quizOptions)
-      .values(insertOption)
-      .returning();
+    const [option] = await db.insert(quizOptions).values(insertOption).returning();
     return option;
   }
 
-  // Dictionary Terms
-  async getDictionaryTerms(options?: { category?: string; searchQuery?: string; limit?: number; offset?: number }): Promise<DictionaryTerm[]> {
-    let query = db.select().from(dictionaryTerms);
-    
-    if (options?.category) {
-      query = query.where(eq(dictionaryTerms.category, options.category));
-    }
-    
-    if (options?.searchQuery) {
-      query = query.where(
-        like(dictionaryTerms.name, `%${options.searchQuery}%`)
-      );
-    }
-    
-    query = query.orderBy(asc(dictionaryTerms.name));
-    
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-    
-    return await query;
-  }
-
-  async getDictionaryTermById(id: number): Promise<DictionaryTerm | undefined> {
-    const [term] = await db
-      .select()
-      .from(dictionaryTerms)
-      .where(eq(dictionaryTerms.id, id));
-    return term;
-  }
-
-  async getDictionaryTermBySlug(slug: string): Promise<DictionaryTerm | undefined> {
-    const [term] = await db
-      .select()
-      .from(dictionaryTerms)
-      .where(eq(dictionaryTerms.slug, slug));
-    return term;
-  }
-
-  async getDictionaryCategories(): Promise<string[]> {
-    const result = await db
-      .select({ category: dictionaryTerms.category })
-      .from(dictionaryTerms)
-      .groupBy(dictionaryTerms.category);
-    
-    return result.map(item => item.category);
-  }
-
-  async createDictionaryTerm(insertTerm: InsertDictionaryTerm): Promise<DictionaryTerm> {
-    const [term] = await db
-      .insert(dictionaryTerms)
-      .values(insertTerm)
-      .returning();
-    return term;
-  }
-
-  async updateDictionaryTermViewCount(id: number): Promise<DictionaryTerm | undefined> {
-    const [term] = await db
-      .update(dictionaryTerms)
-      .set({
-        viewCount: sql`${dictionaryTerms.viewCount} + 1`,
-        updatedAt: new Date()
-      })
-      .where(eq(dictionaryTerms.id, id))
-      .returning();
-    return term;
-  }
-
-  // Trade Agreements
-  async getTradeAgreements(options?: { status?: string; limit?: number; offset?: number }): Promise<TradeAgreement[]> {
-    let query = db.select().from(tradeAgreements);
-    
-    if (options?.status) {
-      query = query.where(eq(tradeAgreements.status, options.status));
-    }
-    
-    query = query.orderBy(asc(tradeAgreements.name));
-    
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-    
-    return await query;
-  }
-
-  async getTradeAgreementById(id: number): Promise<TradeAgreement | undefined> {
-    const [agreement] = await db
-      .select()
-      .from(tradeAgreements)
-      .where(eq(tradeAgreements.id, id));
-    return agreement;
-  }
-
-  async getTradeAgreementBySlug(slug: string): Promise<TradeAgreement | undefined> {
-    const [agreement] = await db
-      .select()
-      .from(tradeAgreements)
-      .where(eq(tradeAgreements.slug, slug));
-    return agreement;
-  }
-
-  async createTradeAgreement(insertAgreement: InsertTradeAgreement): Promise<TradeAgreement> {
-    const [agreement] = await db
-      .insert(tradeAgreements)
-      .values(insertAgreement)
-      .returning();
-    return agreement;
-  }
-
-  // User Progress
+  // User progress
   async getUserModuleProgress(userId: number, moduleId: number): Promise<UserModuleProgress | undefined> {
     const [progress] = await db
       .select()
@@ -406,56 +218,33 @@ export class DatabaseStorage implements IStorage {
           eq(userModuleProgress.moduleId, moduleId)
         )
       );
+    return progress || undefined;
+  }
+
+  async getUserModuleProgressByUser(userId: number): Promise<UserModuleProgress[]> {
+    return await db
+      .select()
+      .from(userModuleProgress)
+      .where(eq(userModuleProgress.userId, userId));
+  }
+
+  async createUserModuleProgress(insertProgress: InsertUserModuleProgress): Promise<UserModuleProgress> {
+    const [progress] = await db.insert(userModuleProgress).values(insertProgress).returning();
     return progress;
   }
 
-  async updateUserModuleProgress(userId: number, moduleId: number, progress: number, completed?: boolean): Promise<UserModuleProgress> {
-    // Check if a record exists
-    const existingProgress = await this.getUserModuleProgress(userId, moduleId);
-    
-    if (existingProgress) {
-      // Update existing record
-      const updateData: any = { 
-        progress, 
-        updatedAt: new Date() 
-      };
-      
-      if (completed) {
-        updateData.completedAt = new Date();
-      }
-      
-      const [updatedProgress] = await db
-        .update(userModuleProgress)
-        .set(updateData)
-        .where(
-          and(
-            eq(userModuleProgress.userId, userId),
-            eq(userModuleProgress.moduleId, moduleId)
-          )
+  async updateUserModuleProgress(userId: number, moduleId: number, data: Partial<InsertUserModuleProgress>): Promise<UserModuleProgress | undefined> {
+    const [progress] = await db
+      .update(userModuleProgress)
+      .set({ ...data, updatedAt: new Date() })
+      .where(
+        and(
+          eq(userModuleProgress.userId, userId),
+          eq(userModuleProgress.moduleId, moduleId)
         )
-        .returning();
-      
-      return updatedProgress;
-    } else {
-      // Create new record
-      const insertData: any = {
-        userId,
-        moduleId,
-        progress,
-        status: completed ? 'completed' : 'in_progress'
-      };
-      
-      if (completed) {
-        insertData.completedAt = new Date();
-      }
-      
-      const [newProgress] = await db
-        .insert(userModuleProgress)
-        .values(insertData)
-        .returning();
-      
-      return newProgress;
-    }
+      )
+      .returning();
+    return progress || undefined;
   }
 
   async getUserQuizProgress(userId: number, quizId: number): Promise<UserQuizProgress | undefined> {
@@ -468,71 +257,149 @@ export class DatabaseStorage implements IStorage {
           eq(userQuizProgress.quizId, quizId)
         )
       );
+    return progress || undefined;
+  }
+
+  async getUserQuizProgressByUser(userId: number): Promise<UserQuizProgress[]> {
+    return await db
+      .select()
+      .from(userQuizProgress)
+      .where(eq(userQuizProgress.userId, userId));
+  }
+
+  async createUserQuizProgress(insertProgress: InsertUserQuizProgress): Promise<UserQuizProgress> {
+    const [progress] = await db.insert(userQuizProgress).values(insertProgress).returning();
     return progress;
   }
 
-  async updateUserQuizProgress(userId: number, quizId: number, score: number, passed: boolean): Promise<UserQuizProgress> {
-    // Check if a record exists
-    const existingProgress = await this.getUserQuizProgress(userId, quizId);
-    
-    if (existingProgress) {
-      // Update existing record
-      const [updatedProgress] = await db
-        .update(userQuizProgress)
-        .set({
-          score,
-          passed,
-          updatedAt: new Date(),
-          completedAt: new Date()
-        })
-        .where(
-          and(
-            eq(userQuizProgress.userId, userId),
-            eq(userQuizProgress.quizId, quizId)
-          )
+  async updateUserQuizProgress(userId: number, quizId: number, data: Partial<InsertUserQuizProgress>): Promise<UserQuizProgress | undefined> {
+    const [progress] = await db
+      .update(userQuizProgress)
+      .set({ ...data, updatedAt: new Date() })
+      .where(
+        and(
+          eq(userQuizProgress.userId, userId),
+          eq(userQuizProgress.quizId, quizId)
         )
-        .returning();
-      
-      return updatedProgress;
-    } else {
-      // Create new record
-      const [newProgress] = await db
-        .insert(userQuizProgress)
-        .values({
-          userId,
-          quizId,
-          score,
-          passed,
-          completedAt: new Date()
-        })
-        .returning();
-      
-      return newProgress;
-    }
+      )
+      .returning();
+    return progress || undefined;
   }
 
-  // Daily Challenges
-  async getDailyChallenge(date?: string): Promise<DailyChallenge | undefined> {
-    const targetDate = date ? new Date(date) : new Date();
-    const dateStr = targetDate.toISOString().split('T')[0];
+  // Dictionary terms
+  async getDictionaryTerms(options?: { category?: string; searchQuery?: string }): Promise<DictionaryTerm[]> {
+    let query = db.select().from(dictionaryTerms);
     
+    if (options?.category) {
+      query = query.where(eq(dictionaryTerms.category, options.category));
+    }
+    
+    if (options?.searchQuery) {
+      query = query.where(
+        like(dictionaryTerms.name, `%${options.searchQuery}%`)
+      );
+    }
+    
+    return await query.orderBy(asc(dictionaryTerms.name));
+  }
+
+  async getDictionaryTermById(id: number): Promise<DictionaryTerm | undefined> {
+    const [term] = await db.select().from(dictionaryTerms).where(eq(dictionaryTerms.id, id));
+    return term || undefined;
+  }
+
+  async getDictionaryTermBySlug(slug: string): Promise<DictionaryTerm | undefined> {
+    const [term] = await db.select().from(dictionaryTerms).where(eq(dictionaryTerms.slug, slug));
+    return term || undefined;
+  }
+
+  async createDictionaryTerm(insertTerm: InsertDictionaryTerm): Promise<DictionaryTerm> {
+    const [term] = await db.insert(dictionaryTerms).values(insertTerm).returning();
+    return term;
+  }
+
+  async updateDictionaryTerm(id: number, termData: Partial<InsertDictionaryTerm>): Promise<DictionaryTerm | undefined> {
+    const [term] = await db
+      .update(dictionaryTerms)
+      .set({ ...termData, updatedAt: new Date() })
+      .where(eq(dictionaryTerms.id, id))
+      .returning();
+    return term || undefined;
+  }
+
+  async incrementDictionaryTermViewCount(id: number): Promise<DictionaryTerm | undefined> {
+    const [term] = await db
+      .update(dictionaryTerms)
+      .set({
+        viewCount: sql`${dictionaryTerms.viewCount} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(dictionaryTerms.id, id))
+      .returning();
+    return term || undefined;
+  }
+
+  // Trade agreements
+  async getTradeAgreements(options?: { status?: keyof typeof tradeAgreementStatusEnum.enumValues; searchQuery?: string }): Promise<TradeAgreement[]> {
+    let query = db.select().from(tradeAgreements);
+    
+    if (options?.status) {
+      query = query.where(eq(tradeAgreements.status, options.status));
+    }
+    
+    if (options?.searchQuery) {
+      query = query.where(
+        like(tradeAgreements.name, `%${options.searchQuery}%`)
+      );
+    }
+    
+    return await query.orderBy(asc(tradeAgreements.name));
+  }
+
+  async getTradeAgreementById(id: number): Promise<TradeAgreement | undefined> {
+    const [agreement] = await db.select().from(tradeAgreements).where(eq(tradeAgreements.id, id));
+    return agreement || undefined;
+  }
+
+  async getTradeAgreementBySlug(slug: string): Promise<TradeAgreement | undefined> {
+    const [agreement] = await db.select().from(tradeAgreements).where(eq(tradeAgreements.slug, slug));
+    return agreement || undefined;
+  }
+
+  async createTradeAgreement(insertAgreement: InsertTradeAgreement): Promise<TradeAgreement> {
+    const [agreement] = await db.insert(tradeAgreements).values(insertAgreement).returning();
+    return agreement;
+  }
+
+  async updateTradeAgreement(id: number, agreementData: Partial<InsertTradeAgreement>): Promise<TradeAgreement | undefined> {
+    const [agreement] = await db
+      .update(tradeAgreements)
+      .set({ ...agreementData, updatedAt: new Date() })
+      .where(eq(tradeAgreements.id, id))
+      .returning();
+    return agreement || undefined;
+  }
+
+  // Daily challenges
+  async getDailyChallenges(): Promise<DailyChallenge[]> {
+    return await db.select().from(dailyChallenges).orderBy(desc(dailyChallenges.date));
+  }
+
+  async getDailyChallenge(date?: Date): Promise<DailyChallenge | undefined> {
+    const queryDate = date || new Date();
     const [challenge] = await db
       .select()
       .from(dailyChallenges)
-      .where(eq(dailyChallenges.date, dateStr));
-    
-    return challenge;
+      .where(eq(dailyChallenges.date, queryDate));
+    return challenge || undefined;
   }
 
   async createDailyChallenge(insertChallenge: InsertDailyChallenge): Promise<DailyChallenge> {
-    const [challenge] = await db
-      .insert(dailyChallenges)
-      .values(insertChallenge)
-      .returning();
+    const [challenge] = await db.insert(dailyChallenges).values(insertChallenge).returning();
     return challenge;
   }
 
-  async checkChallengeCompletion(userId: number, challengeId: number): Promise<boolean> {
+  async getChallengeCompletion(userId: number, challengeId: number): Promise<ChallengeCompletion | undefined> {
     const [completion] = await db
       .select()
       .from(challengeCompletions)
@@ -542,20 +409,18 @@ export class DatabaseStorage implements IStorage {
           eq(challengeCompletions.challengeId, challengeId)
         )
       );
-    
-    return !!completion;
+    return completion || undefined;
   }
 
-  async completeChallenge(userId: number, challengeId: number): Promise<ChallengeCompletion> {
-    const [completion] = await db
-      .insert(challengeCompletions)
-      .values({
-        userId,
-        challengeId,
-        completedAt: new Date()
-      })
-      .returning();
-    
+  async getUserChallengeCompletions(userId: number): Promise<ChallengeCompletion[]> {
+    return await db
+      .select()
+      .from(challengeCompletions)
+      .where(eq(challengeCompletions.userId, userId));
+  }
+
+  async createChallengeCompletion(insertCompletion: InsertChallengeCompletion): Promise<ChallengeCompletion> {
+    const [completion] = await db.insert(challengeCompletions).values(insertCompletion).returning();
     return completion;
   }
 
@@ -566,7 +431,7 @@ export class DatabaseStorage implements IStorage {
 
   async getBadgeById(id: number): Promise<Badge | undefined> {
     const [badge] = await db.select().from(badges).where(eq(badges.id, id));
-    return badge;
+    return badge || undefined;
   }
 
   async createBadge(insertBadge: InsertBadge): Promise<Badge> {
@@ -574,21 +439,15 @@ export class DatabaseStorage implements IStorage {
     return badge;
   }
 
-  async getUserBadges(userId: number): Promise<Badge[]> {
-    const userBadgesWithInfo = await db
-      .select({
-        badge: badges
-      })
+  async getUserBadges(userId: number): Promise<UserBadge[]> {
+    return await db
+      .select()
       .from(userBadges)
-      .innerJoin(badges, eq(userBadges.badgeId, badges.id))
       .where(eq(userBadges.userId, userId));
-    
-    return userBadgesWithInfo.map(item => item.badge);
   }
 
-  async awardBadgeToUser(userId: number, badgeId: number): Promise<UserBadge> {
-    // Check if already awarded
-    const [existing] = await db
+  async getUserBadge(userId: number, badgeId: number): Promise<UserBadge | undefined> {
+    const [userBadge] = await db
       .select()
       .from(userBadges)
       .where(
@@ -597,58 +456,40 @@ export class DatabaseStorage implements IStorage {
           eq(userBadges.badgeId, badgeId)
         )
       );
-    
-    if (existing) {
-      return existing;
-    }
-    
-    const [userBadge] = await db
-      .insert(userBadges)
-      .values({
-        userId,
-        badgeId,
-        awardedAt: new Date()
-      })
-      .returning();
-    
+    return userBadge || undefined;
+  }
+
+  async awardBadge(insertUserBadge: InsertUserBadge): Promise<UserBadge> {
+    const [userBadge] = await db.insert(userBadges).values(insertUserBadge).returning();
     return userBadge;
   }
 
-  // Feature Flags
+  // Feature flags
   async getFeatureFlags(): Promise<FeatureFlag[]> {
     return await db.select().from(featureFlags);
   }
 
   async getFeatureFlag(name: string): Promise<FeatureFlag | undefined> {
-    const [featureFlag] = await db
-      .select()
-      .from(featureFlags)
-      .where(eq(featureFlags.name, name));
-    
-    return featureFlag;
+    const [featureFlag] = await db.select().from(featureFlags).where(eq(featureFlags.name, name));
+    return featureFlag || undefined;
   }
 
   async createFeatureFlag(insertFeatureFlag: InsertFeatureFlag): Promise<FeatureFlag> {
-    const [featureFlag] = await db
-      .insert(featureFlags)
-      .values(insertFeatureFlag)
-      .returning();
-    
+    const [featureFlag] = await db.insert(featureFlags).values(insertFeatureFlag).returning();
     return featureFlag;
   }
 
   async updateFeatureFlag(name: string, isEnabled: boolean): Promise<FeatureFlag | undefined> {
-    const [updatedFlag] = await db
+    const [featureFlag] = await db
       .update(featureFlags)
       .set({ isEnabled, updatedAt: new Date() })
       .where(eq(featureFlags.name, name))
       .returning();
-    
-    return updatedFlag;
+    return featureFlag || undefined;
   }
 
-  // Feature Access
-  async getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined> {
+  // Feature access
+  async getFeatureAccess(featureName: string, userRole: keyof typeof userRoleEnum.enumValues): Promise<FeatureAccess | undefined> {
     const [access] = await db
       .select()
       .from(featureAccess)
@@ -658,78 +499,65 @@ export class DatabaseStorage implements IStorage {
           eq(featureAccess.userRole, userRole)
         )
       );
-    
-    return access;
+    return access || undefined;
   }
 
   async getAllFeatureAccess(): Promise<FeatureAccess[]> {
     return await db.select().from(featureAccess);
   }
 
-  async setFeatureAccess(featureName: string, userRole: string, isEnabled: boolean): Promise<FeatureAccess> {
-    // Check if record exists
-    const existingAccess = await this.getFeatureAccess(featureName, userRole);
-    
-    if (existingAccess) {
-      // Update existing record
-      const [updatedAccess] = await db
-        .update(featureAccess)
-        .set({ isEnabled })
-        .where(
-          and(
-            eq(featureAccess.featureName, featureName),
-            eq(featureAccess.userRole, userRole)
-          )
+  async setFeatureAccess(featureName: string, userRole: keyof typeof userRoleEnum.enumValues, isEnabled: boolean): Promise<FeatureAccess> {
+    // Try to update existing record
+    const [existing] = await db
+      .update(featureAccess)
+      .set({ isEnabled, updatedAt: new Date() })
+      .where(
+        and(
+          eq(featureAccess.featureName, featureName),
+          eq(featureAccess.userRole, userRole)
         )
-        .returning();
-      
-      return updatedAccess;
-    } else {
-      // Create new record
-      const [newAccess] = await db
-        .insert(featureAccess)
-        .values({
-          featureName,
-          userRole,
-          isEnabled
-        })
-        .returning();
-      
-      return newAccess;
+      )
+      .returning();
+
+    if (existing) {
+      return existing;
     }
+
+    // Create new record if it doesn't exist
+    const [newAccess] = await db
+      .insert(featureAccess)
+      .values({
+        featureName,
+        userRole,
+        isEnabled
+      })
+      .returning();
+
+    return newAccess;
   }
 
-  // Email Subscribers
+  // Email subscribers
   async getEmailSubscribers(): Promise<EmailSubscriber[]> {
     return await db.select().from(emailSubscribers);
   }
 
   async getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined> {
-    const [subscriber] = await db
-      .select()
-      .from(emailSubscribers)
-      .where(eq(emailSubscribers.email, email));
-    
-    return subscriber;
+    const [subscriber] = await db.select().from(emailSubscribers).where(eq(emailSubscribers.email, email));
+    return subscriber || undefined;
   }
 
   async createEmailSubscriber(insertSubscriber: InsertEmailSubscriber): Promise<EmailSubscriber> {
-    const [subscriber] = await db
-      .insert(emailSubscribers)
-      .values(insertSubscriber)
-      .returning();
-    
+    const [subscriber] = await db.insert(emailSubscribers).values(insertSubscriber).returning();
     return subscriber;
   }
 
-  async updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined> {
-    const [updatedSubscriber] = await db
+  async updateEmailSubscriberStatus(email: string, status: keyof typeof emailSubscriberStatusEnum.enumValues): Promise<EmailSubscriber | undefined> {
+    const [subscriber] = await db
       .update(emailSubscribers)
       .set({ status, updatedAt: new Date() })
       .where(eq(emailSubscribers.email, email))
       .returning();
-    
-    return updatedSubscriber;
+    return subscriber || undefined;
   }
 
   // Certificates
@@ -740,19 +568,68 @@ export class DatabaseStorage implements IStorage {
       .where(eq(certificates.userId, userId));
   }
 
-  async generateCertificate(userId: number, moduleId: number): Promise<Certificate> {
-    const [certificate] = await db
-      .insert(certificates)
-      .values({
-        userId,
-        moduleId,
-        issuedAt: new Date()
-      })
-      .returning();
-    
+  async createCertificate(insertCertificate: InsertCertificate): Promise<Certificate> {
+    const [certificate] = await db.insert(certificates).values(insertCertificate).returning();
     return certificate;
+  }
+
+  // Initialize default data
+  async initializeData(): Promise<void> {
+    // Initialize default feature flags
+    const defaultFeatureFlags = [
+      { name: 'ENABLE_V2', description: 'Enable the v2 platform features', isEnabled: true },
+      { name: 'ENABLE_LEARNING_MODULES', description: 'Enable learning modules features', isEnabled: true },
+      { name: 'ENABLE_QUIZZES', description: 'Enable quiz features', isEnabled: true },
+      { name: 'ENABLE_DICTIONARY', description: 'Enable the trade dictionary', isEnabled: true },
+      { name: 'ENABLE_DAILY_CHALLENGES', description: 'Enable daily challenges', isEnabled: true },
+      { name: 'ENABLE_BADGES', description: 'Enable badges and achievements', isEnabled: true },
+      { name: 'ENABLE_CERTIFICATES', description: 'Enable completion certificates', isEnabled: true },
+      { name: 'ENABLE_TRADE_AGREEMENTS', description: 'Enable trade agreements database', isEnabled: true },
+      { name: 'ENABLE_USER_PROGRESS', description: 'Enable user progress tracking', isEnabled: true },
+      { name: 'ENABLE_SOCIAL_SHARING', description: 'Enable social media sharing', isEnabled: false },
+      { name: 'ENABLE_EMAIL_SUBSCRIPTION', description: 'Enable email subscription features', isEnabled: true },
+    ];
+
+    for (const flag of defaultFeatureFlags) {
+      const existing = await this.getFeatureFlag(flag.name);
+      if (!existing) {
+        await this.createFeatureFlag(flag);
+      }
+    }
+
+    // Initialize default feature access for different user roles
+    const features = [
+      'LEARNING_MODULES',
+      'QUIZZES',
+      'DICTIONARY',
+      'DAILY_CHALLENGES',
+      'BADGES',
+      'CERTIFICATES',
+      'TRADE_AGREEMENTS',
+      'USER_PROGRESS',
+    ];
+
+    const roles = ['admin', 'editor', 'premium', 'basic'] as const;
+
+    for (const feature of features) {
+      for (const role of roles) {
+        // Admins and editors get access to everything
+        // Premium users get access to everything 
+        // Basic users get access to basic features only
+        const isEnabled = 
+          role === 'admin' || 
+          role === 'editor' || 
+          role === 'premium' || 
+          (role === 'basic' && 
+            (feature === 'LEARNING_MODULES' || 
+             feature === 'DICTIONARY' ||
+             feature === 'DAILY_CHALLENGES'));
+
+        await this.setFeatureAccess(feature, role, isEnabled);
+      }
+    }
   }
 }
 
-// Export a singleton instance of the database storage
+// Create a singleton instance
 export const storage = new DatabaseStorage();
