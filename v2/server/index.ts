@@ -1,54 +1,81 @@
-import express, { Express, Request, Response, NextFunction } from "express";
-import cors from "cors";
-import session from "express-session";
-import { registerRoutes } from "./routes";
-import { storage } from "./storage";
-import { createServer, Server } from "http";
-import { db } from "./db";
-import { featureFlags } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import express, { Express, Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import session from 'express-session';
+import { registerRoutes } from './routes';
+import { storage } from './storage';
+import pgSession from 'connect-pg-simple';
+import { pool } from './db';
 
 /**
  * Initialize the v2 platform's Express application
  */
 async function init() {
   const app: Express = express();
-  
-  // Enable CORS
-  app.use(cors());
-  
-  // Parse JSON request bodies
+
+  // Setup middleware
   app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
   
-  // Configure sessions
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || "local-dev-secret",
-      resave: false,
-      saveUninitialized: true,
-      cookie: {
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-      },
-    })
-  );
-  
-  // Initialize database with defaults if needed
-  await initializeDatabase();
-  
-  // Register all v2 routes
-  const server = await registerRoutes(app);
-  
-  // Error handling middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error("Unhandled error:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      message: process.env.NODE_ENV === "production" ? undefined : err.message,
-    });
+  // Configure CORS for API requests
+  app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://tariffsmart.replit.app'] 
+      : ['http://localhost:3000', 'http://localhost:5173', 'https://tariffsmart.replit.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true
+  }));
+
+  // Set up session store with PostgreSQL
+  const PgStore = pgSession(session);
+  app.use(session({
+    store: new PgStore({
+      pool,
+      tableName: 'user_sessions'
+    }),
+    secret: process.env.SESSION_SECRET || 'development_secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    }
+  }));
+
+  // Register all API routes
+  await registerRoutes(app);
+
+  // Serve the v2 client application for all v2/* routes
+  app.get("/v2/*", (_req: Request, res: Response) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>TariffSmart v2 - International Trade Education Platform</title>
+        </head>
+        <body>
+          <div id="root"></div>
+          <script type="module" src="/v2/client/src/main.tsx"></script>
+        </body>
+      </html>
+    `);
   });
   
-  return server;
+  // Error handler
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    console.error(err.stack);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred' : err.message
+    });
+  });
+
+  // Initialize database with default data
+  await initializeDatabase();
+
+  return app;
 }
 
 /**
@@ -56,60 +83,10 @@ async function init() {
  */
 async function initializeDatabase() {
   try {
-    // Check if default feature flags exist
-    const existingFlags = await db.select().from(featureFlags);
-    
-    if (existingFlags.length === 0) {
-      console.log("Initializing v2 database with default feature flags...");
-      
-      // Insert default feature flags
-      await db.insert(featureFlags).values([
-        {
-          name: "enable_dictionary",
-          description: "Enable the Trade Dictionary feature",
-          isEnabled: true,
-        },
-        {
-          name: "enable_modules",
-          description: "Enable the Learning Modules feature",
-          isEnabled: true,
-        },
-        {
-          name: "enable_quizzes",
-          description: "Enable the Quizzes feature",
-          isEnabled: true,
-        },
-        {
-          name: "enable_agreements",
-          description: "Enable the Trade Agreements Database feature",
-          isEnabled: false, // Disabled initially
-        },
-        {
-          name: "enable_challenges",
-          description: "Enable the Daily Challenges feature",
-          isEnabled: false, // Disabled initially
-        },
-        {
-          name: "enable_badges",
-          description: "Enable the Badges & Achievements feature",
-          isEnabled: false, // Disabled initially
-        },
-        {
-          name: "enable_certificates",
-          description: "Enable the Certificates feature",
-          isEnabled: false, // Disabled initially
-        },
-        {
-          name: "enable_user_progress",
-          description: "Enable user progress tracking",
-          isEnabled: true,
-        },
-      ]);
-      
-      console.log("Default feature flags initialized successfully.");
-    }
+    await storage.initializeData();
+    console.log('Database initialized with default data');
   } catch (error) {
-    console.error("Error initializing v2 database:", error);
+    console.error('Failed to initialize database:', error);
   }
 }
 
