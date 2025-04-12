@@ -1,301 +1,290 @@
-// User Types
+/**
+ * Type definitions for the client application
+ */
+
+/**
+ * User type
+ */
 export interface User {
   id: number;
   username: string;
   email: string;
-  displayName: string | null;
-  role: 'admin' | 'editor' | 'premium' | 'basic';
-  googleId: string | null;
-  profilePicture: string | null;
-  bio: string | null;
-  subscriptionTier: string | null;
-  subscriptionExpiresAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  displayName?: string;
+  profilePicture?: string;
+  bio?: string;
+  role: string;
+  subscriptionTier?: string;
+  subscriptionExpiresAt?: string;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Module Types
-export interface ModuleListItem {
+/**
+ * Authentication response
+ */
+export interface AuthResponse {
+  user: User;
+  token?: string;
+}
+
+/**
+ * Learning module
+ */
+export interface Module {
   id: number;
   title: string;
   slug: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: 'tariffs' | 'trade_policy' | 'customs' | 'shipping' | 'regulations' | 'agreements';
+  content: string;
+  category: string;
+  difficulty: string;
   estimatedMinutes: number;
-  published: boolean;
-  imageUrl: string | null;
-  authorId: number | null;
+  featured: boolean;
+  order: number;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Module extends ModuleListItem {
-  content: any;
-  prerequisites: number[] | null;
-  authorName?: string;
-  createdAt: Date;
-  updatedAt: Date;
+/**
+ * Learning module section
+ */
+export interface ModuleSection {
+  id: number;
+  moduleId: number;
+  title: string;
+  content: string;
+  order: number;
 }
 
+/**
+ * Module response
+ */
+export interface ModuleResponse {
+  module: Module;
+  sections: ModuleSection[];
+  related: Module[];
+}
+
+/**
+ * Modules list response
+ */
 export interface ModulesResponse {
-  modules: ModuleListItem[];
+  modules: Module[];
   categories: string[];
   totalModules: number;
 }
 
-export interface ModuleResponse {
-  module: Module;
-}
-
-export interface ModuleSection {
-  title: string;
-  content: string;
-  type: 'text' | 'video' | 'image' | 'code' | 'table';
-  resources?: {
-    title: string;
-    url: string;
-    type: 'link' | 'pdf' | 'video';
-  }[];
-}
-
-// Quiz Types
-export interface QuizListItem {
+/**
+ * Dictionary term
+ */
+export interface DictionaryTerm {
   id: number;
-  title: string;
+  term: string;
+  slug: string;
+  definition: string;
+  category: string;
+  relatedTerms?: number[];
+  examples?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Dictionary term response
+ */
+export interface DictionaryTermResponse {
+  term: DictionaryTerm;
+  related: DictionaryTerm[];
+}
+
+/**
+ * Dictionary terms list response
+ */
+export interface DictionaryTermsResponse {
+  terms: DictionaryTerm[];
+  categories: string[];
+  totalTerms: number;
+}
+
+/**
+ * Trade agreement
+ */
+export interface TradeAgreement {
+  id: number;
+  name: string;
   slug: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  moduleId: number | null;
+  content: string;
+  countries: string[];
+  status: string;
+  signedDate: string;
+  effectiveDate?: string;
+  expirationDate?: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Agreement response
+ */
+export interface AgreementResponse {
+  agreement: TradeAgreement;
+  related: TradeAgreement[];
+}
+
+/**
+ * Agreements list response
+ */
+export interface AgreementsResponse {
+  agreements: TradeAgreement[];
+  totalAgreements: number;
+}
+
+/**
+ * Quiz
+ */
+export interface Quiz {
+  id: number;
+  moduleId?: number;
+  title: string;
+  description: string;
+  difficulty: string;
+  timeLimit?: number;
   passingScore: number;
-  timeLimit: number | null;
-  published: boolean;
-  authorId: number | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Quiz extends QuizListItem {
-  createdAt: Date;
-  updatedAt: Date;
-}
-
+/**
+ * Quiz question
+ */
 export interface QuizQuestion {
   id: number;
   quizId: number;
-  text: string;
+  question: string;
+  type: 'multiple_choice' | 'true_false' | 'matching';
+  options: string[];
+  correctAnswer: string | string[];
+  explanation?: string;
   points: number;
-  explanation: string | null;
-  type: 'multiple_choice' | 'true_false' | 'open_ended';
-  order: number;
-  options?: QuizOption[];
-}
-
-export interface QuizOption {
-  id: number;
-  questionId: number;
-  text: string;
-  isCorrect: boolean;
   order: number;
 }
 
-export interface QuizListResponse {
-  quizzes: QuizListItem[];
-}
-
+/**
+ * Quiz response
+ */
 export interface QuizResponse {
   quiz: Quiz;
   questions: QuizQuestion[];
 }
 
-export interface QuizSubmission {
-  questionId: number;
-  selectedOptionId: number;
-}
-
+/**
+ * Quiz result
+ */
 export interface QuizResult {
+  id: number;
+  userId: number;
+  quizId: number;
   score: number;
-  maxScore: number;
-  passed: boolean;
-  attempts: number;
-  responses: Record<number, {
-    questionId: number;
-    selectedOptionId: number;
-    isCorrect: boolean;
-    correctOptionId?: number;
-  }>;
+  passingScore: number;
+  passedAt?: string;
+  completedAt: string;
+  timeSpent: number;
 }
 
-// Dictionary Types
-export interface DictionaryTermListItem {
-  id: number;
-  name: string;
-  slug: string;
-  category: 'tariffs' | 'trade_policy' | 'customs' | 'shipping' | 'regulations' | 'agreements';
-  definition: string;
-  authorId: number | null;
-  imageUrl: string | null;
-  videoUrl: string | null;
-  viewCount: number;
-}
-
-export interface DictionaryTerm extends DictionaryTermListItem {
-  examples: string[] | null;
-  relatedTerms: number[] | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface DictionaryTermsResponse {
-  terms: DictionaryTermListItem[];
-  categories: string[];
-  total: number;
-}
-
-export interface DictionaryTermResponse {
-  term: DictionaryTerm;
-}
-
-// Trade Agreement Types
-export interface TradeAgreementListItem {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  countries: string[];
-  status: 'active' | 'expired' | 'proposed' | 'renegotiating';
-  startDate: Date | null;
-  endDate: Date | null;
-  authorId: number | null;
-}
-
-export interface TradeAgreement extends TradeAgreementListItem {
-  content: any;
-  keyProvisions: string[] | null;
-  documentUrl: string | null;
-  imageUrl: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface TradeAgreementsResponse {
-  agreements: TradeAgreementListItem[];
-  stats: {
-    totalActive: number;
-    totalExpired: number;
-    totalProposed: number;
-    totalRenegotiating: number;
-    total: number;
-  };
-}
-
-export interface TradeAgreementResponse {
-  agreement: TradeAgreement;
-}
-
-// Challenge Types
+/**
+ * Daily challenge
+ */
 export interface DailyChallenge {
   id: number;
   title: string;
   description: string;
-  type: 'quiz' | 'research' | 'reading';
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  content: any;
-  date: Date;
+  difficulty: string;
+  type: 'quiz' | 'task';
   points: number;
-  expiresAt: Date;
-  authorId: number | null;
-  createdAt: Date;
-  updatedAt: Date;
+  content: any;
+  availableFrom: string;
+  availableTo: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
+/**
+ * Daily challenge response
+ */
 export interface DailyChallengeResponse {
-  challenge: DailyChallenge;
+  challenge: DailyChallenge | null;
   completed: boolean;
 }
 
-// User Progress Types
+/**
+ * User progress
+ */
 export interface UserProgress {
-  userId: number;
-  moduleId: number;
-  status: 'not_started' | 'in_progress' | 'completed';
-  progress: number;
-  currentSection: number;
-  startedAt: Date;
-  lastAccessedAt: Date;
-  completedAt: Date | null;
-}
-
-export interface UserQuizProgress {
-  userId: number;
-  quizId: number;
-  score: number;
-  attempts: number;
-  completed: boolean;
-  lastAttemptAt: Date;
-  responses: any;
-}
-
-export interface UserProgressResponse {
-  moduleProgress: UserProgress[];
-  quizProgress: UserQuizProgress[];
-}
-
-// Certificate Types
-export interface Certificate {
-  id: number;
-  title: string;
-  userId: number;
-  moduleId: number | null;
-  imageUrl: string;
-  issuedAt: Date;
-  verificationCode: string;
-}
-
-export interface CertificatesResponse {
+  completedModules: number;
+  totalModules: number;
+  completedChallenges: number;
+  earnedPoints: number;
+  rank?: string;
+  badges: Badge[];
   certificates: Certificate[];
+  recentActivity: ActivityItem[];
 }
 
-// Badge Types
+/**
+ * Badge
+ */
 export interface Badge {
   id: number;
   name: string;
   description: string;
   imageUrl: string;
   criteria: string;
-  category: string;
-  points: number;
+  earnedAt: string;
 }
 
-export interface UserBadge {
-  userId: number;
-  badgeId: number;
-  awardedAt: Date;
-  badge: Badge;
-}
-
-export interface BadgesResponse {
-  badges: Badge[];
-}
-
-export interface UserBadgesResponse {
-  badges: UserBadge[];
-}
-
-// Feature Flag Types
-export interface FeatureFlag {
+/**
+ * Certificate
+ */
+export interface Certificate {
   id: number;
   name: string;
   description: string;
+  imageUrl: string;
+  earnedAt: string;
+  expiresAt?: string;
+}
+
+/**
+ * Activity item
+ */
+export interface ActivityItem {
+  id: number;
+  type: 'module_completed' | 'quiz_passed' | 'challenge_completed' | 'badge_earned' | 'certificate_earned';
+  itemId: number;
+  itemName: string;
+  timestamp: string;
+}
+
+/**
+ * Feature flag
+ */
+export interface FeatureFlag {
+  id: number;
+  name: string;
   isEnabled: boolean;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface FeatureFlagsResponse {
-  flags: FeatureFlag[];
-}
-
+/**
+ * Feature flag response
+ */
 export interface FeatureFlagResponse {
   flag: FeatureFlag;
   isEnabled: boolean;
-}
-
-// Auth Types
-export interface AuthResponse {
-  user: Omit<User, 'password'>;
 }
