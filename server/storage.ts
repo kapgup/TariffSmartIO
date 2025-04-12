@@ -64,6 +64,49 @@ export interface IStorage {
   getFeatureFlag(name: string): Promise<FeatureFlag | undefined>;
   createFeatureFlag(featureFlag: InsertFeatureFlag): Promise<FeatureFlag>;
   updateFeatureFlag(name: string, isEnabled: boolean): Promise<FeatureFlag | undefined>;
+
+  // V2 Learning Modules
+  getLearningModules(): Promise<LearningModule[]>;
+  getLearningModule(id: number): Promise<LearningModule | undefined>;
+  getLearningModuleBySlug(slug: string): Promise<LearningModule | undefined>;
+  createLearningModule(module: InsertLearningModule): Promise<LearningModule>;
+  updateLearningModule(id: number, module: Partial<InsertLearningModule>): Promise<LearningModule | undefined>;
+  
+  // V2 Quizzes
+  getQuizzes(): Promise<Quiz[]>;
+  getQuiz(id: number): Promise<Quiz | undefined>;
+  getQuizzesByModule(moduleId: number): Promise<Quiz[]>;
+  createQuiz(quiz: InsertQuiz): Promise<Quiz>;
+  updateQuiz(id: number, quiz: Partial<InsertQuiz>): Promise<Quiz | undefined>;
+  
+  // V2 Quiz Questions
+  getQuizQuestions(quizId: number): Promise<QuizQuestion[]>;
+  getQuizQuestion(id: number): Promise<QuizQuestion | undefined>;
+  createQuizQuestion(question: InsertQuizQuestion): Promise<QuizQuestion>;
+  updateQuizQuestion(id: number, question: Partial<InsertQuizQuestion>): Promise<QuizQuestion | undefined>;
+  
+  // V2 User Progress
+  getUserProgress(userId: number, moduleId: number): Promise<UserProgress | undefined>;
+  getUserProgressForAllModules(userId: number): Promise<UserProgress[]>;
+  createOrUpdateUserProgress(progress: InsertUserProgress): Promise<UserProgress>;
+  
+  // V2 Quiz Attempts
+  getQuizAttempts(userId: number, quizId: number): Promise<QuizAttempt[]>;
+  createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt>;
+  
+  // V2 Trade Dictionary
+  getTradeDictionaryTerms(): Promise<TradeDictionary[]>;
+  getTradeDictionaryTerm(id: number): Promise<TradeDictionary | undefined>;
+  getTradeDictionaryTermByName(term: string): Promise<TradeDictionary | undefined>;
+  createTradeDictionaryTerm(term: InsertTradeDictionary): Promise<TradeDictionary>;
+  updateTradeDictionaryTerm(id: number, term: Partial<InsertTradeDictionary>): Promise<TradeDictionary | undefined>;
+  
+  // V2 Trade Agreements
+  getTradeAgreements(): Promise<TradeAgreement[]>;
+  getTradeAgreement(id: number): Promise<TradeAgreement | undefined>;
+  getTradeAgreementByName(name: string): Promise<TradeAgreement | undefined>;
+  createTradeAgreement(agreement: InsertTradeAgreement): Promise<TradeAgreement>;
+  updateTradeAgreement(id: number, agreement: Partial<InsertTradeAgreement>): Promise<TradeAgreement | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -75,6 +118,14 @@ export class MemStorage implements IStorage {
   private subscriptions: Map<number, Subscription>;
   private featureAccessList: Map<number, FeatureAccess>;
   private emailSubscribers: Map<number, EmailSubscriber>;
+  // v2 storage
+  private learningModules: Map<number, LearningModule>;
+  private quizzes: Map<number, Quiz>;
+  private quizQuestions: Map<number, QuizQuestion>;
+  private userProgressList: Map<string, UserProgress>;
+  private quizAttempts: Map<number, QuizAttempt>;
+  private tradeDictionary: Map<number, TradeDictionary>;
+  private tradeAgreements: Map<number, TradeAgreement>;
   
   currentUserId: number;
   currentProductCategoryId: number;
@@ -83,8 +134,14 @@ export class MemStorage implements IStorage {
   currentFeatureFlagId: number;
   currentSubscriptionId: number;
   currentFeatureAccessId: number;
-
   currentEmailSubscriberId: number;
+  // v2 IDs
+  currentLearningModuleId: number;
+  currentQuizId: number;
+  currentQuizQuestionId: number;
+  currentQuizAttemptId: number;
+  currentTradeDictionaryId: number;
+  currentTradeAgreementId: number;
 
   constructor() {
     this.users = new Map();
@@ -95,6 +152,14 @@ export class MemStorage implements IStorage {
     this.subscriptions = new Map();
     this.featureAccessList = new Map();
     this.emailSubscribers = new Map();
+    // Initialize v2 storage
+    this.learningModules = new Map();
+    this.quizzes = new Map();
+    this.quizQuestions = new Map();
+    this.userProgressList = new Map();
+    this.quizAttempts = new Map();
+    this.tradeDictionary = new Map();
+    this.tradeAgreements = new Map();
     
     this.currentUserId = 1;
     this.currentProductCategoryId = 1;
@@ -104,6 +169,13 @@ export class MemStorage implements IStorage {
     this.currentSubscriptionId = 1;
     this.currentFeatureAccessId = 1;
     this.currentEmailSubscriberId = 1;
+    // Initialize v2 IDs
+    this.currentLearningModuleId = 1;
+    this.currentQuizId = 1;
+    this.currentQuizQuestionId = 1;
+    this.currentQuizAttemptId = 1;
+    this.currentTradeDictionaryId = 1;
+    this.currentTradeAgreementId = 1;
     
     // Initialize with sample data
     this.initializeData();
