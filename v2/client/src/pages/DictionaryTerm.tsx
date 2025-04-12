@@ -1,169 +1,157 @@
-import { useParams, Link } from 'wouter';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link, useRoute } from 'wouter';
+import { PATHS, DICTIONARY_CATEGORIES } from '../lib/constants';
 import { DictionaryTermResponse } from '../lib/types';
 
-export default function DictionaryTermPage() {
-  const { id } = useParams<{ id: string }>();
-  const termId = parseInt(id);
-  
-  // Fetch term details
+/**
+ * Dictionary term detail page
+ */
+export default function DictionaryTerm() {
+  // Get the term slug from the URL
+  const [match, params] = useRoute<{ slug: string }>(PATHS.DICTIONARY_TERM);
+  const { slug } = params || { slug: '' };
+
+  // Query the dictionary term data
   const {
-    data: termData,
+    data,
     isLoading,
+    isError,
     error
   } = useQuery<DictionaryTermResponse>({
-    queryKey: [`/dictionary/${termId}`],
-    enabled: !!termId,
+    queryKey: ['dictionary', slug],
+    queryFn: async () => {
+      const response = await fetch(`/v2/api/dictionary/${slug}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch dictionary term: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: !!slug,
   });
-  
-  const term = termData?.term;
-  
+
+  if (!match) {
+    return <div>Term not found</div>;
+  }
+
   return (
-    <>
-      {/* Header */}
-      <div className="page-header">
-        <div className="content-container">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div>
-              <Link href="/v2/dictionary">
-                <a className="text-white/80 hover:text-white flex items-center mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                  </svg>
-                  Back to Dictionary
-                </a>
-              </Link>
-              {isLoading ? (
-                <div className="animate-pulse">
-                  <div className="h-8 bg-white/20 rounded w-48 mb-2"></div>
-                </div>
-              ) : error ? (
-                <h1 className="page-title">Term Not Found</h1>
-              ) : term ? (
-                <h1 className="page-title">{term.term}</h1>
-              ) : (
-                <h1 className="page-title">Term Details</h1>
-              )}
-            </div>
-            {!isLoading && !error && term?.category && (
-              <span className="inline-block mt-2 md:mt-0 px-3 py-1 bg-white/20 text-white rounded-full text-sm">
-                {term.category}
-              </span>
+    <div className="space-y-8">
+      {/* Header with term and navigation */}
+      <div className="bg-white shadow-sm rounded-lg p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <Link href={PATHS.DICTIONARY}>
+              <a className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                ← Back to Dictionary
+              </a>
+            </Link>
+            {!isLoading && !isError && data?.term && (
+              <h1 className="mt-2 text-3xl font-bold text-gray-900">{data.term.term}</h1>
             )}
           </div>
-        </div>
-      </div>
-      
-      {/* Term Content */}
-      <div className="bg-white py-12">
-        <div className="content-container">
-          {isLoading ? (
-            <div className="max-w-3xl animate-pulse">
-              <div className="h-6 bg-neutral-200 rounded w-full mb-4"></div>
-              <div className="h-6 bg-neutral-200 rounded w-5/6 mb-4"></div>
-              <div className="h-6 bg-neutral-200 rounded w-4/6 mb-8"></div>
-              
-              <div className="h-4 bg-neutral-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-neutral-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-neutral-200 rounded w-3/4"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold text-red-500 mb-4">Error Loading Term</h3>
-              <p className="text-neutral-600 mb-6">
-                Sorry, we couldn't load this dictionary term. It may not exist or there was a problem with the server.
-              </p>
-              <div className="flex justify-center gap-4">
-                <button 
-                  className="px-6 py-2 bg-primary text-white rounded-md"
-                  onClick={() => window.location.reload()}
-                >
-                  Try Again
-                </button>
-                <Link href="/v2/dictionary">
-                  <a className="px-6 py-2 border border-neutral-300 rounded-md">
-                    Back to Dictionary
-                  </a>
-                </Link>
-              </div>
-            </div>
-          ) : term ? (
-            <div>
-              <div className="max-w-3xl bg-neutral-50 rounded-lg p-8 mb-8 border shadow-sm">
-                <h2 className="text-2xl font-bold text-neutral-900 mb-4">{term.term}</h2>
-                <p className="text-lg text-neutral-700">{term.definition}</p>
-              </div>
-              
-              {/* Related Terms (Placeholder for future feature) */}
-              <div className="max-w-3xl mt-8">
-                <h3 className="text-xl font-semibold mb-4">Related Terms</h3>
-                <p className="text-neutral-500 italic">
-                  This feature is coming soon. We'll show related dictionary terms here.
-                </p>
-              </div>
-              
-              {/* Example Usage (Placeholder for future feature) */}
-              <div className="max-w-3xl mt-8">
-                <h3 className="text-xl font-semibold mb-4">Example Usage</h3>
-                <p className="text-neutral-500 italic">
-                  This feature is coming soon. We'll show examples of how this term is used in real-world trade contexts.
-                </p>
-              </div>
-              
-              {/* Navigation */}
-              <div className="max-w-3xl border-t mt-12 pt-8">
-                <div className="flex justify-between">
-                  <Link href="/v2/dictionary">
-                    <a className="inline-flex items-center text-primary hover:underline">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                      </svg>
-                      Back to Dictionary
-                    </a>
-                  </Link>
-                  <Link href="/v2/challenge">
-                    <a className="inline-flex items-center text-primary hover:underline">
-                      Test Your Knowledge
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 ml-1">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                      </svg>
-                    </a>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-4">Term Not Found</h3>
-              <p className="text-neutral-600 mb-6">
-                Sorry, we couldn't find the term you're looking for.
-              </p>
-              <Link href="/v2/dictionary">
-                <a className="px-6 py-2 bg-primary text-white rounded-md">
-                  Back to Dictionary
-                </a>
-              </Link>
-            </div>
+          
+          {!isLoading && !isError && data?.term && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+              {DICTIONARY_CATEGORIES[data.term.category.toUpperCase()] || data.term.category}
+            </span>
           )}
         </div>
       </div>
-      
-      {/* Daily Challenge CTA */}
-      <div className="bg-neutral-50 py-12 border-t">
-        <div className="content-container">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Ready for a Challenge?</h2>
-            <p className="text-neutral-600 mb-6 max-w-2xl mx-auto">
-              Test your trade terminology knowledge with our daily challenge.
+
+      {/* Main content */}
+      <div className="bg-white shadow-sm rounded-lg p-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="h-8 bg-gray-100 rounded animate-pulse"></div>
+            <div className="h-24 bg-gray-100 rounded animate-pulse"></div>
+            <div className="h-32 bg-gray-100 rounded animate-pulse"></div>
+          </div>
+        ) : isError ? (
+          <div className="py-8 text-center">
+            <p className="text-red-500">
+              {error instanceof Error ? error.message : 'Failed to load dictionary term'}
             </p>
-            <Link href="/v2/challenge">
-              <a className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-600 transition">
-                Take Today's Challenge
+            <Link href={PATHS.DICTIONARY}>
+              <a className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Return to Dictionary
               </a>
             </Link>
           </div>
-        </div>
+        ) : data?.term ? (
+          <div>
+            <div className="prose max-w-none">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">Definition</h2>
+                <p className="text-gray-700">{data.term.definition}</p>
+              </div>
+
+              {data.term.examples && data.term.examples.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-3">Examples</h2>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {data.term.examples.map((example, index) => (
+                      <li key={index} className="text-gray-700">{example}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Related terms */}
+            {data.related && data.related.length > 0 && (
+              <div className="mt-12">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Related Terms</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {data.related.map((relatedTerm) => (
+                    <Link key={relatedTerm.id} href={PATHS.DICTIONARY_TERM.replace(':slug', relatedTerm.slug)}>
+                      <a className="block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all">
+                        <h3 className="text-lg font-medium text-gray-900">{relatedTerm.term}</h3>
+                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{relatedTerm.definition}</p>
+                      </a>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Knowledge source and last updated date */}
+            <div className="mt-12 pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:justify-between text-sm text-gray-500">
+                <p>Source: TariffSmart Trade Knowledge Base</p>
+                <p>Last updated: {new Date(data.term.updatedAt).toLocaleDateString()}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-gray-500">Term not found</p>
+            <Link href={PATHS.DICTIONARY}>
+              <a className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Return to Dictionary
+              </a>
+            </Link>
+          </div>
+        )}
       </div>
-    </>
+
+      {/* Navigation buttons */}
+      <div className="flex justify-between">
+        <Link href={PATHS.DICTIONARY}>
+          <a className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Back to Dictionary
+          </a>
+        </Link>
+        {data?.term && (
+          <a
+            href={`mailto:?subject=Trade%20Term:%20${encodeURIComponent(data.term.term)}&body=${encodeURIComponent(
+              `Check out this trade term on TariffSmart:\n\n${data.term.term}\n\n${data.term.definition}\n\n`
+            )}`}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Share via Email
+          </a>
+        )}
+      </div>
+    </div>
   );
 }
