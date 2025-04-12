@@ -1,928 +1,1564 @@
-import { Express, Request, Response } from "express";
-import { z } from "zod";
-import { storage } from "./storage";
-import { db } from "./db";
-import { and, desc, eq, like, sql } from "drizzle-orm";
-import { 
-  featureFlags, 
-  modules, 
-  quizzes, 
-  quizQuestions, 
-  quizOptions,
-  dictionaryTerms,
-  tradeAgreements,
-  userModuleProgress,
-  userQuizProgress,
-  dailyChallenges,
-  challengeCompletions,
-  badges,
-  userBadges,
-  emailSubscribers,
-  insertEmailSubscriberSchema,
-  insertUserSchema,
-  insertModuleSchema,
-  insertQuizSchema,
-  insertQuizQuestionSchema,
-  insertQuizOptionSchema,
-  insertDictionaryTermSchema,
-  insertTradeAgreementSchema,
-  insertDailyChallengeSchema,
-  insertBadgeSchema
-} from "../shared/schema";
+import { Express, Request, Response } from 'express';
+import { storage } from './storage';
+import { eq } from 'drizzle-orm';
+import * as z from 'zod';
+import { dictionaryTerms, emailSubscriptionSchema, insertDictionaryTermSchema, insertModuleSchema, insertUserSchema, moduleCreateSchema, userLoginSchema, userRegistrationSchema } from '../shared/schema';
 
 /**
- * Register all routes for the v2 platform
+ * Register all API routes for the v2 platform
  */
 export async function registerRoutes(app: Express) {
-  // Health check endpoint
-  app.get("/v2/api/health", (_req: Request, res: Response) => {
-    res.json({ status: "ok", version: "2.0", timestamp: new Date().toISOString() });
+  // HEALTH CHECK
+  app.get('/v2/api/health', (_req: Request, res: Response) => {
+    res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
   });
 
-  // ===== FEATURE FLAGS =====
-  app.get("/v2/api/feature-flags", async (_req: Request, res: Response) => {
-    try {
-      const flags = await storage.getFeatureFlags();
-      res.json({ flags });
-    } catch (error) {
-      console.error("Error fetching feature flags:", error);
-      res.status(500).json({ error: "Failed to fetch feature flags" });
-    }
-  });
+  // AUTH ROUTES
+  registerAuthRoutes(app);
 
-  app.get("/v2/api/feature-flags/:name", async (req: Request, res: Response) => {
+  // MODULES ROUTES
+  registerModuleRoutes(app);
+
+  // QUIZ ROUTES 
+  registerQuizRoutes(app);
+
+  // DICTIONARY ROUTES
+  registerDictionaryRoutes(app);
+
+  // TRADE AGREEMENT ROUTES
+  registerTradeAgreementRoutes(app);
+
+  // DAILY CHALLENGE ROUTES
+  registerChallengeRoutes(app);
+
+  // USER PROGRESS ROUTES
+  registerProgressRoutes(app);
+
+  // BADGE ROUTES
+  registerBadgeRoutes(app);
+
+  // FEATURE FLAG ROUTES
+  registerFeatureFlagRoutes(app);
+
+  // EMAIL SUBSCRIPTION ROUTES
+  registerEmailSubscriptionRoutes(app);
+
+  console.log('All v2 API routes registered');
+}
+
+/**
+ * Register authentication routes
+ */
+function registerAuthRoutes(app: Express) {
+  // Register a new user
+  app.post('/v2/api/auth/register', async (req: Request, res: Response) => {
     try {
-      const flag = await storage.getFeatureFlag(req.params.name);
-      if (!flag) {
-        return res.status(404).json({ error: "Feature flag not found" });
+      const validatedData = userRegistrationSchema.parse(req.body);
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      
+      if (existingUser) {
+        return res.status(409).json({
+          error: 'User already exists',
+          message: 'A user with this email already exists'
+        });
       }
-      res.json({ flag });
+      
+      const newUser = await storage.createUser({
+        email: validatedData.email,
+        username: validatedData.username,
+        passwordHash: validatedData.passwordHash, // In production, hash the password
+        role: 'basic', // Default role for new users
+      });
+      
+      // Create session
+      if (req.session) {
+        req.session.userId = newUser.id;
+        req.session.userRole = newUser.role;
+      }
+      
+      return res.status(201).json({
+        message: 'User registered successfully',
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          username: newUser.username,
+          role: newUser.role
+        }
+      });
     } catch (error) {
-      console.error(`Error fetching feature flag ${req.params.name}:`, error);
-      res.status(500).json({ error: "Failed to fetch feature flag" });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
+      }
+      
+      console.error('Registration error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not register user'
+      });
     }
   });
 
-  // ===== MODULES =====
-  app.get("/v2/api/modules", async (req: Request, res: Response) => {
+  // Login
+  app.post('/v2/api/auth/login', async (req: Request, res: Response) => {
+    try {
+      const validatedData = userLoginSchema.parse(req.body);
+      const user = await storage.getUserByEmail(validatedData.email);
+      
+      if (!user || user.passwordHash !== validatedData.password) { // In production, compare hashed passwords
+        return res.status(401).json({
+          error: 'Authentication failed',
+          message: 'Invalid email or password'
+        });
+      }
+      
+      // Create session
+      if (req.session) {
+        req.session.userId = user.id;
+        req.session.userRole = user.role;
+      }
+      
+      return res.status(200).json({
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role
+        }
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
+      }
+      
+      console.error('Login error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not authenticate user'
+      });
+    }
+  });
+
+  // Logout
+  app.post('/v2/api/auth/logout', (req: Request, res: Response) => {
+    if (req.session) {
+      req.session.destroy((error) => {
+        if (error) {
+          console.error('Session destruction error:', error);
+          return res.status(500).json({
+            error: 'Internal server error',
+            message: 'Could not log out'
+          });
+        }
+        
+        res.clearCookie('connect.sid');
+        return res.status(200).json({
+          message: 'Logout successful'
+        });
+      });
+    } else {
+      return res.status(200).json({
+        message: 'Logout successful (no session found)'
+      });
+    }
+  });
+
+  // Get current user
+  app.get('/v2/api/auth/me', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to access this resource'
+      });
+    }
+    
+    try {
+      const user = await storage.getUser(req.session.userId);
+      
+      if (!user) {
+        // Session exists but user doesn't - clear session
+        req.session.destroy(() => {});
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Invalid session'
+        });
+      }
+      
+      return res.status(200).json({
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          createdAt: user.createdAt
+        }
+      });
+    } catch (error) {
+      console.error('Get current user error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve user information'
+      });
+    }
+  });
+}
+
+/**
+ * Register module routes
+ */
+function registerModuleRoutes(app: Express) {
+  // Get all modules (with optional filtering)
+  app.get('/v2/api/modules', async (req: Request, res: Response) => {
     try {
       const category = req.query.category as string | undefined;
-      const publishedOnly = req.query.published === "true";
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
+      const published = req.query.published === 'true';
       
-      const modulesList = await storage.getModules({ 
-        category, 
-        published: publishedOnly,
-        limit,
-        offset
-      });
+      const modules = await storage.getModules({ category, published });
       
-      // Get all unique categories
-      const categoriesResult = await db.selectDistinct({ category: modules.category })
-        .from(modules)
-        .where(publishedOnly ? eq(modules.published, true) : undefined);
+      // Get distinct categories for filtering
+      const moduleCategories = Array.from(new Set(modules.map(module => module.category)));
       
-      const categories = categoriesResult.map(c => c.category);
-      
-      // Get total count
-      const [{ count }] = await db.select({ 
-        count: sql<number>`count(*)` 
-      })
-      .from(modules)
-      .where(
-        category ? eq(modules.category, category as any) : undefined,
-        publishedOnly ? eq(modules.published, true) : undefined
-      );
-      
-      res.json({ 
-        modules: modulesList,
-        categories,
-        totalModules: count
+      return res.status(200).json({
+        modules,
+        categories: moduleCategories,
+        totalModules: modules.length
       });
     } catch (error) {
-      console.error("Error fetching modules:", error);
-      res.status(500).json({ error: "Failed to fetch modules" });
+      console.error('Get modules error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve modules'
+      });
     }
   });
 
-  app.get("/v2/api/modules/:id", async (req: Request, res: Response) => {
+  // Get module by ID
+  app.get('/v2/api/modules/:id', async (req: Request, res: Response) => {
     try {
       const moduleId = parseInt(req.params.id);
-      const moduleData = await storage.getModuleById(moduleId);
       
-      if (!moduleData) {
-        return res.status(404).json({ error: "Module not found" });
+      if (isNaN(moduleId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Module ID must be a number'
+        });
       }
       
-      // Get related quizzes for this module
-      const relatedQuizzes = await storage.getQuizzes({ moduleId });
+      const module = await storage.getModuleById(moduleId);
       
-      res.json({ module: moduleData, quizzes: relatedQuizzes });
+      if (!module) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Module not found'
+        });
+      }
+      
+      // Also get associated quizzes
+      const quizzes = await storage.getQuizzes({ moduleId });
+      
+      return res.status(200).json({
+        module,
+        quizzes
+      });
     } catch (error) {
-      console.error(`Error fetching module ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to fetch module" });
+      console.error('Get module error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve module'
+      });
     }
   });
 
-  app.get("/v2/api/modules/slug/:slug", async (req: Request, res: Response) => {
+  // Get module by slug
+  app.get('/v2/api/modules/slug/:slug', async (req: Request, res: Response) => {
     try {
-      const moduleData = await storage.getModuleBySlug(req.params.slug);
+      const slug = req.params.slug;
       
-      if (!moduleData) {
-        return res.status(404).json({ error: "Module not found" });
+      const module = await storage.getModuleBySlug(slug);
+      
+      if (!module) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Module not found'
+        });
       }
       
-      // Get related quizzes for this module
-      const relatedQuizzes = await storage.getQuizzes({ moduleId: moduleData.id });
+      // Also get associated quizzes
+      const quizzes = await storage.getQuizzes({ moduleId: module.id });
       
-      res.json({ module: moduleData, quizzes: relatedQuizzes });
+      return res.status(200).json({
+        module,
+        quizzes
+      });
     } catch (error) {
-      console.error(`Error fetching module with slug ${req.params.slug}:`, error);
-      res.status(500).json({ error: "Failed to fetch module" });
+      console.error('Get module by slug error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve module'
+      });
     }
   });
 
-  app.post("/v2/api/modules", async (req: Request, res: Response) => {
+  // Create a new module (admin only)
+  app.post('/v2/api/modules', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to create modules'
+      });
+    }
+    
     try {
-      const moduleData = insertModuleSchema.parse(req.body);
-      const newModule = await storage.createModule(moduleData);
-      res.status(201).json({ module: newModule });
+      const validatedData = moduleCreateSchema.parse(req.body);
+      
+      const newModule = await storage.createModule({
+        title: validatedData.title,
+        slug: validatedData.slug,
+        description: validatedData.description,
+        category: validatedData.category,
+        difficulty: validatedData.difficulty,
+        authorId: req.session.userId,
+        content: validatedData.content,
+        estimatedMinutes: validatedData.estimatedMinutes,
+        published: validatedData.published || false,
+        tags: validatedData.tags || []
+      });
+      
+      return res.status(201).json({
+        message: 'Module created successfully',
+        module: newModule
+      });
     } catch (error) {
-      console.error("Error creating module:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid module data", details: error.errors });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
       }
-      res.status(500).json({ error: "Failed to create module" });
+      
+      console.error('Create module error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not create module'
+      });
     }
   });
 
-  // ===== QUIZZES =====
-  app.get("/v2/api/quizzes", async (req: Request, res: Response) => {
+  // Update a module (admin only)
+  app.patch('/v2/api/modules/:id', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to update modules'
+      });
+    }
+    
+    try {
+      const moduleId = parseInt(req.params.id);
+      
+      if (isNaN(moduleId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Module ID must be a number'
+        });
+      }
+      
+      const validatedData = insertModuleSchema.partial().parse(req.body);
+      
+      const updatedModule = await storage.updateModule(moduleId, validatedData);
+      
+      if (!updatedModule) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Module not found'
+        });
+      }
+      
+      return res.status(200).json({
+        message: 'Module updated successfully',
+        module: updatedModule
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
+      }
+      
+      console.error('Update module error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not update module'
+      });
+    }
+  });
+}
+
+/**
+ * Register quiz routes
+ */
+function registerQuizRoutes(app: Express) {
+  // Get all quizzes (with optional filtering)
+  app.get('/v2/api/quizzes', async (req: Request, res: Response) => {
     try {
       const moduleId = req.query.moduleId ? parseInt(req.query.moduleId as string) : undefined;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
+      const published = req.query.published === 'true';
       
-      const quizList = await storage.getQuizzes({ moduleId, limit, offset });
+      const quizzes = await storage.getQuizzes({ moduleId, published });
       
-      // Get total count
-      const [{ count }] = await db.select({ 
-        count: sql<number>`count(*)` 
-      })
-      .from(quizzes)
-      .where(moduleId ? eq(quizzes.moduleId, moduleId) : undefined);
-      
-      res.json({ 
-        quizzes: quizList,
-        totalQuizzes: count
+      return res.status(200).json({
+        quizzes,
+        totalQuizzes: quizzes.length
       });
     } catch (error) {
-      console.error("Error fetching quizzes:", error);
-      res.status(500).json({ error: "Failed to fetch quizzes" });
+      console.error('Get quizzes error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve quizzes'
+      });
     }
   });
 
-  app.get("/v2/api/quizzes/:id", async (req: Request, res: Response) => {
+  // Get quiz by ID with questions and options
+  app.get('/v2/api/quizzes/:id', async (req: Request, res: Response) => {
     try {
       const quizId = parseInt(req.params.id);
-      const quizData = await storage.getQuizById(quizId);
       
-      if (!quizData) {
-        return res.status(404).json({ error: "Quiz not found" });
+      if (isNaN(quizId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Quiz ID must be a number'
+        });
       }
       
-      // Get quiz questions with their options
-      const questions = await storage.getQuizQuestions(quizId);
-      const questionsWithOptions = await Promise.all(
-        questions.map(async (question) => {
-          const options = await storage.getQuizOptions(question.id);
-          return {
-            ...question,
-            options: options.map(opt => ({
-              id: opt.id,
-              text: opt.text,
-              order: opt.order,
-              questionId: opt.questionId,
-              isCorrect: opt.isCorrect
-            }))
-          };
-        })
-      );
-      
-      res.json({ 
-        quiz: quizData, 
-        questions: questionsWithOptions.sort((a, b) => a.order - b.order)
-      });
-    } catch (error) {
-      console.error(`Error fetching quiz ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to fetch quiz" });
-    }
-  });
-
-  app.get("/v2/api/quizzes/slug/:slug", async (req: Request, res: Response) => {
-    try {
-      const quizData = await storage.getQuizBySlug(req.params.slug);
-      
-      if (!quizData) {
-        return res.status(404).json({ error: "Quiz not found" });
-      }
-      
-      // Get quiz questions with their options
-      const questions = await storage.getQuizQuestions(quizData.id);
-      const questionsWithOptions = await Promise.all(
-        questions.map(async (question) => {
-          const options = await storage.getQuizOptions(question.id);
-          return {
-            ...question,
-            options: options.map(opt => ({
-              id: opt.id,
-              text: opt.text,
-              order: opt.order,
-              questionId: opt.questionId,
-              isCorrect: opt.isCorrect
-            }))
-          };
-        })
-      );
-      
-      res.json({ 
-        quiz: quizData, 
-        questions: questionsWithOptions.sort((a, b) => a.order - b.order)
-      });
-    } catch (error) {
-      console.error(`Error fetching quiz with slug ${req.params.slug}:`, error);
-      res.status(500).json({ error: "Failed to fetch quiz" });
-    }
-  });
-
-  app.post("/v2/api/quizzes", async (req: Request, res: Response) => {
-    try {
-      const quizData = insertQuizSchema.parse(req.body);
-      const newQuiz = await storage.createQuiz(quizData);
-      res.status(201).json({ quiz: newQuiz });
-    } catch (error) {
-      console.error("Error creating quiz:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid quiz data", details: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create quiz" });
-    }
-  });
-
-  app.post("/v2/api/quiz-questions", async (req: Request, res: Response) => {
-    try {
-      const questionData = insertQuizQuestionSchema.parse(req.body);
-      const newQuestion = await storage.createQuizQuestion(questionData);
-      res.status(201).json({ question: newQuestion });
-    } catch (error) {
-      console.error("Error creating quiz question:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid question data", details: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create quiz question" });
-    }
-  });
-
-  app.post("/v2/api/quiz-options", async (req: Request, res: Response) => {
-    try {
-      const optionData = insertQuizOptionSchema.parse(req.body);
-      const newOption = await storage.createQuizOption(optionData);
-      res.status(201).json({ option: newOption });
-    } catch (error) {
-      console.error("Error creating quiz option:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid option data", details: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create quiz option" });
-    }
-  });
-
-  // Submit a quiz attempt
-  app.post("/v2/api/quizzes/:id/submit", async (req: Request, res: Response) => {
-    try {
-      const quizId = parseInt(req.params.id);
-      const { userId, answers, timeSpent } = req.body;
-      
-      if (!userId || !answers) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-      
-      // Get the quiz
       const quiz = await storage.getQuizById(quizId);
+      
       if (!quiz) {
-        return res.status(404).json({ error: "Quiz not found" });
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Quiz not found'
+        });
       }
       
-      // Get all questions and correct answers
+      // Get questions for this quiz
       const questions = await storage.getQuizQuestions(quizId);
-      const correctAnswers: Record<number, number[]> = {};
       
-      for (const question of questions) {
-        const options = await storage.getQuizOptions(question.id);
-        correctAnswers[question.id] = options
-          .filter(opt => opt.isCorrect)
-          .map(opt => opt.id);
+      // Get options for each question
+      const questionsWithOptions = await Promise.all(
+        questions.map(async (question) => {
+          const options = await storage.getQuizOptions(question.id);
+          return { ...question, options };
+        })
+      );
+      
+      return res.status(200).json({
+        quiz,
+        questions: questionsWithOptions
+      });
+    } catch (error) {
+      console.error('Get quiz error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve quiz'
+      });
+    }
+  });
+
+  // Get quiz by slug
+  app.get('/v2/api/quizzes/slug/:slug', async (req: Request, res: Response) => {
+    try {
+      const slug = req.params.slug;
+      
+      const quiz = await storage.getQuizBySlug(slug);
+      
+      if (!quiz) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Quiz not found'
+        });
       }
+      
+      // Get questions for this quiz
+      const questions = await storage.getQuizQuestions(quiz.id);
+      
+      // Get options for each question
+      const questionsWithOptions = await Promise.all(
+        questions.map(async (question) => {
+          const options = await storage.getQuizOptions(question.id);
+          return { ...question, options };
+        })
+      );
+      
+      return res.status(200).json({
+        quiz,
+        questions: questionsWithOptions
+      });
+    } catch (error) {
+      console.error('Get quiz by slug error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve quiz'
+      });
+    }
+  });
+
+  // Submit quiz answers
+  app.post('/v2/api/quizzes/:id/submit', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to submit quiz answers'
+      });
+    }
+    
+    try {
+      const quizId = parseInt(req.params.id);
+      
+      if (isNaN(quizId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Quiz ID must be a number'
+        });
+      }
+      
+      const quiz = await storage.getQuizById(quizId);
+      
+      if (!quiz) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Quiz not found'
+        });
+      }
+      
+      const { answers, timeSpent } = req.body;
+      
+      if (!answers || !Array.isArray(answers)) {
+        return res.status(400).json({
+          error: 'Invalid submission',
+          message: 'Answers must be provided as an array'
+        });
+      }
+      
+      // Get questions for this quiz
+      const questions = await storage.getQuizQuestions(quizId);
+      
+      // Get options for each question to determine correct answers
+      const questionsWithOptions = await Promise.all(
+        questions.map(async (question) => {
+          const options = await storage.getQuizOptions(question.id);
+          return { ...question, options };
+        })
+      );
       
       // Calculate score
-      let correctCount = 0;
+      let score = 0;
+      let correctAnswers = 0;
       
-      for (const questionId in answers) {
-        const userAnswer = answers[questionId];
-        const correctOptionsForQuestion = correctAnswers[parseInt(questionId)] || [];
+      answers.forEach((answer: { questionId: number, selectedOptionId: number }) => {
+        const question = questionsWithOptions.find(q => q.id === answer.questionId);
         
-        // For single-select questions
-        if (typeof userAnswer === 'number') {
-          if (correctOptionsForQuestion.includes(userAnswer)) {
-            correctCount++;
-          }
-        } 
-        // For multi-select questions
-        else if (Array.isArray(userAnswer)) {
-          const isCorrect = 
-            userAnswer.length === correctOptionsForQuestion.length &&
-            userAnswer.every(a => correctOptionsForQuestion.includes(a));
+        if (question) {
+          const correctOption = question.options.find(o => o.isCorrect);
           
-          if (isCorrect) {
-            correctCount++;
+          if (correctOption && correctOption.id === answer.selectedOptionId) {
+            correctAnswers++;
           }
         }
+      });
+      
+      if (questions.length > 0) {
+        score = (correctAnswers / questions.length) * 100;
       }
       
-      const score = Math.round((correctCount / questions.length) * 100);
       const passed = score >= (quiz.passingScore || 70);
       
-      // Update user progress
-      const progress = await storage.updateUserQuizProgress(
-        userId,
-        quizId,
-        score,
-        passed
-      );
+      // Save user's quiz progress
+      const existingProgress = await storage.getUserQuizProgress(req.session.userId, quizId);
       
-      res.json({ 
-        success: true,
+      if (existingProgress) {
+        // Update existing progress
+        await storage.updateUserQuizProgress(req.session.userId, quizId, {
+          score,
+          passed,
+          attempts: existingProgress.attempts + 1,
+          answers: answers,
+          completedAt: new Date(),
+          timeSpent: timeSpent || null
+        });
+      } else {
+        // Create new progress record
+        await storage.createUserQuizProgress({
+          userId: req.session.userId,
+          quizId,
+          score,
+          passed,
+          attempts: 1,
+          answers: answers,
+          completedAt: new Date(),
+          timeSpent: timeSpent || null
+        });
+      }
+      
+      return res.status(200).json({
         score,
         passed,
-        correctAnswers: Object.fromEntries(
-          Object.entries(correctAnswers).map(([qId, answers]) => [qId, answers])
-        ),
-        progress
+        correctAnswers,
+        totalQuestions: questions.length
       });
     } catch (error) {
-      console.error(`Error submitting quiz ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to submit quiz" });
+      console.error('Submit quiz error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not process quiz submission'
+      });
     }
   });
+}
 
-  // ===== DICTIONARY =====
-  app.get("/v2/api/dictionary", async (req: Request, res: Response) => {
+/**
+ * Register dictionary routes
+ */
+function registerDictionaryRoutes(app: Express) {
+  // Get all dictionary terms (with optional filtering)
+  app.get('/v2/api/dictionary', async (req: Request, res: Response) => {
     try {
       const category = req.query.category as string | undefined;
-      const searchQuery = req.query.query as string | undefined;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
+      const searchQuery = req.query.search as string | undefined;
       
-      const terms = await storage.getDictionaryTerms({ 
-        category, 
-        searchQuery,
-        limit,
-        offset
-      });
+      const terms = await storage.getDictionaryTerms({ category, searchQuery });
       
-      // Get all unique categories
-      const categoriesResult = await db.selectDistinct({ category: dictionaryTerms.category })
-        .from(dictionaryTerms);
+      // Get distinct categories for filtering
+      const termCategories = Array.from(new Set(terms.map(term => term.category)));
       
-      const categories = categoriesResult.map(c => c.category);
-      
-      // Get total count with the same filters
-      const [{ count }] = await db.select({ 
-        count: sql<number>`count(*)` 
-      })
-      .from(dictionaryTerms)
-      .where(
-        category ? eq(dictionaryTerms.category, category as any) : undefined,
-        searchQuery ? 
-          like(dictionaryTerms.name, `%${searchQuery}%`) : 
-          undefined
-      );
-      
-      res.json({ 
+      return res.status(200).json({
         terms,
-        categories,
-        totalTerms: count
+        categories: termCategories,
+        totalTerms: terms.length
       });
     } catch (error) {
-      console.error("Error fetching dictionary terms:", error);
-      res.status(500).json({ error: "Failed to fetch dictionary terms" });
+      console.error('Get dictionary terms error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve dictionary terms'
+      });
     }
   });
 
-  app.get("/v2/api/dictionary/:id", async (req: Request, res: Response) => {
+  // Get dictionary term by ID
+  app.get('/v2/api/dictionary/:id', async (req: Request, res: Response) => {
     try {
       const termId = parseInt(req.params.id);
+      
+      if (isNaN(termId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Term ID must be a number'
+        });
+      }
+      
       const term = await storage.getDictionaryTermById(termId);
       
       if (!term) {
-        return res.status(404).json({ error: "Dictionary term not found" });
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Dictionary term not found'
+        });
       }
       
       // Increment view count
-      await storage.updateDictionaryTermViewCount(termId);
+      const updatedTerm = await storage.incrementDictionaryTermViewCount(termId);
       
-      res.json({ term });
+      return res.status(200).json({
+        term: updatedTerm || term
+      });
     } catch (error) {
-      console.error(`Error fetching dictionary term ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to fetch dictionary term" });
+      console.error('Get dictionary term error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve dictionary term'
+      });
     }
   });
 
-  app.get("/v2/api/dictionary/slug/:slug", async (req: Request, res: Response) => {
+  // Get dictionary term by slug
+  app.get('/v2/api/dictionary/slug/:slug', async (req: Request, res: Response) => {
     try {
-      const term = await storage.getDictionaryTermBySlug(req.params.slug);
+      const slug = req.params.slug;
+      
+      const term = await storage.getDictionaryTermBySlug(slug);
       
       if (!term) {
-        return res.status(404).json({ error: "Dictionary term not found" });
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Dictionary term not found'
+        });
       }
       
       // Increment view count
-      await storage.updateDictionaryTermViewCount(term.id);
+      const updatedTerm = await storage.incrementDictionaryTermViewCount(term.id);
       
-      res.json({ term });
+      return res.status(200).json({
+        term: updatedTerm || term
+      });
     } catch (error) {
-      console.error(`Error fetching dictionary term with slug ${req.params.slug}:`, error);
-      res.status(500).json({ error: "Failed to fetch dictionary term" });
+      console.error('Get dictionary term by slug error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve dictionary term'
+      });
     }
   });
 
-  app.post("/v2/api/dictionary", async (req: Request, res: Response) => {
+  // Create a new dictionary term (admin only)
+  app.post('/v2/api/dictionary', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to create dictionary terms'
+      });
+    }
+    
     try {
-      const termData = insertDictionaryTermSchema.parse(req.body);
-      const newTerm = await storage.createDictionaryTerm(termData);
-      res.status(201).json({ term: newTerm });
+      const validatedData = insertDictionaryTermSchema.parse(req.body);
+      
+      const newTerm = await storage.createDictionaryTerm({
+        ...validatedData,
+        authorId: req.session.userId,
+        viewCount: 0
+      });
+      
+      return res.status(201).json({
+        message: 'Dictionary term created successfully',
+        term: newTerm
+      });
     } catch (error) {
-      console.error("Error creating dictionary term:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid term data", details: error.errors });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
       }
-      res.status(500).json({ error: "Failed to create dictionary term" });
+      
+      console.error('Create dictionary term error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not create dictionary term'
+      });
     }
   });
 
-  // ===== TRADE AGREEMENTS =====
-  app.get("/v2/api/trade-agreements", async (req: Request, res: Response) => {
+  // Update a dictionary term (admin only)
+  app.patch('/v2/api/dictionary/:id', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to update dictionary terms'
+      });
+    }
+    
+    try {
+      const termId = parseInt(req.params.id);
+      
+      if (isNaN(termId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Term ID must be a number'
+        });
+      }
+      
+      const validatedData = insertDictionaryTermSchema.partial().parse(req.body);
+      
+      const updatedTerm = await storage.updateDictionaryTerm(termId, validatedData);
+      
+      if (!updatedTerm) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Dictionary term not found'
+        });
+      }
+      
+      return res.status(200).json({
+        message: 'Dictionary term updated successfully',
+        term: updatedTerm
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
+      }
+      
+      console.error('Update dictionary term error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not update dictionary term'
+      });
+    }
+  });
+}
+
+/**
+ * Register trade agreement routes
+ */
+function registerTradeAgreementRoutes(app: Express) {
+  // Get all trade agreements (with optional filtering)
+  app.get('/v2/api/agreements', async (req: Request, res: Response) => {
     try {
       const status = req.query.status as string | undefined;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
+      const searchQuery = req.query.search as string | undefined;
       
-      const agreements = await storage.getTradeAgreements({ 
-        status, 
-        limit,
-        offset
-      });
+      const agreements = await storage.getTradeAgreements({ status, searchQuery });
       
-      // Get all unique statuses
-      const statusesResult = await db.selectDistinct({ status: tradeAgreements.status })
-        .from(tradeAgreements);
-      
-      const statuses = statusesResult.map(s => s.status);
-      
-      // Get total count with the same filters
-      const [{ count }] = await db.select({ 
-        count: sql<number>`count(*)` 
-      })
-      .from(tradeAgreements)
-      .where(
-        status ? eq(tradeAgreements.status, status as any) : undefined
-      );
-      
-      res.json({ 
+      return res.status(200).json({
         agreements,
-        statuses,
-        totalAgreements: count
+        totalAgreements: agreements.length
       });
     } catch (error) {
-      console.error("Error fetching trade agreements:", error);
-      res.status(500).json({ error: "Failed to fetch trade agreements" });
+      console.error('Get trade agreements error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve trade agreements'
+      });
     }
   });
 
-  app.get("/v2/api/trade-agreements/:id", async (req: Request, res: Response) => {
+  // Get trade agreement by ID
+  app.get('/v2/api/agreements/:id', async (req: Request, res: Response) => {
     try {
       const agreementId = parseInt(req.params.id);
+      
+      if (isNaN(agreementId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Agreement ID must be a number'
+        });
+      }
+      
       const agreement = await storage.getTradeAgreementById(agreementId);
       
       if (!agreement) {
-        return res.status(404).json({ error: "Trade agreement not found" });
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Trade agreement not found'
+        });
       }
       
-      res.json({ agreement });
-    } catch (error) {
-      console.error(`Error fetching trade agreement ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to fetch trade agreement" });
-    }
-  });
-
-  app.get("/v2/api/trade-agreements/slug/:slug", async (req: Request, res: Response) => {
-    try {
-      const agreement = await storage.getTradeAgreementBySlug(req.params.slug);
-      
-      if (!agreement) {
-        return res.status(404).json({ error: "Trade agreement not found" });
-      }
-      
-      res.json({ agreement });
-    } catch (error) {
-      console.error(`Error fetching trade agreement with slug ${req.params.slug}:`, error);
-      res.status(500).json({ error: "Failed to fetch trade agreement" });
-    }
-  });
-
-  app.post("/v2/api/trade-agreements", async (req: Request, res: Response) => {
-    try {
-      const agreementData = insertTradeAgreementSchema.parse(req.body);
-      const newAgreement = await storage.createTradeAgreement(agreementData);
-      res.status(201).json({ agreement: newAgreement });
-    } catch (error) {
-      console.error("Error creating trade agreement:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid agreement data", details: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create trade agreement" });
-    }
-  });
-
-  // ===== USER PROGRESS =====
-  app.get("/v2/api/user-progress/:userId", async (req: Request, res: Response) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      
-      // Get all module progress for this user
-      const moduleProgressData = await db
-        .select()
-        .from(userModuleProgress)
-        .where(eq(userModuleProgress.userId, userId));
-      
-      // Get all quiz progress for this user
-      const quizProgressData = await db
-        .select()
-        .from(userQuizProgress)
-        .where(eq(userQuizProgress.userId, userId));
-      
-      // Get badges for this user
-      const userBadgesData = await storage.getUserBadges(userId);
-      
-      // Calculate overall progress stats
-      const completedModules = moduleProgressData.filter(m => m.status === "completed").length;
-      const totalModules = await db.select({ count: sql<number>`count(*)` }).from(modules);
-      const totalModulesCount = totalModules[0].count;
-      
-      const completedQuizzes = quizProgressData.filter(q => q.completed).length;
-      const totalQuizzes = await db.select({ count: sql<number>`count(*)` }).from(quizzes);
-      const totalQuizzesCount = totalQuizzes[0].count;
-      
-      // Calculate overall progress percentage
-      const moduleCompletionPercent = totalModulesCount > 0 
-        ? (completedModules / totalModulesCount) * 100
-        : 0;
-        
-      const quizCompletionPercent = totalQuizzesCount > 0
-        ? (completedQuizzes / totalQuizzesCount) * 100
-        : 0;
-      
-      // Average quiz score
-      const quizScores = quizProgressData
-        .filter(q => q.score !== null)
-        .map(q => q.score as number);
-        
-      const averageQuizScore = quizScores.length > 0
-        ? quizScores.reduce((sum, score) => sum + score, 0) / quizScores.length
-        : 0;
-      
-      res.json({
-        moduleProgress: moduleProgressData,
-        quizProgress: quizProgressData,
-        badges: userBadgesData,
-        stats: {
-          completedModules,
-          totalModules: totalModulesCount,
-          moduleCompletionPercent,
-          completedQuizzes,
-          totalQuizzes: totalQuizzesCount,
-          quizCompletionPercent,
-          averageQuizScore,
-          badgesEarned: userBadgesData.length
-        }
+      return res.status(200).json({
+        agreement
       });
     } catch (error) {
-      console.error(`Error fetching user progress for user ${req.params.userId}:`, error);
-      res.status(500).json({ error: "Failed to fetch user progress" });
+      console.error('Get trade agreement error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve trade agreement'
+      });
     }
   });
 
-  // ===== DAILY CHALLENGES =====
-  app.get("/v2/api/daily-challenge", async (req: Request, res: Response) => {
+  // Get trade agreement by slug
+  app.get('/v2/api/agreements/slug/:slug', async (req: Request, res: Response) => {
     try {
-      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
-      const date = req.query.date as string || new Date().toISOString().split('T')[0];
+      const slug = req.params.slug;
       
-      // Get today's challenge
-      const challenge = await storage.getDailyChallenge(date);
+      const agreement = await storage.getTradeAgreementBySlug(slug);
+      
+      if (!agreement) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Trade agreement not found'
+        });
+      }
+      
+      return res.status(200).json({
+        agreement
+      });
+    } catch (error) {
+      console.error('Get trade agreement by slug error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve trade agreement'
+      });
+    }
+  });
+}
+
+/**
+ * Register daily challenge routes
+ */
+function registerChallengeRoutes(app: Express) {
+  // Get today's challenge
+  app.get('/v2/api/challenges/today', async (req: Request, res: Response) => {
+    try {
+      const today = new Date();
+      const challenge = await storage.getDailyChallenge(today);
       
       if (!challenge) {
-        return res.status(404).json({ error: "No challenge found for today" });
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'No challenge available for today'
+        });
       }
       
-      // Check if the user has completed this challenge
+      // Check if authenticated user has completed this challenge
       let completed = false;
-      if (userId) {
-        completed = await storage.checkChallengeCompletion(userId, challenge.id);
+      
+      if (req.session && req.session.userId) {
+        const completion = await storage.getChallengeCompletion(req.session.userId, challenge.id);
+        completed = !!completion;
       }
       
-      res.json({
+      return res.status(200).json({
         challenge,
         completed
       });
     } catch (error) {
-      console.error(`Error fetching daily challenge:`, error);
-      res.status(500).json({ error: "Failed to fetch daily challenge" });
+      console.error('Get today\'s challenge error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve today\'s challenge'
+      });
     }
   });
 
-  app.post("/v2/api/daily-challenge/:id/complete", async (req: Request, res: Response) => {
+  // Get all daily challenges
+  app.get('/v2/api/challenges', async (req: Request, res: Response) => {
     try {
-      const challengeId = parseInt(req.params.id);
-      const { userId } = req.body;
+      const challenges = await storage.getDailyChallenges();
       
-      if (!userId) {
-        return res.status(400).json({ error: "Missing required field: userId" });
+      // Get completion status for authenticated user
+      let userCompletions: Record<number, boolean> = {};
+      
+      if (req.session && req.session.userId) {
+        const completions = await storage.getUserChallengeCompletions(req.session.userId);
+        userCompletions = completions.reduce((acc, completion) => {
+          acc[completion.challengeId] = true;
+          return acc;
+        }, {} as Record<number, boolean>);
       }
       
-      // Check if challenge exists
-      const challenge = await storage.getDailyChallengeById(challengeId);
-      if (!challenge) {
-        return res.status(404).json({ error: "Challenge not found" });
+      return res.status(200).json({
+        challenges,
+        userCompletions
+      });
+    } catch (error) {
+      console.error('Get challenges error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve challenges'
+      });
+    }
+  });
+
+  // Complete a challenge
+  app.post('/v2/api/challenges/:id/complete', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to complete challenges'
+      });
+    }
+    
+    try {
+      const challengeId = parseInt(req.params.id);
+      
+      if (isNaN(challengeId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Challenge ID must be a number'
+        });
+      }
+      
+      const challenge = await storage.getDailyChallenge();
+      
+      if (!challenge || challenge.id !== challengeId) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Challenge not found or not available today'
+        });
       }
       
       // Check if already completed
-      const isCompleted = await storage.checkChallengeCompletion(userId, challengeId);
-      if (isCompleted) {
-        return res.status(400).json({ error: "Challenge already completed by this user" });
+      const existingCompletion = await storage.getChallengeCompletion(req.session.userId, challengeId);
+      
+      if (existingCompletion) {
+        return res.status(409).json({
+          error: 'Already completed',
+          message: 'You have already completed this challenge'
+        });
       }
       
-      // Mark as completed
-      const completion = await storage.completeChallenge(userId, challengeId);
+      // Create completion record
+      const completion = await storage.createChallengeCompletion({
+        userId: req.session.userId,
+        challengeId,
+        completedAt: new Date()
+      });
       
-      res.json({ 
-        success: true, 
+      return res.status(201).json({
+        message: 'Challenge completed successfully',
         completion,
-        points: challenge.points
+        points: challenge.points || 10
       });
     } catch (error) {
-      console.error(`Error completing challenge ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to complete challenge" });
+      console.error('Complete challenge error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not complete challenge'
+      });
+    }
+  });
+}
+
+/**
+ * Register user progress routes
+ */
+function registerProgressRoutes(app: Express) {
+  // Get user's progress for all modules
+  app.get('/v2/api/progress/modules', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to access your progress'
+      });
+    }
+    
+    try {
+      const progress = await storage.getUserModuleProgressByUser(req.session.userId);
+      
+      return res.status(200).json({
+        moduleProgress: progress
+      });
+    } catch (error) {
+      console.error('Get module progress error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve module progress'
+      });
     }
   });
 
-  app.post("/v2/api/daily-challenge", async (req: Request, res: Response) => {
+  // Get user's progress for all quizzes
+  app.get('/v2/api/progress/quizzes', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to access your progress'
+      });
+    }
+    
     try {
-      const challengeData = insertDailyChallengeSchema.parse(req.body);
-      const newChallenge = await storage.createDailyChallenge(challengeData);
-      res.status(201).json({ challenge: newChallenge });
+      const progress = await storage.getUserQuizProgressByUser(req.session.userId);
+      
+      return res.status(200).json({
+        quizProgress: progress
+      });
     } catch (error) {
-      console.error("Error creating daily challenge:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid challenge data", details: error.errors });
+      console.error('Get quiz progress error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve quiz progress'
+      });
+    }
+  });
+
+  // Update module progress
+  app.post('/v2/api/progress/modules/:id', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to update progress'
+      });
+    }
+    
+    try {
+      const moduleId = parseInt(req.params.id);
+      
+      if (isNaN(moduleId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Module ID must be a number'
+        });
       }
-      res.status(500).json({ error: "Failed to create daily challenge" });
-    }
-  });
-
-  // ===== BADGES =====
-  app.get("/v2/api/badges", async (_req: Request, res: Response) => {
-    try {
-      const badgesList = await storage.getBadges();
-      res.json({ badges: badgesList });
-    } catch (error) {
-      console.error("Error fetching badges:", error);
-      res.status(500).json({ error: "Failed to fetch badges" });
-    }
-  });
-
-  app.post("/v2/api/badges", async (req: Request, res: Response) => {
-    try {
-      const badgeData = insertBadgeSchema.parse(req.body);
-      const newBadge = await storage.createBadge(badgeData);
-      res.status(201).json({ badge: newBadge });
-    } catch (error) {
-      console.error("Error creating badge:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid badge data", details: error.errors });
+      
+      const { progress } = req.body;
+      
+      if (typeof progress !== 'number' || progress < 0 || progress > 100) {
+        return res.status(400).json({
+          error: 'Invalid progress',
+          message: 'Progress must be a number between 0 and 100'
+        });
       }
-      res.status(500).json({ error: "Failed to create badge" });
+      
+      // Check if module exists
+      const module = await storage.getModuleById(moduleId);
+      
+      if (!module) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Module not found'
+        });
+      }
+      
+      // Check if progress record exists
+      const existingProgress = await storage.getUserModuleProgress(req.session.userId, moduleId);
+      
+      let moduleProgress;
+      
+      if (existingProgress) {
+        // Update existing progress
+        moduleProgress = await storage.updateUserModuleProgress(req.session.userId, moduleId, {
+          progress,
+          completedAt: progress === 100 ? new Date() : existingProgress.completedAt,
+          lastAccessedAt: new Date()
+        });
+      } else {
+        // Create new progress record
+        moduleProgress = await storage.createUserModuleProgress({
+          userId: req.session.userId,
+          moduleId,
+          progress,
+          completedAt: progress === 100 ? new Date() : null,
+          lastAccessedAt: new Date()
+        });
+      }
+      
+      return res.status(200).json({
+        message: 'Progress updated successfully',
+        moduleProgress
+      });
+    } catch (error) {
+      console.error('Update module progress error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not update module progress'
+      });
     }
   });
 
-  app.post("/v2/api/badges/:id/award", async (req: Request, res: Response) => {
+  // Get user certificates
+  app.get('/v2/api/certificates', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to access your certificates'
+      });
+    }
+    
+    try {
+      const certificates = await storage.getUserCertificates(req.session.userId);
+      
+      return res.status(200).json({
+        certificates
+      });
+    } catch (error) {
+      console.error('Get certificates error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve certificates'
+      });
+    }
+  });
+
+  // Generate certificate (after completing all modules in a category)
+  app.post('/v2/api/certificates/category/:category', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to generate certificates'
+      });
+    }
+    
+    try {
+      const category = req.params.category;
+      
+      // Get all modules in this category
+      const modules = await storage.getModules({ category, published: true });
+      
+      if (modules.length === 0) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'No modules found in this category'
+        });
+      }
+      
+      // Check if user has completed all modules
+      const moduleIds = modules.map(module => module.id);
+      const userProgress = await storage.getUserModuleProgressByUser(req.session.userId);
+      
+      const completedModuleIds = userProgress
+        .filter(progress => progress.progress === 100 && progress.completedAt !== null)
+        .map(progress => progress.moduleId);
+      
+      const allModulesCompleted = moduleIds.every(id => completedModuleIds.includes(id));
+      
+      if (!allModulesCompleted) {
+        return res.status(400).json({
+          error: 'Incomplete',
+          message: 'You must complete all modules in this category to receive a certificate'
+        });
+      }
+      
+      // Create certificate
+      const certificate = await storage.createCertificate({
+        userId: req.session.userId,
+        name: `${category.charAt(0).toUpperCase() + category.slice(1)} Expert`,
+        description: `Certification for completing all modules in the ${category} category`,
+        issuedAt: new Date(),
+        expiresAt: null, // Certificates don't expire
+        imageUrl: `/certificates/${category.toLowerCase()}.png`,
+        category
+      });
+      
+      return res.status(201).json({
+        message: 'Certificate generated successfully',
+        certificate
+      });
+    } catch (error) {
+      console.error('Generate certificate error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not generate certificate'
+      });
+    }
+  });
+}
+
+/**
+ * Register badge routes
+ */
+function registerBadgeRoutes(app: Express) {
+  // Get all badges
+  app.get('/v2/api/badges', async (req: Request, res: Response) => {
+    try {
+      const badges = await storage.getBadges();
+      
+      // Get user's earned badges if authenticated
+      let userBadges: Record<number, boolean> = {};
+      
+      if (req.session && req.session.userId) {
+        const earned = await storage.getUserBadges(req.session.userId);
+        userBadges = earned.reduce((acc, badge) => {
+          acc[badge.badgeId] = true;
+          return acc;
+        }, {} as Record<number, boolean>);
+      }
+      
+      return res.status(200).json({
+        badges,
+        userBadges
+      });
+    } catch (error) {
+      console.error('Get badges error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve badges'
+      });
+    }
+  });
+
+  // Get user's badges
+  app.get('/v2/api/user/badges', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You must be logged in to access your badges'
+      });
+    }
+    
+    try {
+      const userBadges = await storage.getUserBadges(req.session.userId);
+      
+      // Get full badge details for each user badge
+      const badgesWithDetails = await Promise.all(
+        userBadges.map(async (userBadge) => {
+          const badge = await storage.getBadgeById(userBadge.badgeId);
+          return {
+            ...userBadge,
+            badge
+          };
+        })
+      );
+      
+      return res.status(200).json({
+        badges: badgesWithDetails
+      });
+    } catch (error) {
+      console.error('Get user badges error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve user badges'
+      });
+    }
+  });
+
+  // Award a badge (admin only)
+  app.post('/v2/api/badges/:id/award/:userId', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to award badges'
+      });
+    }
+    
     try {
       const badgeId = parseInt(req.params.id);
-      const { userId } = req.body;
+      const userId = parseInt(req.params.userId);
       
-      if (!userId) {
-        return res.status(400).json({ error: "Missing required field: userId" });
+      if (isNaN(badgeId) || isNaN(userId)) {
+        return res.status(400).json({
+          error: 'Invalid ID',
+          message: 'Badge ID and User ID must be numbers'
+        });
       }
       
       // Check if badge exists
       const badge = await storage.getBadgeById(badgeId);
+      
       if (!badge) {
-        return res.status(404).json({ error: "Badge not found" });
-      }
-      
-      // Award badge to user
-      const userBadge = await storage.awardBadgeToUser(userId, badgeId);
-      
-      res.json({ 
-        success: true,
-        userBadge,
-        badge
-      });
-    } catch (error) {
-      console.error(`Error awarding badge ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to award badge" });
-    }
-  });
-
-  // ===== CERTIFICATES =====
-  app.get("/v2/api/certificates/:userId", async (req: Request, res: Response) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const certificates = await storage.getUserCertificates(userId);
-      res.json({ certificates });
-    } catch (error) {
-      console.error(`Error fetching certificates for user ${req.params.userId}:`, error);
-      res.status(500).json({ error: "Failed to fetch certificates" });
-    }
-  });
-
-  app.post("/v2/api/certificates/generate", async (req: Request, res: Response) => {
-    try {
-      const { userId, moduleId } = req.body;
-      
-      if (!userId || !moduleId) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-      
-      // Check if user has completed the module
-      const progress = await db.select()
-        .from(userModuleProgress)
-        .where(
-          and(
-            eq(userModuleProgress.userId, userId),
-            eq(userModuleProgress.moduleId, moduleId),
-            eq(userModuleProgress.status, "completed")
-          )
-        );
-      
-      if (!progress || progress.length === 0) {
-        return res.status(400).json({ error: "User has not completed this module" });
-      }
-      
-      // Generate certificate
-      const certificate = await storage.generateCertificate(userId, moduleId);
-      
-      res.json({ 
-        success: true,
-        certificate
-      });
-    } catch (error) {
-      console.error("Error generating certificate:", error);
-      res.status(500).json({ error: "Failed to generate certificate" });
-    }
-  });
-
-  // ===== EMAIL SUBSCRIBERS =====
-  app.post("/v2/api/subscribe", async (req: Request, res: Response) => {
-    try {
-      const { email } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ error: "Email is required" });
-      }
-      
-      // Check if already subscribed
-      const existingSubscriber = await storage.getEmailSubscriber(email);
-      
-      if (existingSubscriber) {
-        // If unsubscribed before, resubscribe
-        if (existingSubscriber.status === "unsubscribed") {
-          await storage.updateEmailSubscriberStatus(email, "subscribed");
-          return res.json({ 
-            success: true, 
-            message: "Successfully resubscribed" 
-          });
-        }
-        
-        return res.status(400).json({ 
-          error: "Email already subscribed", 
-          status: existingSubscriber.status 
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Badge not found'
         });
       }
       
-      // Create new subscriber
-      const subscriber = await storage.createEmailSubscriber({
-        email,
-        status: "subscribed"
-      });
-      
-      res.json({ 
-        success: true,
-        subscriber
-      });
-    } catch (error) {
-      console.error("Error subscribing email:", error);
-      res.status(500).json({ error: "Failed to subscribe" });
-    }
-  });
-
-  app.post("/v2/api/unsubscribe", async (req: Request, res: Response) => {
-    try {
-      const { email } = req.body;
-      
-      if (!email) {
-        return res.status(400).json({ error: "Email is required" });
-      }
-      
-      // Check if subscribed
-      const existingSubscriber = await storage.getEmailSubscriber(email);
-      
-      if (!existingSubscriber) {
-        return res.status(404).json({ error: "Email not found in subscribers list" });
-      }
-      
-      // Update status to unsubscribed
-      await storage.updateEmailSubscriberStatus(email, "unsubscribed");
-      
-      res.json({ 
-        success: true,
-        message: "Successfully unsubscribed"
-      });
-    } catch (error) {
-      console.error("Error unsubscribing email:", error);
-      res.status(500).json({ error: "Failed to unsubscribe" });
-    }
-  });
-
-  // ===== USERS =====
-  app.post("/v2/api/users", async (req: Request, res: Response) => {
-    try {
-      const userData = insertUserSchema.parse(req.body);
-      
-      // Check if user already exists
-      const existingUser = userData.email 
-        ? await storage.getUserByEmail(userData.email)
-        : userData.googleId 
-          ? await storage.getUserByGoogleId(userData.googleId)
-          : null;
-          
-      if (existingUser) {
-        return res.status(400).json({ 
-          error: "User already exists",
-          userId: existingUser.id
-        });
-      }
-      
-      // Create new user
-      const newUser = await storage.createUser(userData);
-      
-      res.status(201).json({ user: newUser });
-    } catch (error) {
-      console.error("Error creating user:", error);
-      if (error.errors) {
-        return res.status(400).json({ error: "Invalid user data", details: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create user" });
-    }
-  });
-
-  app.get("/v2/api/users/:id", async (req: Request, res: Response) => {
-    try {
-      const userId = parseInt(req.params.id);
+      // Check if user exists
       const user = await storage.getUser(userId);
       
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'User not found'
+        });
       }
       
-      // Remove sensitive information
-      const { password, ...safeUser } = user;
+      // Check if user already has this badge
+      const existingBadge = await storage.getUserBadge(userId, badgeId);
       
-      res.json({ user: safeUser });
+      if (existingBadge) {
+        return res.status(409).json({
+          error: 'Already awarded',
+          message: 'User already has this badge'
+        });
+      }
+      
+      // Award badge
+      const userBadge = await storage.awardBadge({
+        userId,
+        badgeId,
+        awardedAt: new Date()
+      });
+      
+      return res.status(201).json({
+        message: 'Badge awarded successfully',
+        userBadge
+      });
     } catch (error) {
-      console.error(`Error fetching user ${req.params.id}:`, error);
-      res.status(500).json({ error: "Failed to fetch user" });
+      console.error('Award badge error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not award badge'
+      });
+    }
+  });
+}
+
+/**
+ * Register feature flag routes
+ */
+function registerFeatureFlagRoutes(app: Express) {
+  // Get all feature flags
+  app.get('/v2/api/feature-flags', async (req: Request, res: Response) => {
+    try {
+      const flags = await storage.getFeatureFlags();
+      
+      return res.status(200).json({
+        flags
+      });
+    } catch (error) {
+      console.error('Get feature flags error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve feature flags'
+      });
+    }
+  });
+
+  // Get specific feature flag
+  app.get('/v2/api/feature-flags/:name', async (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      const flag = await storage.getFeatureFlag(name);
+      
+      if (!flag) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Feature flag not found'
+        });
+      }
+      
+      // Check if user has access to this feature
+      let userHasAccess = flag.isEnabled; // Default to flag's global state
+      
+      if (req.session && req.session.userRole) {
+        const featureAccess = await storage.getFeatureAccess(name, req.session.userRole as any);
+        
+        if (featureAccess !== undefined) {
+          userHasAccess = featureAccess.isEnabled;
+        }
+      }
+      
+      return res.status(200).json({
+        flag,
+        hasAccess: userHasAccess
+      });
+    } catch (error) {
+      console.error('Get feature flag error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not retrieve feature flag'
+      });
+    }
+  });
+
+  // Update feature flag (admin only)
+  app.patch('/v2/api/feature-flags/:name', async (req: Request, res: Response) => {
+    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to update feature flags'
+      });
+    }
+    
+    try {
+      const name = req.params.name;
+      const { isEnabled } = req.body;
+      
+      if (typeof isEnabled !== 'boolean') {
+        return res.status(400).json({
+          error: 'Invalid data',
+          message: 'isEnabled must be a boolean'
+        });
+      }
+      
+      const updatedFlag = await storage.updateFeatureFlag(name, isEnabled);
+      
+      if (!updatedFlag) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Feature flag not found'
+        });
+      }
+      
+      return res.status(200).json({
+        message: 'Feature flag updated successfully',
+        flag: updatedFlag
+      });
+    } catch (error) {
+      console.error('Update feature flag error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not update feature flag'
+      });
+    }
+  });
+}
+
+/**
+ * Register email subscription routes
+ */
+function registerEmailSubscriptionRoutes(app: Express) {
+  // Subscribe to email newsletter
+  app.post('/v2/api/subscribe', async (req: Request, res: Response) => {
+    try {
+      const validatedData = emailSubscriptionSchema.parse(req.body);
+      
+      // Check if email already exists
+      const existingSubscriber = await storage.getEmailSubscriber(validatedData.email);
+      
+      if (existingSubscriber) {
+        if (existingSubscriber.status === 'subscribed') {
+          return res.status(409).json({
+            error: 'Already subscribed',
+            message: 'This email is already subscribed to our newsletter'
+          });
+        } else {
+          // Reactivate subscription
+          await storage.updateEmailSubscriberStatus(validatedData.email, 'subscribed');
+          
+          return res.status(200).json({
+            message: 'Subscription reactivated successfully'
+          });
+        }
+      }
+      
+      // Create new subscriber
+      await storage.createEmailSubscriber({
+        email: validatedData.email,
+        firstName: validatedData.firstName || null,
+        lastName: validatedData.lastName || null,
+        status: 'subscribed',
+        subscribedAt: new Date()
+      });
+      
+      return res.status(201).json({
+        message: 'Successfully subscribed to newsletter'
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
+      }
+      
+      console.error('Newsletter subscription error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not process subscription request'
+      });
+    }
+  });
+
+  // Unsubscribe from email newsletter
+  app.post('/v2/api/unsubscribe', async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({
+          error: 'Invalid data',
+          message: 'Email is required'
+        });
+      }
+      
+      const subscriber = await storage.getEmailSubscriber(email);
+      
+      if (!subscriber) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Email not found in our subscription list'
+        });
+      }
+      
+      await storage.updateEmailSubscriberStatus(email, 'unsubscribed');
+      
+      return res.status(200).json({
+        message: 'Successfully unsubscribed from newsletter'
+      });
+    } catch (error) {
+      console.error('Newsletter unsubscribe error:', error);
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: 'Could not process unsubscribe request'
+      });
     }
   });
 }
