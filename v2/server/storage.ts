@@ -1,391 +1,758 @@
 import { db } from "./db";
-import { eq, and, desc, asc, like } from "drizzle-orm";
-import * as schema from "../shared/schema";
+import { 
+  modules, Module, InsertModule,
+  quizzes, Quiz, InsertQuiz,
+  quizQuestions, QuizQuestion, InsertQuizQuestion,
+  quizOptions, QuizOption, InsertQuizOption,
+  dictionaryTerms, DictionaryTerm, InsertDictionaryTerm,
+  tradeAgreements, TradeAgreement, InsertTradeAgreement,
+  dailyChallenges, DailyChallenge, InsertDailyChallenge,
+  challengeCompletions, ChallengeCompletion,
+  users, User, InsertUser,
+  userModuleProgress, UserModuleProgress,
+  userQuizProgress, UserQuizProgress,
+  badges, Badge, InsertBadge,
+  userBadges, UserBadge,
+  featureFlags, FeatureFlag, InsertFeatureFlag,
+  featureAccess, FeatureAccess, InsertFeatureAccess,
+  emailSubscribers, EmailSubscriber, InsertEmailSubscriber,
+  certificates, Certificate
+} from "../shared/schema";
+import { and, asc, desc, eq, like, sql } from "drizzle-orm";
 
+/**
+ * Interface for all storage operations in the v2 platform
+ */
 export interface IStorage {
+  // Users
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUserRole(userId: number, role: string): Promise<User | undefined>;
+  
   // Modules
-  getModules(): Promise<schema.Module[]>;
-  getModuleById(id: number): Promise<schema.Module | undefined>;
-  createModule(module: schema.InsertModule): Promise<schema.Module>;
-  updateModule(id: number, module: Partial<schema.InsertModule>): Promise<schema.Module | undefined>;
+  getModules(options?: { category?: string, published?: boolean, limit?: number, offset?: number }): Promise<Module[]>;
+  getModuleById(id: number): Promise<Module | undefined>;
+  getModuleBySlug(slug: string): Promise<Module | undefined>;
+  getModuleCategories(): Promise<string[]>;
+  createModule(module: InsertModule): Promise<Module>;
+  updateModule(id: number, module: Partial<Module>): Promise<Module | undefined>;
   
   // Quizzes
-  getQuizzes(): Promise<schema.Quiz[]>;
-  getQuizById(id: number): Promise<schema.Quiz | undefined>;
-  getQuizzesByModuleId(moduleId: number): Promise<schema.Quiz[]>;
-  createQuiz(quiz: schema.InsertQuiz): Promise<schema.Quiz>;
+  getQuizzes(options?: { moduleId?: number, limit?: number, offset?: number }): Promise<Quiz[]>;
+  getQuizById(id: number): Promise<Quiz | undefined>;
+  getQuizBySlug(slug: string): Promise<Quiz | undefined>;
+  createQuiz(quiz: InsertQuiz): Promise<Quiz>;
   
   // Quiz Questions
-  getQuizQuestions(quizId: number): Promise<schema.QuizQuestion[]>;
-  createQuizQuestion(question: schema.InsertQuizQuestion): Promise<schema.QuizQuestion>;
+  getQuizQuestions(quizId: number): Promise<QuizQuestion[]>;
+  getQuizQuestion(id: number): Promise<QuizQuestion | undefined>;
+  createQuizQuestion(question: InsertQuizQuestion): Promise<QuizQuestion>;
+  
+  // Quiz Options
+  getQuizOptions(questionId: number): Promise<QuizOption[]>;
+  createQuizOption(option: InsertQuizOption): Promise<QuizOption>;
   
   // Dictionary Terms
-  getDictionaryTerms(): Promise<schema.DictionaryTerm[]>;
-  getDictionaryTermById(id: number): Promise<schema.DictionaryTerm | undefined>;
-  getDictionaryTermByName(term: string): Promise<schema.DictionaryTerm | undefined>;
-  getDictionaryTermsByCategory(category: string): Promise<schema.DictionaryTerm[]>;
-  createDictionaryTerm(term: schema.InsertDictionaryTerm): Promise<schema.DictionaryTerm>;
+  getDictionaryTerms(options?: { category?: string, searchQuery?: string, limit?: number, offset?: number }): Promise<DictionaryTerm[]>;
+  getDictionaryTermById(id: number): Promise<DictionaryTerm | undefined>;
+  getDictionaryTermBySlug(slug: string): Promise<DictionaryTerm | undefined>;
+  getDictionaryCategories(): Promise<string[]>;
+  createDictionaryTerm(term: InsertDictionaryTerm): Promise<DictionaryTerm>;
+  updateDictionaryTermViewCount(id: number): Promise<DictionaryTerm | undefined>;
   
   // Trade Agreements
-  getTradeAgreements(): Promise<schema.TradeAgreement[]>;
-  getTradeAgreementById(id: number): Promise<schema.TradeAgreement | undefined>;
-  createTradeAgreement(agreement: schema.InsertTradeAgreement): Promise<schema.TradeAgreement>;
+  getTradeAgreements(options?: { status?: string, limit?: number, offset?: number }): Promise<TradeAgreement[]>;
+  getTradeAgreementById(id: number): Promise<TradeAgreement | undefined>;
+  getTradeAgreementBySlug(slug: string): Promise<TradeAgreement | undefined>;
+  createTradeAgreement(agreement: InsertTradeAgreement): Promise<TradeAgreement>;
   
   // User Progress
-  getUserProgress(userId: number): Promise<schema.UserProgress[]>;
-  getUserModuleProgress(userId: number, moduleId: number): Promise<schema.UserProgress | undefined>;
-  updateUserProgress(userId: number, moduleId: number, completed: boolean): Promise<schema.UserProgress>;
-  getUserQuizResults(userId: number, quizId: number): Promise<schema.UserProgress | undefined>;
-  saveQuizResult(userId: number, quizId: number, score: number): Promise<schema.UserProgress>;
-  
-  // Dictionary Term Views (for gamification)
-  recordDictionaryTermView(userId: number, termId: number): Promise<schema.DictionaryView>;
-  getDictionaryTermViews(userId: number): Promise<schema.DictionaryView[]>;
+  getUserModuleProgress(userId: number, moduleId: number): Promise<UserModuleProgress | undefined>;
+  updateUserModuleProgress(userId: number, moduleId: number, progress: number, completed?: boolean): Promise<UserModuleProgress>;
+  getUserQuizProgress(userId: number, quizId: number): Promise<UserQuizProgress | undefined>;
+  updateUserQuizProgress(userId: number, quizId: number, score: number, passed: boolean): Promise<UserQuizProgress>;
   
   // Daily Challenges
-  getDailyChallenge(date?: Date): Promise<schema.DailyChallenge | undefined>;
-  createDailyChallenge(challenge: schema.InsertDailyChallenge): Promise<schema.DailyChallenge>;
-  recordChallengeCompletion(userId: number, challengeId: number, score?: number): Promise<schema.ChallengeCompletion>;
-  getUserChallengeCompletions(userId: number): Promise<schema.ChallengeCompletion[]>;
+  getDailyChallenge(date?: string): Promise<DailyChallenge | undefined>;
+  createDailyChallenge(challenge: InsertDailyChallenge): Promise<DailyChallenge>;
+  checkChallengeCompletion(userId: number, challengeId: number): Promise<boolean>;
+  completeChallenge(userId: number, challengeId: number): Promise<ChallengeCompletion>;
   
-  // Simulations
-  getSimulations(): Promise<schema.Simulation[]>;
-  getSimulationById(id: number): Promise<schema.Simulation | undefined>;
-  getSimulationsByModuleId(moduleId: number): Promise<schema.Simulation[]>;
-  createSimulation(simulation: schema.InsertSimulation): Promise<schema.Simulation>;
+  // Badges
+  getBadges(): Promise<Badge[]>;
+  getBadgeById(id: number): Promise<Badge | undefined>;
+  createBadge(badge: InsertBadge): Promise<Badge>;
+  getUserBadges(userId: number): Promise<Badge[]>;
+  awardBadgeToUser(userId: number, badgeId: number): Promise<UserBadge>;
+  
+  // Feature Flags
+  getFeatureFlags(): Promise<FeatureFlag[]>;
+  getFeatureFlag(name: string): Promise<FeatureFlag | undefined>;
+  createFeatureFlag(featureFlag: InsertFeatureFlag): Promise<FeatureFlag>;
+  updateFeatureFlag(name: string, isEnabled: boolean): Promise<FeatureFlag | undefined>;
+  
+  // Feature Access
+  getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined>;
+  getAllFeatureAccess(): Promise<FeatureAccess[]>;
+  setFeatureAccess(featureName: string, userRole: string, isEnabled: boolean): Promise<FeatureAccess>;
+  
+  // Email Subscribers
+  getEmailSubscribers(): Promise<EmailSubscriber[]>;
+  getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined>;
+  createEmailSubscriber(subscriber: InsertEmailSubscriber): Promise<EmailSubscriber>;
+  updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined>;
+  
+  // Certificates
+  getUserCertificates(userId: number): Promise<Certificate[]>;
+  generateCertificate(userId: number, moduleId: number): Promise<Certificate>;
 }
 
+/**
+ * Implementation of the IStorage interface using PostgreSQL and Drizzle ORM
+ */
 export class DatabaseStorage implements IStorage {
-  // Modules
-  async getModules(): Promise<schema.Module[]> {
-    return db.select().from(schema.modules).orderBy(schema.modules.order);
+  // Users
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
-  
-  async getModuleById(id: number): Promise<schema.Module | undefined> {
-    const [module] = await db.select().from(schema.modules).where(eq(schema.modules.id, id));
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUserRole(userId: number, role: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
+
+  // Modules
+  async getModules(options?: { category?: string; published?: boolean; limit?: number; offset?: number }): Promise<Module[]> {
+    let query = db.select().from(modules);
+    
+    if (options?.category) {
+      query = query.where(eq(modules.category, options.category));
+    }
+    
+    if (options?.published !== undefined) {
+      query = query.where(eq(modules.published, options.published));
+    }
+    
+    query = query.orderBy(asc(modules.id));
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    if (options?.offset) {
+      query = query.offset(options.offset);
+    }
+    
+    return await query;
+  }
+
+  async getModuleById(id: number): Promise<Module | undefined> {
+    const [module] = await db.select().from(modules).where(eq(modules.id, id));
     return module;
   }
-  
-  async createModule(module: schema.InsertModule): Promise<schema.Module> {
-    const [newModule] = await db.insert(schema.modules).values(module).returning();
-    return newModule;
+
+  async getModuleBySlug(slug: string): Promise<Module | undefined> {
+    const [module] = await db.select().from(modules).where(eq(modules.slug, slug));
+    return module;
   }
-  
-  async updateModule(id: number, moduleData: Partial<schema.InsertModule>): Promise<schema.Module | undefined> {
+
+  async getModuleCategories(): Promise<string[]> {
+    const result = await db
+      .select({ category: modules.category })
+      .from(modules)
+      .groupBy(modules.category);
+    
+    return result.map(item => item.category);
+  }
+
+  async createModule(insertModule: InsertModule): Promise<Module> {
+    const [module] = await db.insert(modules).values(insertModule).returning();
+    return module;
+  }
+
+  async updateModule(id: number, moduleData: Partial<Module>): Promise<Module | undefined> {
     const [updatedModule] = await db
-      .update(schema.modules)
+      .update(modules)
       .set({ ...moduleData, updatedAt: new Date() })
-      .where(eq(schema.modules.id, id))
+      .where(eq(modules.id, id))
       .returning();
     return updatedModule;
   }
-  
+
   // Quizzes
-  async getQuizzes(): Promise<schema.Quiz[]> {
-    return db.select().from(schema.quizzes);
+  async getQuizzes(options?: { moduleId?: number; limit?: number; offset?: number }): Promise<Quiz[]> {
+    let query = db.select().from(quizzes);
+    
+    if (options?.moduleId) {
+      query = query.where(eq(quizzes.moduleId, options.moduleId));
+    }
+    
+    query = query.orderBy(asc(quizzes.id));
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    if (options?.offset) {
+      query = query.offset(options.offset);
+    }
+    
+    return await query;
   }
-  
-  async getQuizById(id: number): Promise<schema.Quiz | undefined> {
-    const [quiz] = await db.select().from(schema.quizzes).where(eq(schema.quizzes.id, id));
+
+  async getQuizById(id: number): Promise<Quiz | undefined> {
+    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
     return quiz;
   }
-  
-  async getQuizzesByModuleId(moduleId: number): Promise<schema.Quiz[]> {
-    return db.select().from(schema.quizzes).where(eq(schema.quizzes.moduleId, moduleId));
+
+  async getQuizBySlug(slug: string): Promise<Quiz | undefined> {
+    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.slug, slug));
+    return quiz;
   }
-  
-  async createQuiz(quiz: schema.InsertQuiz): Promise<schema.Quiz> {
-    const [newQuiz] = await db.insert(schema.quizzes).values(quiz).returning();
-    return newQuiz;
+
+  async createQuiz(insertQuiz: InsertQuiz): Promise<Quiz> {
+    const [quiz] = await db.insert(quizzes).values(insertQuiz).returning();
+    return quiz;
   }
-  
+
   // Quiz Questions
-  async getQuizQuestions(quizId: number): Promise<schema.QuizQuestion[]> {
-    return db
+  async getQuizQuestions(quizId: number): Promise<QuizQuestion[]> {
+    return await db
       .select()
-      .from(schema.quizQuestions)
-      .where(eq(schema.quizQuestions.quizId, quizId))
-      .orderBy(schema.quizQuestions.order);
+      .from(quizQuestions)
+      .where(eq(quizQuestions.quizId, quizId))
+      .orderBy(asc(quizQuestions.order));
   }
-  
-  async createQuizQuestion(question: schema.InsertQuizQuestion): Promise<schema.QuizQuestion> {
-    const [newQuestion] = await db.insert(schema.quizQuestions).values(question).returning();
-    return newQuestion;
+
+  async getQuizQuestion(id: number): Promise<QuizQuestion | undefined> {
+    const [question] = await db
+      .select()
+      .from(quizQuestions)
+      .where(eq(quizQuestions.id, id));
+    return question;
   }
-  
+
+  async createQuizQuestion(insertQuestion: InsertQuizQuestion): Promise<QuizQuestion> {
+    const [question] = await db
+      .insert(quizQuestions)
+      .values(insertQuestion)
+      .returning();
+    return question;
+  }
+
+  // Quiz Options
+  async getQuizOptions(questionId: number): Promise<QuizOption[]> {
+    return await db
+      .select()
+      .from(quizOptions)
+      .where(eq(quizOptions.questionId, questionId));
+  }
+
+  async createQuizOption(insertOption: InsertQuizOption): Promise<QuizOption> {
+    const [option] = await db
+      .insert(quizOptions)
+      .values(insertOption)
+      .returning();
+    return option;
+  }
+
   // Dictionary Terms
-  async getDictionaryTerms(): Promise<schema.DictionaryTerm[]> {
-    return db.select().from(schema.dictionaryTerms).orderBy(schema.dictionaryTerms.term);
+  async getDictionaryTerms(options?: { category?: string; searchQuery?: string; limit?: number; offset?: number }): Promise<DictionaryTerm[]> {
+    let query = db.select().from(dictionaryTerms);
+    
+    if (options?.category) {
+      query = query.where(eq(dictionaryTerms.category, options.category));
+    }
+    
+    if (options?.searchQuery) {
+      query = query.where(
+        like(dictionaryTerms.name, `%${options.searchQuery}%`)
+      );
+    }
+    
+    query = query.orderBy(asc(dictionaryTerms.name));
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    if (options?.offset) {
+      query = query.offset(options.offset);
+    }
+    
+    return await query;
   }
-  
-  async getDictionaryTermById(id: number): Promise<schema.DictionaryTerm | undefined> {
-    const [term] = await db.select().from(schema.dictionaryTerms).where(eq(schema.dictionaryTerms.id, id));
+
+  async getDictionaryTermById(id: number): Promise<DictionaryTerm | undefined> {
+    const [term] = await db
+      .select()
+      .from(dictionaryTerms)
+      .where(eq(dictionaryTerms.id, id));
     return term;
   }
-  
-  async getDictionaryTermByName(term: string): Promise<schema.DictionaryTerm | undefined> {
-    const [result] = await db
+
+  async getDictionaryTermBySlug(slug: string): Promise<DictionaryTerm | undefined> {
+    const [term] = await db
       .select()
-      .from(schema.dictionaryTerms)
-      .where(eq(schema.dictionaryTerms.term, term));
-    return result;
+      .from(dictionaryTerms)
+      .where(eq(dictionaryTerms.slug, slug));
+    return term;
   }
-  
-  async getDictionaryTermsByCategory(category: string): Promise<schema.DictionaryTerm[]> {
-    return db
-      .select()
-      .from(schema.dictionaryTerms)
-      .where(eq(schema.dictionaryTerms.category, category))
-      .orderBy(schema.dictionaryTerms.term);
+
+  async getDictionaryCategories(): Promise<string[]> {
+    const result = await db
+      .select({ category: dictionaryTerms.category })
+      .from(dictionaryTerms)
+      .groupBy(dictionaryTerms.category);
+    
+    return result.map(item => item.category);
   }
-  
-  async createDictionaryTerm(term: schema.InsertDictionaryTerm): Promise<schema.DictionaryTerm> {
-    const [newTerm] = await db.insert(schema.dictionaryTerms).values(term).returning();
-    return newTerm;
+
+  async createDictionaryTerm(insertTerm: InsertDictionaryTerm): Promise<DictionaryTerm> {
+    const [term] = await db
+      .insert(dictionaryTerms)
+      .values(insertTerm)
+      .returning();
+    return term;
   }
-  
+
+  async updateDictionaryTermViewCount(id: number): Promise<DictionaryTerm | undefined> {
+    const [term] = await db
+      .update(dictionaryTerms)
+      .set({
+        viewCount: sql`${dictionaryTerms.viewCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(dictionaryTerms.id, id))
+      .returning();
+    return term;
+  }
+
   // Trade Agreements
-  async getTradeAgreements(): Promise<schema.TradeAgreement[]> {
-    return db.select().from(schema.tradeAgreements).orderBy(schema.tradeAgreements.name);
+  async getTradeAgreements(options?: { status?: string; limit?: number; offset?: number }): Promise<TradeAgreement[]> {
+    let query = db.select().from(tradeAgreements);
+    
+    if (options?.status) {
+      query = query.where(eq(tradeAgreements.status, options.status));
+    }
+    
+    query = query.orderBy(asc(tradeAgreements.name));
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    if (options?.offset) {
+      query = query.offset(options.offset);
+    }
+    
+    return await query;
   }
-  
-  async getTradeAgreementById(id: number): Promise<schema.TradeAgreement | undefined> {
+
+  async getTradeAgreementById(id: number): Promise<TradeAgreement | undefined> {
     const [agreement] = await db
       .select()
-      .from(schema.tradeAgreements)
-      .where(eq(schema.tradeAgreements.id, id));
+      .from(tradeAgreements)
+      .where(eq(tradeAgreements.id, id));
     return agreement;
   }
-  
-  async createTradeAgreement(agreement: schema.InsertTradeAgreement): Promise<schema.TradeAgreement> {
-    const [newAgreement] = await db.insert(schema.tradeAgreements).values(agreement).returning();
-    return newAgreement;
+
+  async getTradeAgreementBySlug(slug: string): Promise<TradeAgreement | undefined> {
+    const [agreement] = await db
+      .select()
+      .from(tradeAgreements)
+      .where(eq(tradeAgreements.slug, slug));
+    return agreement;
   }
-  
+
+  async createTradeAgreement(insertAgreement: InsertTradeAgreement): Promise<TradeAgreement> {
+    const [agreement] = await db
+      .insert(tradeAgreements)
+      .values(insertAgreement)
+      .returning();
+    return agreement;
+  }
+
   // User Progress
-  async getUserProgress(userId: number): Promise<schema.UserProgress[]> {
-    return db.select().from(schema.userProgress).where(eq(schema.userProgress.userId, userId));
-  }
-  
-  async getUserModuleProgress(userId: number, moduleId: number): Promise<schema.UserProgress | undefined> {
+  async getUserModuleProgress(userId: number, moduleId: number): Promise<UserModuleProgress | undefined> {
     const [progress] = await db
       .select()
-      .from(schema.userProgress)
+      .from(userModuleProgress)
       .where(
         and(
-          eq(schema.userProgress.userId, userId),
-          eq(schema.userProgress.moduleId, moduleId)
+          eq(userModuleProgress.userId, userId),
+          eq(userModuleProgress.moduleId, moduleId)
         )
       );
     return progress;
   }
-  
-  async updateUserProgress(userId: number, moduleId: number, completed: boolean): Promise<schema.UserProgress> {
-    // Check if progress entry already exists
+
+  async updateUserModuleProgress(userId: number, moduleId: number, progress: number, completed?: boolean): Promise<UserModuleProgress> {
+    // Check if a record exists
     const existingProgress = await this.getUserModuleProgress(userId, moduleId);
     
     if (existingProgress) {
       // Update existing record
-      const [updated] = await db
-        .update(schema.userProgress)
-        .set({
-          completed,
-          lastAccessedAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(schema.userProgress.id, existingProgress.id))
+      const updateData: any = { 
+        progress, 
+        updatedAt: new Date() 
+      };
+      
+      if (completed) {
+        updateData.completedAt = new Date();
+      }
+      
+      const [updatedProgress] = await db
+        .update(userModuleProgress)
+        .set(updateData)
+        .where(
+          and(
+            eq(userModuleProgress.userId, userId),
+            eq(userModuleProgress.moduleId, moduleId)
+          )
+        )
         .returning();
-      return updated;
+      
+      return updatedProgress;
     } else {
       // Create new record
+      const insertData: any = {
+        userId,
+        moduleId,
+        progress,
+        status: completed ? 'completed' : 'in_progress'
+      };
+      
+      if (completed) {
+        insertData.completedAt = new Date();
+      }
+      
       const [newProgress] = await db
-        .insert(schema.userProgress)
-        .values({
-          userId,
-          moduleId,
-          completed,
-          lastAccessedAt: new Date()
-        })
+        .insert(userModuleProgress)
+        .values(insertData)
         .returning();
+      
       return newProgress;
     }
   }
-  
-  async getUserQuizResults(userId: number, quizId: number): Promise<schema.UserProgress | undefined> {
-    const [result] = await db
+
+  async getUserQuizProgress(userId: number, quizId: number): Promise<UserQuizProgress | undefined> {
+    const [progress] = await db
       .select()
-      .from(schema.userProgress)
+      .from(userQuizProgress)
       .where(
         and(
-          eq(schema.userProgress.userId, userId),
-          eq(schema.userProgress.quizId, quizId)
+          eq(userQuizProgress.userId, userId),
+          eq(userQuizProgress.quizId, quizId)
         )
       );
-    return result;
+    return progress;
   }
-  
-  async saveQuizResult(userId: number, quizId: number, score: number): Promise<schema.UserProgress> {
-    // Check if result already exists
-    const existingResult = await this.getUserQuizResults(userId, quizId);
+
+  async updateUserQuizProgress(userId: number, quizId: number, score: number, passed: boolean): Promise<UserQuizProgress> {
+    // Check if a record exists
+    const existingProgress = await this.getUserQuizProgress(userId, quizId);
     
-    if (existingResult) {
-      // Update existing record with better score
-      if (score > (existingResult.score || 0)) {
-        const [updated] = await db
-          .update(schema.userProgress)
-          .set({
-            score,
-            completed: true,
-            lastAccessedAt: new Date(),
-            updatedAt: new Date()
-          })
-          .where(eq(schema.userProgress.id, existingResult.id))
-          .returning();
-        return updated;
-      }
-      return existingResult;
+    if (existingProgress) {
+      // Update existing record
+      const [updatedProgress] = await db
+        .update(userQuizProgress)
+        .set({
+          score,
+          passed,
+          updatedAt: new Date(),
+          completedAt: new Date()
+        })
+        .where(
+          and(
+            eq(userQuizProgress.userId, userId),
+            eq(userQuizProgress.quizId, quizId)
+          )
+        )
+        .returning();
+      
+      return updatedProgress;
     } else {
       // Create new record
-      const [newResult] = await db
-        .insert(schema.userProgress)
+      const [newProgress] = await db
+        .insert(userQuizProgress)
         .values({
           userId,
           quizId,
           score,
-          completed: true,
-          lastAccessedAt: new Date()
+          passed,
+          completedAt: new Date()
         })
         .returning();
-      return newResult;
+      
+      return newProgress;
     }
   }
-  
-  // Dictionary Term Views
-  async recordDictionaryTermView(userId: number, termId: number): Promise<schema.DictionaryView> {
-    // Check if view already exists
-    const [existingView] = await db
+
+  // Daily Challenges
+  async getDailyChallenge(date?: string): Promise<DailyChallenge | undefined> {
+    const targetDate = date ? new Date(date) : new Date();
+    const dateStr = targetDate.toISOString().split('T')[0];
+    
+    const [challenge] = await db
       .select()
-      .from(schema.dictionaryViews)
+      .from(dailyChallenges)
+      .where(eq(dailyChallenges.date, dateStr));
+    
+    return challenge;
+  }
+
+  async createDailyChallenge(insertChallenge: InsertDailyChallenge): Promise<DailyChallenge> {
+    const [challenge] = await db
+      .insert(dailyChallenges)
+      .values(insertChallenge)
+      .returning();
+    return challenge;
+  }
+
+  async checkChallengeCompletion(userId: number, challengeId: number): Promise<boolean> {
+    const [completion] = await db
+      .select()
+      .from(challengeCompletions)
       .where(
         and(
-          eq(schema.dictionaryViews.userId, userId),
-          eq(schema.dictionaryViews.termId, termId)
+          eq(challengeCompletions.userId, userId),
+          eq(challengeCompletions.challengeId, challengeId)
         )
       );
     
-    if (existingView) {
-      // Update view count
-      const [updated] = await db
-        .update(schema.dictionaryViews)
-        .set({
-          viewCount: existingView.viewCount + 1,
-          lastViewedAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(schema.dictionaryViews.id, existingView.id))
-        .returning();
-      return updated;
-    } else {
-      // Create new view
-      const [newView] = await db
-        .insert(schema.dictionaryViews)
-        .values({
-          userId,
-          termId,
-          viewCount: 1,
-          lastViewedAt: new Date()
-        })
-        .returning();
-      return newView;
-    }
+    return !!completion;
   }
-  
-  async getDictionaryTermViews(userId: number): Promise<schema.DictionaryView[]> {
-    return db
-      .select()
-      .from(schema.dictionaryViews)
-      .where(eq(schema.dictionaryViews.userId, userId))
-      .orderBy(desc(schema.dictionaryViews.viewCount));
+
+  async completeChallenge(userId: number, challengeId: number): Promise<ChallengeCompletion> {
+    const [completion] = await db
+      .insert(challengeCompletions)
+      .values({
+        userId,
+        challengeId,
+        completedAt: new Date()
+      })
+      .returning();
+    
+    return completion;
   }
-  
-  // Daily Challenges
-  async getDailyChallenge(date?: Date): Promise<schema.DailyChallenge | undefined> {
-    const targetDate = date || new Date();
-    const [challenge] = await db
-      .select()
-      .from(schema.dailyChallenges)
-      .where(eq(schema.dailyChallenges.date, targetDate))
-      .limit(1);
-    return challenge;
+
+  // Badges
+  async getBadges(): Promise<Badge[]> {
+    return await db.select().from(badges);
   }
-  
-  async createDailyChallenge(challenge: schema.InsertDailyChallenge): Promise<schema.DailyChallenge> {
-    const [newChallenge] = await db.insert(schema.dailyChallenges).values(challenge).returning();
-    return newChallenge;
+
+  async getBadgeById(id: number): Promise<Badge | undefined> {
+    const [badge] = await db.select().from(badges).where(eq(badges.id, id));
+    return badge;
   }
-  
-  async recordChallengeCompletion(userId: number, challengeId: number, score?: number): Promise<schema.ChallengeCompletion> {
-    // Check if already completed
+
+  async createBadge(insertBadge: InsertBadge): Promise<Badge> {
+    const [badge] = await db.insert(badges).values(insertBadge).returning();
+    return badge;
+  }
+
+  async getUserBadges(userId: number): Promise<Badge[]> {
+    const userBadgesWithInfo = await db
+      .select({
+        badge: badges
+      })
+      .from(userBadges)
+      .innerJoin(badges, eq(userBadges.badgeId, badges.id))
+      .where(eq(userBadges.userId, userId));
+    
+    return userBadgesWithInfo.map(item => item.badge);
+  }
+
+  async awardBadgeToUser(userId: number, badgeId: number): Promise<UserBadge> {
+    // Check if already awarded
     const [existing] = await db
       .select()
-      .from(schema.challengeCompletions)
+      .from(userBadges)
       .where(
         and(
-          eq(schema.challengeCompletions.userId, userId),
-          eq(schema.challengeCompletions.challengeId, challengeId)
+          eq(userBadges.userId, userId),
+          eq(userBadges.badgeId, badgeId)
         )
       );
     
     if (existing) {
-      return existing; // Already completed, return existing record
+      return existing;
     }
     
-    // Create new completion record
-    const [completion] = await db
-      .insert(schema.challengeCompletions)
+    const [userBadge] = await db
+      .insert(userBadges)
       .values({
         userId,
-        challengeId,
-        score,
-        completed: true,
-        completedAt: new Date()
+        badgeId,
+        awardedAt: new Date()
       })
       .returning();
-    return completion;
+    
+    return userBadge;
   }
-  
-  async getUserChallengeCompletions(userId: number): Promise<schema.ChallengeCompletion[]> {
-    return db
+
+  // Feature Flags
+  async getFeatureFlags(): Promise<FeatureFlag[]> {
+    return await db.select().from(featureFlags);
+  }
+
+  async getFeatureFlag(name: string): Promise<FeatureFlag | undefined> {
+    const [featureFlag] = await db
       .select()
-      .from(schema.challengeCompletions)
-      .where(eq(schema.challengeCompletions.userId, userId))
-      .orderBy(desc(schema.challengeCompletions.completedAt));
+      .from(featureFlags)
+      .where(eq(featureFlags.name, name));
+    
+    return featureFlag;
   }
-  
-  // Simulations
-  async getSimulations(): Promise<schema.Simulation[]> {
-    return db.select().from(schema.simulations);
+
+  async createFeatureFlag(insertFeatureFlag: InsertFeatureFlag): Promise<FeatureFlag> {
+    const [featureFlag] = await db
+      .insert(featureFlags)
+      .values(insertFeatureFlag)
+      .returning();
+    
+    return featureFlag;
   }
-  
-  async getSimulationById(id: number): Promise<schema.Simulation | undefined> {
-    const [simulation] = await db
+
+  async updateFeatureFlag(name: string, isEnabled: boolean): Promise<FeatureFlag | undefined> {
+    const [updatedFlag] = await db
+      .update(featureFlags)
+      .set({ isEnabled, updatedAt: new Date() })
+      .where(eq(featureFlags.name, name))
+      .returning();
+    
+    return updatedFlag;
+  }
+
+  // Feature Access
+  async getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined> {
+    const [access] = await db
       .select()
-      .from(schema.simulations)
-      .where(eq(schema.simulations.id, id));
-    return simulation;
+      .from(featureAccess)
+      .where(
+        and(
+          eq(featureAccess.featureName, featureName),
+          eq(featureAccess.userRole, userRole)
+        )
+      );
+    
+    return access;
   }
-  
-  async getSimulationsByModuleId(moduleId: number): Promise<schema.Simulation[]> {
-    return db
+
+  async getAllFeatureAccess(): Promise<FeatureAccess[]> {
+    return await db.select().from(featureAccess);
+  }
+
+  async setFeatureAccess(featureName: string, userRole: string, isEnabled: boolean): Promise<FeatureAccess> {
+    // Check if record exists
+    const existingAccess = await this.getFeatureAccess(featureName, userRole);
+    
+    if (existingAccess) {
+      // Update existing record
+      const [updatedAccess] = await db
+        .update(featureAccess)
+        .set({ isEnabled })
+        .where(
+          and(
+            eq(featureAccess.featureName, featureName),
+            eq(featureAccess.userRole, userRole)
+          )
+        )
+        .returning();
+      
+      return updatedAccess;
+    } else {
+      // Create new record
+      const [newAccess] = await db
+        .insert(featureAccess)
+        .values({
+          featureName,
+          userRole,
+          isEnabled
+        })
+        .returning();
+      
+      return newAccess;
+    }
+  }
+
+  // Email Subscribers
+  async getEmailSubscribers(): Promise<EmailSubscriber[]> {
+    return await db.select().from(emailSubscribers);
+  }
+
+  async getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined> {
+    const [subscriber] = await db
       .select()
-      .from(schema.simulations)
-      .where(eq(schema.simulations.moduleId, moduleId));
+      .from(emailSubscribers)
+      .where(eq(emailSubscribers.email, email));
+    
+    return subscriber;
   }
-  
-  async createSimulation(simulation: schema.InsertSimulation): Promise<schema.Simulation> {
-    const [newSimulation] = await db.insert(schema.simulations).values(simulation).returning();
-    return newSimulation;
+
+  async createEmailSubscriber(insertSubscriber: InsertEmailSubscriber): Promise<EmailSubscriber> {
+    const [subscriber] = await db
+      .insert(emailSubscribers)
+      .values(insertSubscriber)
+      .returning();
+    
+    return subscriber;
+  }
+
+  async updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined> {
+    const [updatedSubscriber] = await db
+      .update(emailSubscribers)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(emailSubscribers.email, email))
+      .returning();
+    
+    return updatedSubscriber;
+  }
+
+  // Certificates
+  async getUserCertificates(userId: number): Promise<Certificate[]> {
+    return await db
+      .select()
+      .from(certificates)
+      .where(eq(certificates.userId, userId));
+  }
+
+  async generateCertificate(userId: number, moduleId: number): Promise<Certificate> {
+    const [certificate] = await db
+      .insert(certificates)
+      .values({
+        userId,
+        moduleId,
+        issuedAt: new Date()
+      })
+      .returning();
+    
+    return certificate;
   }
 }
 
+// Export a singleton instance of the database storage
 export const storage = new DatabaseStorage();
