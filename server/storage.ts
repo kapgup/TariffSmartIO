@@ -144,22 +144,22 @@ export class MemStorage implements IStorage {
   currentTradeAgreementId: number;
 
   constructor() {
-    this.users = new Map();
-    this.productCategories = new Map();
-    this.products = new Map();
-    this.countries = new Map();
-    this.featureFlags = new Map();
-    this.subscriptions = new Map();
-    this.featureAccessList = new Map();
-    this.emailSubscribers = new Map();
+    this.users = new Map<number, User>();
+    this.productCategories = new Map<number, ProductCategory>();
+    this.products = new Map<number, Product>();
+    this.countries = new Map<number, Country>();
+    this.featureFlags = new Map<number, FeatureFlag>();
+    this.subscriptions = new Map<number, Subscription>();
+    this.featureAccessList = new Map<number, FeatureAccess>();
+    this.emailSubscribers = new Map<number, EmailSubscriber>();
     // Initialize v2 storage
-    this.learningModules = new Map();
-    this.quizzes = new Map();
-    this.quizQuestions = new Map();
-    this.userProgressList = new Map();
-    this.quizAttempts = new Map();
-    this.tradeDictionary = new Map();
-    this.tradeAgreements = new Map();
+    this.learningModules = new Map<number, LearningModule>();
+    this.quizzes = new Map<number, Quiz>();
+    this.quizQuestions = new Map<number, QuizQuestion>();
+    this.userProgressList = new Map<string, UserProgress>();
+    this.quizAttempts = new Map<number, QuizAttempt>();
+    this.tradeDictionary = new Map<number, TradeDictionary>();
+    this.tradeAgreements = new Map<number, TradeAgreement>();
     
     this.currentUserId = 1;
     this.currentProductCategoryId = 1;
@@ -517,6 +517,335 @@ export class MemStorage implements IStorage {
       return updatedSubscriber;
     }
     return undefined;
+  }
+
+  // V2 Learning Modules methods
+  async getLearningModules(): Promise<LearningModule[]> {
+    return Array.from(this.learningModules.values());
+  }
+  
+  async getLearningModule(id: number): Promise<LearningModule | undefined> {
+    return this.learningModules.get(id);
+  }
+  
+  async getLearningModuleBySlug(slug: string): Promise<LearningModule | undefined> {
+    return Array.from(this.learningModules.values()).find(
+      (module) => module.slug === slug
+    );
+  }
+  
+  async createLearningModule(module: InsertLearningModule): Promise<LearningModule> {
+    const id = this.currentLearningModuleId++;
+    const learningModule: LearningModule = {
+      id,
+      title: module.title,
+      slug: module.slug,
+      description: module.description,
+      content: module.content,
+      orderIndex: module.orderIndex || 0,
+      imageUrl: module.imageUrl || null,
+      isPublished: module.isPublished !== undefined ? module.isPublished : false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.learningModules.set(id, learningModule);
+    return learningModule;
+  }
+  
+  async updateLearningModule(id: number, module: Partial<InsertLearningModule>): Promise<LearningModule | undefined> {
+    const existingModule = await this.getLearningModule(id);
+    if (!existingModule) return undefined;
+    
+    const updatedModule: LearningModule = {
+      ...existingModule,
+      ...module,
+      updatedAt: new Date()
+    };
+    this.learningModules.set(id, updatedModule);
+    return updatedModule;
+  }
+  
+  // V2 Quizzes methods
+  async getQuizzes(): Promise<Quiz[]> {
+    return Array.from(this.quizzes.values());
+  }
+  
+  async getQuiz(id: number): Promise<Quiz | undefined> {
+    return this.quizzes.get(id);
+  }
+  
+  async getQuizzesByModule(moduleId: number): Promise<Quiz[]> {
+    return Array.from(this.quizzes.values()).filter(
+      (quiz) => quiz.moduleId === moduleId
+    );
+  }
+  
+  async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
+    const id = this.currentQuizId++;
+    const newQuiz: Quiz = {
+      id,
+      moduleId: quiz.moduleId,
+      title: quiz.title,
+      description: quiz.description || null,
+      type: quiz.type || "knowledge_check",
+      isPublished: quiz.isPublished || false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.quizzes.set(id, newQuiz);
+    return newQuiz;
+  }
+  
+  async updateQuiz(id: number, quiz: Partial<InsertQuiz>): Promise<Quiz | undefined> {
+    const existingQuiz = await this.getQuiz(id);
+    if (!existingQuiz) return undefined;
+    
+    const updatedQuiz: Quiz = {
+      ...existingQuiz,
+      ...quiz,
+      updatedAt: new Date()
+    };
+    this.quizzes.set(id, updatedQuiz);
+    return updatedQuiz;
+  }
+  
+  // V2 Quiz Questions methods
+  async getQuizQuestions(quizId: number): Promise<QuizQuestion[]> {
+    return Array.from(this.quizQuestions.values()).filter(
+      (question) => question.quizId === quizId
+    );
+  }
+  
+  async getQuizQuestion(id: number): Promise<QuizQuestion | undefined> {
+    return this.quizQuestions.get(id);
+  }
+  
+  async createQuizQuestion(question: InsertQuizQuestion): Promise<QuizQuestion> {
+    const id = this.currentQuizQuestionId++;
+    const newQuestion: QuizQuestion = {
+      id,
+      quizId: question.quizId,
+      question: question.question,
+      questionType: question.questionType || "multiple_choice",
+      orderIndex: question.orderIndex || 0,
+      options: question.options || null,
+      correctAnswer: question.correctAnswer || null,
+      explanation: question.explanation || null,
+      simulationData: question.simulationData || null
+    };
+    this.quizQuestions.set(id, newQuestion);
+    return newQuestion;
+  }
+  
+  async updateQuizQuestion(id: number, question: Partial<InsertQuizQuestion>): Promise<QuizQuestion | undefined> {
+    const existingQuestion = await this.getQuizQuestion(id);
+    if (!existingQuestion) return undefined;
+    
+    const updatedQuestion: QuizQuestion = {
+      ...existingQuestion,
+      ...question,
+      updatedAt: new Date()
+    };
+    this.quizQuestions.set(id, updatedQuestion);
+    return updatedQuestion;
+  }
+  
+  // V2 User Progress methods
+  async getUserProgress(userId: number, moduleId: number): Promise<UserProgress | undefined> {
+    const key = `${userId}-${moduleId}`;
+    return this.userProgressList.get(key);
+  }
+  
+  async getUserProgressForAllModules(userId: number): Promise<UserProgress[]> {
+    return Array.from(this.userProgressList.values()).filter(
+      (progress) => progress.userId === userId
+    );
+  }
+  
+  async createOrUpdateUserProgress(progress: InsertUserProgress): Promise<UserProgress> {
+    const key = `${progress.userId}-${progress.moduleId}`;
+    const existingProgress = await this.getUserProgress(progress.userId, progress.moduleId);
+    
+    if (existingProgress) {
+      const updatedProgress: UserProgress = {
+        ...existingProgress,
+        ...progress,
+        lastUpdated: new Date()
+      };
+      this.userProgressList.set(key, updatedProgress);
+      return updatedProgress;
+    } else {
+      const newProgress: UserProgress = {
+        userId: progress.userId,
+        moduleId: progress.moduleId,
+        completionStatus: progress.completionStatus || "not_started",
+        completionPercentage: progress.completionPercentage || 0,
+        lastPosition: progress.lastPosition || null,
+        startDate: new Date(),
+        lastUpdated: new Date()
+      };
+      this.userProgressList.set(key, newProgress);
+      return newProgress;
+    }
+  }
+  
+  // V2 Quiz Attempts methods
+  async getQuizAttempts(userId: number, quizId: number): Promise<QuizAttempt[]> {
+    return Array.from(this.quizAttempts.values()).filter(
+      (attempt) => attempt.userId === userId && attempt.quizId === quizId
+    );
+  }
+  
+  async createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt> {
+    const id = this.currentQuizAttemptId++;
+    const newAttempt: QuizAttempt = {
+      id,
+      userId: attempt.userId,
+      quizId: attempt.quizId,
+      score: attempt.score,
+      answers: attempt.answers,
+      completed: attempt.completed !== undefined ? attempt.completed : true,
+      startTime: attempt.startTime || new Date(),
+      endTime: attempt.endTime || new Date(),
+      passed: attempt.passed !== undefined ? attempt.passed : false
+    };
+    this.quizAttempts.set(id, newAttempt);
+    return newAttempt;
+  }
+  
+  // V2 Trade Dictionary methods
+  async getTradeDictionaryTerms(): Promise<TradeDictionary[]> {
+    return Array.from(this.tradeDictionary.values());
+  }
+  
+  async getTradeDictionaryTerm(id: number): Promise<TradeDictionary | undefined> {
+    return this.tradeDictionary.get(id);
+  }
+  
+  async getTradeDictionaryTermByName(term: string): Promise<TradeDictionary | undefined> {
+    return Array.from(this.tradeDictionary.values()).find(
+      (dictTerm) => dictTerm.term.toLowerCase() === term.toLowerCase()
+    );
+  }
+  
+  async createTradeDictionaryTerm(term: InsertTradeDictionary): Promise<TradeDictionary> {
+    const id = this.currentTradeDictionaryId++;
+    // Convert related terms from any array-like structure to proper string[]
+    let relatedTerms: string[] | null = null;
+    if (term.relatedTerms) {
+      if (Array.isArray(term.relatedTerms)) {
+        relatedTerms = [...term.relatedTerms];
+      } else if (typeof term.relatedTerms === 'object') {
+        relatedTerms = Object.values(term.relatedTerms as Record<string, string>);
+      }
+    }
+    
+    const newTerm: TradeDictionary = {
+      id,
+      term: term.term,
+      definition: term.definition,
+      category: term.category || null,
+      usageExample: term.usageExample || null,
+      relatedTerms: relatedTerms,
+      complexity: term.complexity || "basic",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.tradeDictionary.set(id, newTerm);
+    return newTerm;
+  }
+  
+  async updateTradeDictionaryTerm(id: number, term: Partial<InsertTradeDictionary>): Promise<TradeDictionary | undefined> {
+    const existingTerm = await this.getTradeDictionaryTerm(id);
+    if (!existingTerm) return undefined;
+    
+    // Convert related terms if needed
+    let relatedTerms = existingTerm.relatedTerms;
+    if (term.relatedTerms) {
+      if (Array.isArray(term.relatedTerms)) {
+        relatedTerms = [...term.relatedTerms];
+      } else if (typeof term.relatedTerms === 'object') {
+        relatedTerms = Object.values(term.relatedTerms as Record<string, string>);
+      }
+    }
+    
+    const updatedTerm: TradeDictionary = {
+      ...existingTerm,
+      ...term,
+      relatedTerms,
+      updatedAt: new Date()
+    };
+    this.tradeDictionary.set(id, updatedTerm);
+    return updatedTerm;
+  }
+  
+  // V2 Trade Agreements methods
+  async getTradeAgreements(): Promise<TradeAgreement[]> {
+    return Array.from(this.tradeAgreements.values());
+  }
+  
+  async getTradeAgreement(id: number): Promise<TradeAgreement | undefined> {
+    return this.tradeAgreements.get(id);
+  }
+  
+  async getTradeAgreementByName(name: string): Promise<TradeAgreement | undefined> {
+    return Array.from(this.tradeAgreements.values()).find(
+      (agreement) => agreement.name.toLowerCase() === name.toLowerCase()
+    );
+  }
+  
+  async createTradeAgreement(agreement: InsertTradeAgreement): Promise<TradeAgreement> {
+    const id = this.currentTradeAgreementId++;
+    
+    // Convert countries from any array-like structure to proper string[]
+    let countries: string[] | null = null;
+    if (agreement.countries) {
+      if (Array.isArray(agreement.countries)) {
+        countries = [...agreement.countries];
+      } else if (typeof agreement.countries === 'object') {
+        countries = Object.values(agreement.countries as Record<string, string>);
+      }
+    }
+    
+    const newAgreement: TradeAgreement = {
+      id,
+      name: agreement.name,
+      description: agreement.description,
+      summary: agreement.summary,
+      countries: countries,
+      startDate: agreement.startDate || null,
+      endDate: agreement.endDate || null,
+      status: agreement.status || "active",
+      impactSummary: agreement.impactSummary || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.tradeAgreements.set(id, newAgreement);
+    return newAgreement;
+  }
+  
+  async updateTradeAgreement(id: number, agreement: Partial<InsertTradeAgreement>): Promise<TradeAgreement | undefined> {
+    const existingAgreement = await this.getTradeAgreement(id);
+    if (!existingAgreement) return undefined;
+    
+    // Convert countries if needed
+    let countries = existingAgreement.countries;
+    if (agreement.countries) {
+      if (Array.isArray(agreement.countries)) {
+        countries = [...agreement.countries];
+      } else if (typeof agreement.countries === 'object') {
+        countries = Object.values(agreement.countries as Record<string, string>);
+      }
+    }
+    
+    const updatedAgreement: TradeAgreement = {
+      ...existingAgreement,
+      ...agreement,
+      countries,
+      updatedAt: new Date()
+    };
+    this.tradeAgreements.set(id, updatedAgreement);
+    return updatedAgreement;
   }
 }
 
