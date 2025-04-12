@@ -1,155 +1,206 @@
-// Application information
-export const APP_FULL_NAME = "TariffSmart Education";
-export const APP_SHORT_NAME = "TariffEd";
-export const SUPPORT_EMAIL = "support@tariffsmart.com";
-export const CONTENT_LICENSE = "Creative Commons Attribution 4.0";
-export const CONTENT_LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
+/**
+ * Application constants for TariffSmart Education (v2)
+ */
 
-// Navigation links
-export const NAV_ITEMS = [
-  { name: "Home", href: "/v2" },
-  { name: "Modules", href: "/v2/modules" },
-  { name: "Dictionary", href: "/v2/dictionary" },
-  { name: "Trade Agreements", href: "/v2/agreements" },
-  { name: "Daily Challenge", href: "/v2/challenge" }
+// App Information
+export const APP_NAME = "TariffSmart";
+export const APP_FULL_NAME = "TariffSmart Education";
+export const APP_DESCRIPTION = "Your comprehensive learning platform for understanding tariffs, trade policies, and international commerce dynamics.";
+export const APP_VERSION = "2.0.0";
+export const COPYRIGHT_YEAR = "2025";
+
+// Navigation Links
+export const ROUTES = {
+  HOME: "/v2",
+  MODULES: "/v2/modules",
+  MODULE_DETAIL: "/v2/modules/:id",
+  QUIZ: "/v2/quiz/:id",
+  DICTIONARY: "/v2/dictionary",
+  DICTIONARY_TERM: "/v2/dictionary/term/:name",
+  AGREEMENTS: "/v2/trade-agreements",
+  AGREEMENT_DETAIL: "/v2/trade-agreements/:id",
+  CHALLENGE: "/v2/challenge",
+  PROFILE: "/v2/profile",
+  SETTINGS: "/v2/settings",
+  LOGIN: "/v2/login",
+  REGISTER: "/v2/register",
+  NOT_FOUND: "/v2/not-found",
+};
+
+export const NAVIGATION_LINKS = [
+  { name: "Home", href: ROUTES.HOME },
+  { name: "Modules", href: ROUTES.MODULES },
+  { name: "Dictionary", href: ROUTES.DICTIONARY },
+  { name: "Trade Agreements", href: ROUTES.AGREEMENTS },
+  { name: "Daily Challenge", href: ROUTES.CHALLENGE },
 ];
 
-// API endpoints
+export const FOOTER_LINKS = {
+  product: [
+    { name: "Features", href: `${ROUTES.HOME}#features` },
+    { name: "Pricing", href: `${ROUTES.HOME}#pricing` },
+    { name: "Updates", href: `${ROUTES.HOME}#updates` },
+  ],
+  resources: [
+    { name: "Help Center", href: "/help" },
+    { name: "API Documentation", href: "/docs/api" },
+    { name: "Community", href: "/community" },
+  ],
+  company: [
+    { name: "About", href: "/about" },
+    { name: "Blog", href: "/blog" },
+    { name: "Contact", href: "/contact" },
+  ],
+  legal: [
+    { name: "Privacy", href: "/privacy" },
+    { name: "Terms", href: "/terms" },
+  ],
+};
+
+// API Endpoints
 export const API_ENDPOINTS = {
   // Modules
-  MODULES: "/modules",
-  MODULE_BY_ID: (id: number) => `/modules/${id}`,
+  MODULES: "/api/v2/modules",
+  MODULE_BY_ID: "/api/v2/modules/:id",
+  MODULE_COMPLETE: "/api/v2/modules/:id/complete",
+  MODULE_SIMULATIONS: "/api/v2/modules/:id/simulations",
+  MODULE_QUIZZES: "/api/v2/modules/:id/quizzes",
   
   // Quizzes
-  QUIZZES: "/quizzes",
-  QUIZ_BY_ID: (id: number) => `/quizzes/${id}`,
-  QUIZ_BY_MODULE: (moduleId: number) => `/quizzes/module/${moduleId}`,
-  SUBMIT_QUIZ: (id: number) => `/quizzes/${id}/submit`,
+  QUIZZES: "/api/v2/quizzes",
+  QUIZ_BY_ID: "/api/v2/quizzes/:id",
+  QUIZ_SUBMIT: "/api/v2/quizzes/:id/submit",
   
   // Dictionary
-  DICTIONARY: "/dictionary",
-  DICTIONARY_TERM: (id: number) => `/dictionary/${id}`,
-  DICTIONARY_BY_CATEGORY: (category: string) => `/dictionary/category/${category}`,
+  DICTIONARY: "/api/v2/dictionary",
+  DICTIONARY_TERM: "/api/v2/dictionary/:id",
+  DICTIONARY_TERM_BY_NAME: "/api/v2/dictionary/term/:name",
+  DICTIONARY_CATEGORY: "/api/v2/dictionary/category/:category",
   
   // Trade Agreements
-  AGREEMENTS: "/agreements",
-  AGREEMENT_BY_ID: (id: number) => `/agreements/${id}`,
-  
-  // Challenges
-  DAILY_CHALLENGE: "/challenges/daily",
-  COMPLETE_CHALLENGE: (id: number) => `/challenges/${id}/complete`,
+  TRADE_AGREEMENTS: "/api/v2/trade-agreements",
+  TRADE_AGREEMENT_BY_ID: "/api/v2/trade-agreements/:id",
   
   // User Progress
-  USER_PROGRESS: "/user/progress",
-  MODULE_PROGRESS: (moduleId: number) => `/user/progress/module/${moduleId}`,
+  USER_PROGRESS: "/api/v2/progress",
+  
+  // Daily Challenge
+  DAILY_CHALLENGE: "/api/v2/daily-challenge",
+  DAILY_CHALLENGE_COMPLETE: "/api/v2/daily-challenge/:id/complete",
+  
+  // Simulations
+  SIMULATIONS: "/api/v2/simulations",
+  SIMULATION_BY_ID: "/api/v2/simulations/:id",
 };
 
-// Challenge types
-export const CHALLENGE_TYPES = {
-  QUIZ: "quiz",
-  FLASHCARD: "flashcard",
-  MATCHING: "matching",
-  TRUE_FALSE: "true_false",
+// MVP Module Topics
+export const MVP_MODULE_TOPICS = [
+  "Tariff Classifications",
+  "Tariff Calculations",
+  "Trade Agreements",
+  "Trade Policy Fundamentals",
+  "Global Supply Chains",
+  "Import/Export Documentation",
+  "Customs Compliance",
+  "Trade Remedies",
+  "International Regulations",
+  "Shipping Terms and Incoterms",
+  "Customs Valuation Methods",
+  "Anti-Dumping Duties"
+];
+
+// Query Keys
+export const QUERY_KEYS = {
+  modules: "modules",
+  module: "module",
+  quizzes: "quizzes",
+  quiz: "quiz",
+  dictionary: "dictionary",
+  dictionaryTerm: "dictionaryTerm",
+  tradeAgreements: "tradeAgreements",
+  tradeAgreement: "tradeAgreement",
+  userProgress: "userProgress",
+  dailyChallenge: "dailyChallenge",
+  simulations: "simulations",
+  simulation: "simulation",
 };
 
-// User roles
-export const USER_ROLES = {
-  GUEST: "guest",
-  USER: "user",
-  PREMIUM: "premium",
-  EDUCATOR: "educator",
-  ADMIN: "admin",
+// Enums
+export const MODULE_DIFFICULTY = {
+  BEGINNER: "beginner",
+  INTERMEDIATE: "intermediate",
+  ADVANCED: "advanced",
 };
 
-// Quiz types
-export const QUIZ_TYPES = {
-  MULTIPLE_CHOICE: "multiple_choice",
-  TRUE_FALSE: "true_false",
-  FILL_BLANK: "fill_blank",
-  MATCHING: "matching",
-};
-
-// Module categories
 export const MODULE_CATEGORIES = {
   TARIFFS: "tariffs",
   TRADE_POLICY: "trade_policy",
-  TREATIES: "treaties",
   CUSTOMS: "customs",
   SHIPPING: "shipping",
-  COMPLIANCE: "compliance",
-};
-
-// Dictionary categories
-export const DICTIONARY_CATEGORIES = {
-  TARIFFS: "tariffs",
-  TRADE_POLICY: "trade_policy",
-  SHIPPING: "shipping",
-  CUSTOMS: "customs",
   REGULATIONS: "regulations",
   AGREEMENTS: "agreements",
 };
 
-export const DICTIONARY_CATEGORIES_ARRAY = Object.values(DICTIONARY_CATEGORIES);
+export const DICTIONARY_CATEGORIES = {
+  TARIFFS: "Tariffs",
+  TRADE_POLICY: "Trade Policy",
+  SHIPPING: "Shipping",
+  CUSTOMS: "Customs",
+  REGULATIONS: "Regulations",
+  AGREEMENTS: "Agreements",
+};
 
-// Progress status
+export const QUIZ_TYPES = {
+  MULTIPLE_CHOICE: "multiple_choice",
+  TRUE_FALSE: "true_false",
+  MATCHING: "matching",
+  SHORT_ANSWER: "short_answer",
+};
+
+export const CHALLENGE_TYPES = {
+  QUIZ: "quiz",
+  CALCULATION: "calculation",
+  CASE_STUDY: "case_study",
+  SIMULATION: "simulation",
+};
+
+export const AGREEMENT_STATUS = {
+  ACTIVE: "active",
+  PROPOSED: "proposed",
+  EXPIRED: "expired",
+  RENEGOTIATING: "renegotiating",
+};
+
+export const USER_ROLES = {
+  ADMIN: "admin",
+  EDITOR: "editor",
+  PREMIUM: "premium",
+  BASIC: "basic",
+};
+
+export const SUBSCRIPTION_TIERS = {
+  BASIC: "basic",
+  PREMIUM: "premium",
+  PROFESSIONAL: "professional",
+  ENTERPRISE: "enterprise",
+};
+
 export const PROGRESS_STATUS = {
   NOT_STARTED: "not_started",
   IN_PROGRESS: "in_progress",
   COMPLETED: "completed",
 };
 
-// Routes
-export const ROUTES = {
-  HOME: "/v2",
-  MODULES: "/v2/modules",
-  MODULE_DETAIL: (id: number) => `/v2/modules/${id}`,
-  DICTIONARY: "/v2/dictionary",
-  DICTIONARY_TERM: (id: number) => `/v2/dictionary/${id}`,
-  AGREEMENTS: "/v2/agreements",
-  AGREEMENT_DETAIL: (id: number) => `/v2/agreements/${id}`,
-  CHALLENGE: "/v2/challenge",
-  QUIZ: (id: number) => `/v2/quiz/${id}`,
-  LOGIN: "/v2/auth/login",
-  REGISTER: "/v2/auth/register",
-  PROFILE: "/v2/profile",
-  NOT_FOUND: "/v2/not-found",
-};
+// UI Constants
+export const ITEMS_PER_PAGE = 10;
+export const TOAST_DURATION = 5000; // milliseconds
 
-// MVP Module Topics
-export const MVP_MODULE_TOPICS = [
-  {
-    title: "Tariff Fundamentals",
-    description: "Learn the basics of tariffs and their role in international trade",
-    difficulty: "beginner",
-    category: MODULE_CATEGORIES.TARIFFS,
-    estimatedMinutes: 30,
-  },
-  {
-    title: "Trade Policy Basics",
-    description: "Introduction to trade policy principles and international agreements",
-    difficulty: "beginner",
-    category: MODULE_CATEGORIES.TRADE_POLICY,
-    estimatedMinutes: 25,
-  },
-  {
-    title: "Supply Chain Impacts",
-    description: "Understand how tariffs affect global supply chains and business operations",
-    difficulty: "intermediate",
-    category: MODULE_CATEGORIES.SHIPPING,
-    estimatedMinutes: 45,
-  },
-  {
-    title: "Customs Documentation",
-    description: "Essential documentation required for international shipments",
-    difficulty: "intermediate",
-    category: MODULE_CATEGORIES.CUSTOMS,
-    estimatedMinutes: 40,
-  },
-  {
-    title: "Tariff Calculations Advanced",
-    description: "Complex methods for calculating tariff costs across different product categories",
-    difficulty: "advanced",
-    category: MODULE_CATEGORIES.TARIFFS,
-    estimatedMinutes: 60,
-  },
-];
+// Feature flags
+export const FEATURE_FLAGS = {
+  ENABLE_DICTIONARY: "enable_dictionary",
+  ENABLE_DAILY_CHALLENGE: "enable_daily_challenge",
+  ENABLE_SIMULATIONS: "enable_simulations",
+  ENABLE_TRADE_AGREEMENTS: "enable_trade_agreements",
+  SHOW_ADS: "show_ads",
+  BETA_FEATURES: "beta_features",
+};
