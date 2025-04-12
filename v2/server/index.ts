@@ -4,10 +4,9 @@ import session from 'express-session';
 import cors from 'cors';
 import { configureAuth } from './auth';
 import { setupRoutes } from './routes';
-import { db } from './db';
-import { featureFlags } from './db';
+import { db, pool } from './db';
+import { featureFlags } from '../shared/schema';
 import { eq } from 'drizzle-orm';
-import { pool } from './db';
 
 /**
  * Initialize the v2 platform's Express application
