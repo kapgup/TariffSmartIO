@@ -1,101 +1,103 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
+import path from 'path';
 import session from 'express-session';
-import { MemoryStore } from 'memorystore';
 import cors from 'cors';
-import passport from 'passport';
-import { Server } from 'http';
-import { registerRoutes } from './routes';
+import { configureAuth } from './auth';
+import { setupRoutes } from './routes';
 import { db } from './db';
-import { storage } from './storage';
-import './auth/passport-config';
-
-const MemoryStoreInstance = MemoryStore(session);
+import { featureFlags } from '../shared/schema';
+import { eq } from 'drizzle-orm';
+import { pool } from './db';
 
 /**
  * Initialize the v2 platform's Express application
  */
 async function init() {
   const app: Express = express();
-  let server: Server | null = null;
   
-  // Initialize middleware
+  // Set up middleware
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://tariff-calculator.replit.app'] 
-      : ['http://localhost:3000', 'http://localhost:3001'],
+      ? ['https://tariffsmart.com'] 
+      : ['http://localhost:3000', 'http://localhost:5000'],
     credentials: true
   }));
   
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-  
-  // Configure session middleware
+  // Set up session middleware
   app.use(session({
-    store: new MemoryStoreInstance({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    }),
-    secret: process.env.SESSION_SECRET || 'v2-tariff-platform-secret',
+    secret: process.env.SESSION_SECRET || 'tariffsmart-v2-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 1000 * 60 * 60 * 24 // 24 hours
     }
   }));
   
-  // Initialize passport middleware
-  app.use(passport.initialize());
-  app.use(passport.session());
-  
-  // Add request logger
+  // Log requests in development
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    console.log(`[v2-platform] ${new Date().toISOString()} ${req.method} ${req.url}`);
-    // Add user info to request for easier access
-    if (req.session && req.user) {
-      req.session.userId = (req.user as any).id;
-      req.session.userRole = (req.user as any).role;
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[v2] ${req.method} ${req.url}`);
     }
     next();
   });
   
-  // Register API routes
-  await registerRoutes(app);
+  // Configure authentication
+  configureAuth(app);
   
-  // SPA fallback for client-side routing
+  // Set up API routes under /v2/api
+  await setupRoutes(app);
+  
+  // Serve the v2 client for all /v2 routes
   app.get("/v2/*", (_req: Request, res: Response) => {
-    res.sendFile('index.html', { root: './dist' });
+    res.sendFile(path.resolve(__dirname, '../client/index.html'));
   });
   
-  // Global error handler
+  // Error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error('[v2-platform] Error:', err);
-    res.status(err.status || 500).json({
+    console.error('[v2] Error:', err);
+    
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+    
+    res.status(statusCode).json({
       error: {
-        message: err.message || 'An unexpected error occurred',
-        status: err.status || 500
+        status: statusCode,
+        message: message
       }
     });
   });
   
-  // Start the server
-  const port = process.env.PORT || 3000;
-  server = app.listen(port, () => {
-    console.log(`[v2-platform] Server is running on port ${port}`);
-  });
-  
-  return { app, server };
+  return app;
 }
 
 /**
  * Initialize the database with default feature flags
  */
 async function initializeDatabase() {
-  try {
-    console.log('[v2-platform] Initializing database...');
-    await storage.initializeData();
-    console.log('[v2-platform] Database initialization complete');
-  } catch (error) {
-    console.error('[v2-platform] Error initializing database:', error);
+  console.log('Checking if v2 database needs initialization...');
+  
+  const existingFlags = await db.select().from(featureFlags).limit(1);
+  
+  if (existingFlags.length === 0) {
+    console.log('Initializing v2 database with default feature flags...');
+    
+    const defaultFlags = [
+      { name: 'enableLearningModules', isEnabled: true, description: 'Controls whether learning modules are accessible' },
+      { name: 'enableTradeAgreements', isEnabled: true, description: 'Controls whether trade agreements section is accessible' },
+      { name: 'enableDailyChallenges', isEnabled: true, description: 'Controls whether daily challenges are available' },
+      { name: 'enableCertificates', isEnabled: true, description: 'Controls whether certificates can be earned and displayed' },
+      { name: 'enableSocialSharing', isEnabled: true, description: 'Controls whether social sharing options are available' },
+      { name: 'enableFeedback', isEnabled: true, description: 'Controls whether user feedback mechanisms are enabled' },
+      { name: 'enableAdvancedSearch', isEnabled: true, description: 'Controls whether advanced search features are available' }
+    ];
+    
+    await db.insert(featureFlags).values(defaultFlags);
+    console.log('V2 database initialized successfully!');
+  } else {
+    console.log('V2 database already contains data, skipping initialization');
   }
 }
 
@@ -104,16 +106,16 @@ async function initializeDatabase() {
  */
 export default async function startV2Platform() {
   try {
-    // Initialize database with default data
+    // Initialize database
     await initializeDatabase();
     
-    // Initialize and start the Express application
-    const { app, server } = await init();
+    // Initialize app
+    const app = await init();
     
-    console.log('[v2-platform] V2 Platform started successfully');
-    return { app, server };
+    console.log('[v2] Platform initialized successfully');
+    return app;
   } catch (error) {
-    console.error('[v2-platform] Error starting V2 Platform:', error);
+    console.error('[v2] Failed to initialize platform:', error);
     throw error;
   }
 }
@@ -123,13 +125,9 @@ export default async function startV2Platform() {
  */
 export async function shutdownV2Platform() {
   try {
-    // Close database connection
-    console.log('[v2-platform] Closing database connection...');
-    await db.$pool.end();
-    console.log('[v2-platform] Database connection closed');
-    
-    console.log('[v2-platform] V2 Platform shutdown complete');
+    await pool.end();
+    console.log('[v2] Platform shutdown successfully');
   } catch (error) {
-    console.error('[v2-platform] Error during V2 Platform shutdown:', error);
+    console.error('[v2] Failed to shutdown platform:', error);
   }
 }
