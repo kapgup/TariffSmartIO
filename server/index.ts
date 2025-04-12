@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { configureAuth } from "./auth";
 import { storage } from "./storage";
+import startV2Platform from "../v2/server/index"; // Import the v2 platform
 
 // Initialize the app
 const app = express();
@@ -44,6 +45,21 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+
+  // Initialize the v2 platform and mount it to the main Express app
+  try {
+    const v2App = await startV2Platform();
+    // Mount v2 routes to the main app
+    app.use((req, res, next) => {
+      if (req.path.startsWith('/v2')) {
+        log(`Forwarding request to v2 platform: ${req.method} ${req.path}`);
+        return v2App(req, res, next);
+      }
+      next();
+    });
+  } catch (error) {
+    console.error('Failed to initialize v2 platform:', error);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

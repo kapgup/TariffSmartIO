@@ -50,9 +50,13 @@ async function init() {
   // Set up API routes under /v2/api
   await setupRoutes(app);
   
-  // Serve the v2 client for all /v2 routes
-  app.get("/v2/*", (_req: Request, res: Response) => {
-    res.sendFile(path.resolve(__dirname, '../client/index.html'));
+  // Serve static assets for the v2 client
+  const v2ClientPath = path.resolve(__dirname, '../client');
+  app.use('/v2/assets', express.static(path.join(v2ClientPath, 'assets')));
+  
+  // Handle all v2 routes using the main index.html for client-side routing
+  app.get("/v2*", (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(__dirname, '../../client/index.html'));
   });
   
   // Error handler
