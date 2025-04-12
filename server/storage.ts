@@ -6,7 +6,15 @@ import {
   featureFlags, type FeatureFlag, type InsertFeatureFlag,
   subscriptions, type Subscription, type InsertSubscription,
   featureAccess, type FeatureAccess, type InsertFeatureAccess,
-  emailSubscribers, type EmailSubscriber, type InsertEmailSubscriber
+  emailSubscribers, type EmailSubscriber, type InsertEmailSubscriber,
+  // v2 imports
+  learningModules, type LearningModule, type InsertLearningModule,
+  quizzes, type Quiz, type InsertQuiz,
+  quizQuestions, type QuizQuestion, type InsertQuizQuestion,
+  userProgress, type UserProgress, type InsertUserProgress,
+  quizAttempts, type QuizAttempt, type InsertQuizAttempt,
+  tradeDictionary, type TradeDictionary, type InsertTradeDictionary,
+  tradeAgreements, type TradeAgreement, type InsertTradeAgreement
 } from "@shared/schema";
 
 export interface IStorage {
