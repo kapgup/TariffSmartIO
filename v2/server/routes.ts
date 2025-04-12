@@ -1,49 +1,80 @@
-import { Express, Request, Response } from 'express';
+import { Express, Request, Response, NextFunction } from 'express';
+import passport from 'passport';
+import bcrypt from 'bcrypt';
+import { z } from 'zod';
+import { userInsertSchema, userUpdateSchema, moduleInsertSchema, quizInsertSchema, quizQuestionInsertSchema, quizOptionInsertSchema, dictionaryTermInsertSchema, tradeAgreementInsertSchema, dailyChallengeInsertSchema } from '../shared/schema';
 import { storage } from './storage';
-import { eq } from 'drizzle-orm';
-import * as z from 'zod';
-import { dictionaryTerms, emailSubscriptionSchema, insertDictionaryTermSchema, insertModuleSchema, insertUserSchema, moduleCreateSchema, userLoginSchema, userRegistrationSchema } from '../shared/schema';
+
+/**
+ * Type for authenticated request with user ID in session
+ */
+interface AuthenticatedRequest extends Request {
+  session: Request['session'] & {
+    userId?: number;
+    userRole?: 'admin' | 'editor' | 'premium' | 'basic';
+  };
+}
+
+/**
+ * Authentication middleware to restrict access to authenticated users
+ */
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: { message: 'Authentication required', status: 401 } });
+  }
+  next();
+}
+
+/**
+ * Authorization middleware to restrict access to users with specific roles
+ */
+function requireRole(roles: string[]) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.session.userRole || !roles.includes(req.session.userRole)) {
+      return res.status(403).json({ error: { message: 'Insufficient permissions', status: 403 } });
+    }
+    next();
+  };
+}
 
 /**
  * Register all API routes for the v2 platform
  */
 export async function registerRoutes(app: Express) {
-  // HEALTH CHECK
+  // Health check route
   app.get('/v2/api/health', (_req: Request, res: Response) => {
-    res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // AUTH ROUTES
+  // Register authentication routes
   registerAuthRoutes(app);
-
-  // MODULES ROUTES
+  
+  // Register module routes
   registerModuleRoutes(app);
-
-  // QUIZ ROUTES 
+  
+  // Register quiz routes
   registerQuizRoutes(app);
-
-  // DICTIONARY ROUTES
+  
+  // Register dictionary routes
   registerDictionaryRoutes(app);
-
-  // TRADE AGREEMENT ROUTES
+  
+  // Register trade agreement routes
   registerTradeAgreementRoutes(app);
-
-  // DAILY CHALLENGE ROUTES
+  
+  // Register daily challenge routes
   registerChallengeRoutes(app);
-
-  // USER PROGRESS ROUTES
+  
+  // Register progress tracking routes
   registerProgressRoutes(app);
-
-  // BADGE ROUTES
+  
+  // Register badge routes
   registerBadgeRoutes(app);
-
-  // FEATURE FLAG ROUTES
+  
+  // Register feature flag routes
   registerFeatureFlagRoutes(app);
-
-  // EMAIL SUBSCRIPTION ROUTES
+  
+  // Register email subscription routes
   registerEmailSubscriptionRoutes(app);
-
-  console.log('All v2 API routes registered');
 }
 
 /**
@@ -53,158 +84,150 @@ function registerAuthRoutes(app: Express) {
   // Register a new user
   app.post('/v2/api/auth/register', async (req: Request, res: Response) => {
     try {
-      const validatedData = userRegistrationSchema.parse(req.body);
-      const existingUser = await storage.getUserByEmail(validatedData.email);
+      // Validate input
+      const userData = userInsertSchema.parse(req.body);
       
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(409).json({
-          error: 'User already exists',
-          message: 'A user with this email already exists'
-        });
+        return res.status(409).json({ error: { message: 'Email already registered', status: 409 } });
       }
       
-      const newUser = await storage.createUser({
-        email: validatedData.email,
-        username: validatedData.username,
-        passwordHash: validatedData.passwordHash, // In production, hash the password
-        role: 'basic', // Default role for new users
-      });
-      
-      // Create session
-      if (req.session) {
-        req.session.userId = newUser.id;
-        req.session.userRole = newUser.role;
+      // Hash password if provided
+      let insertData = userData;
+      if (userData.password) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(userData.password, salt);
+        insertData = { ...userData, password: hashedPassword };
       }
       
-      return res.status(201).json({
-        message: 'User registered successfully',
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          username: newUser.username,
-          role: newUser.role
-        }
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        });
-      }
+      // Create user
+      const user = await storage.createUser(insertData);
       
-      console.error('Registration error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not register user'
-      });
-    }
-  });
-
-  // Login
-  app.post('/v2/api/auth/login', async (req: Request, res: Response) => {
-    try {
-      const validatedData = userLoginSchema.parse(req.body);
-      const user = await storage.getUserByEmail(validatedData.email);
-      
-      if (!user || user.passwordHash !== validatedData.password) { // In production, compare hashed passwords
-        return res.status(401).json({
-          error: 'Authentication failed',
-          message: 'Invalid email or password'
-        });
-      }
-      
-      // Create session
-      if (req.session) {
-        req.session.userId = user.id;
-        req.session.userRole = user.role;
-      }
-      
-      return res.status(200).json({
-        message: 'Login successful',
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          role: user.role
-        }
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        });
-      }
-      
-      console.error('Login error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not authenticate user'
-      });
-    }
-  });
-
-  // Logout
-  app.post('/v2/api/auth/logout', (req: Request, res: Response) => {
-    if (req.session) {
-      req.session.destroy((error) => {
-        if (error) {
-          console.error('Session destruction error:', error);
-          return res.status(500).json({
-            error: 'Internal server error',
-            message: 'Could not log out'
-          });
+      // Log user in
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: { message: 'Failed to log in after registration', status: 500 } });
         }
         
-        res.clearCookie('connect.sid');
-        return res.status(200).json({
-          message: 'Logout successful'
-        });
+        // Set session data
+        (req as AuthenticatedRequest).session.userId = user.id;
+        (req as AuthenticatedRequest).session.userRole = user.role;
+        
+        // Return user data without password
+        const { password, ...userWithoutPassword } = user;
+        return res.status(201).json({ user: userWithoutPassword });
       });
-    } else {
-      return res.status(200).json({
-        message: 'Logout successful (no session found)'
-      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: { message: 'Invalid user data', details: error.errors, status: 400 } });
+      }
+      res.status(500).json({ error: { message: 'Failed to register user', status: 500 } });
     }
   });
-
+  
+  // Login with email and password
+  app.post('/v2/api/auth/login', (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('local', (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+      
+      if (!user) {
+        return res.status(401).json({ error: { message: info?.message || 'Authentication failed', status: 401 } });
+      }
+      
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return next(loginErr);
+        }
+        
+        // Set session data
+        (req as AuthenticatedRequest).session.userId = user.id;
+        (req as AuthenticatedRequest).session.userRole = user.role;
+        
+        // Return user data without password
+        const { password, ...userWithoutPassword } = user;
+        return res.json({ user: userWithoutPassword });
+      });
+    })(req, res, next);
+  });
+  
+  // Logout
+  app.post('/v2/api/auth/logout', (req: Request, res: Response) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ error: { message: 'Failed to log out', status: 500 } });
+      }
+      res.json({ message: 'Logged out successfully' });
+    });
+  });
+  
   // Get current user
   app.get('/v2/api/auth/me', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to access this resource'
-      });
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: { message: 'Not authenticated', status: 401 } });
     }
     
     try {
-      const user = await storage.getUser(req.session.userId);
-      
+      const user = await storage.getUser((req.user as any).id);
       if (!user) {
-        // Session exists but user doesn't - clear session
-        req.session.destroy(() => {});
-        return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Invalid session'
-        });
+        return res.status(404).json({ error: { message: 'User not found', status: 404 } });
       }
       
-      return res.status(200).json({
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          role: user.role,
-          createdAt: user.createdAt
-        }
-      });
+      // Return user data without password
+      const { password, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword });
     } catch (error) {
-      console.error('Get current user error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve user information'
-      });
+      console.error('Error fetching current user:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch user data', status: 500 } });
+    }
+  });
+  
+  // Google OAuth login initiation
+  app.get('/v2/api/auth/google', 
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+  );
+  
+  // Google OAuth callback
+  app.get('/v2/api/auth/google/callback',
+    passport.authenticate('google', { 
+      failureRedirect: '/v2/login?auth=failed',
+      successRedirect: '/v2/dashboard'
+    })
+  );
+  
+  // Update user profile
+  app.patch('/v2/api/auth/profile', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userData = userUpdateSchema.parse(req.body);
+      const userId = req.session.userId;
+      
+      // Hash password if provided
+      let updateData = userData;
+      if (userData.password) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(userData.password, salt);
+        updateData = { ...userData, password: hashedPassword };
+      }
+      
+      // Update user
+      const user = await storage.updateUser(userId!, updateData);
+      
+      if (!user) {
+        return res.status(404).json({ error: { message: 'User not found', status: 404 } });
+      }
+      
+      // Return user data without password
+      const { password, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: { message: 'Invalid user data', details: error.errors, status: 400 } });
+      }
+      res.status(500).json({ error: { message: 'Failed to update profile', status: 500 } });
     }
   });
 }
@@ -219,184 +242,140 @@ function registerModuleRoutes(app: Express) {
       const category = req.query.category as string | undefined;
       const published = req.query.published === 'true';
       
-      const modules = await storage.getModules({ category, published });
+      // Only return published modules for non-admin/editor users
+      let publishedFilter = published;
+      if (req.isAuthenticated()) {
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        if (userRole === 'admin' || userRole === 'editor') {
+          publishedFilter = req.query.published === 'true' ? true : undefined;
+        } else {
+          publishedFilter = true;
+        }
+      } else {
+        publishedFilter = true;
+      }
       
-      // Get distinct categories for filtering
-      const moduleCategories = Array.from(new Set(modules.map(module => module.category)));
+      const modules = await storage.getModules({ 
+        category, 
+        published: publishedFilter 
+      });
       
-      return res.status(200).json({
+      // Calculate categories and total counts
+      const categories = [...new Set(modules.map(m => m.category))];
+      const totalModules = modules.length;
+      
+      res.json({ 
         modules,
-        categories: moduleCategories,
-        totalModules: modules.length
+        categories,
+        totalModules
       });
     } catch (error) {
-      console.error('Get modules error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve modules'
-      });
+      console.error('Error fetching modules:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch modules', status: 500 } });
     }
   });
-
+  
   // Get module by ID
   app.get('/v2/api/modules/:id', async (req: Request, res: Response) => {
     try {
-      const moduleId = parseInt(req.params.id);
-      
-      if (isNaN(moduleId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Module ID must be a number'
-        });
-      }
-      
+      const moduleId = parseInt(req.params.id, 10);
       const module = await storage.getModuleById(moduleId);
       
       if (!module) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Module not found'
-        });
+        return res.status(404).json({ error: { message: 'Module not found', status: 404 } });
       }
       
-      // Also get associated quizzes
-      const quizzes = await storage.getQuizzes({ moduleId });
+      // Check if user can access unpublished module
+      if (!module.published) {
+        if (!req.isAuthenticated()) {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+        
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        if (userRole !== 'admin' && userRole !== 'editor') {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+      }
       
-      return res.status(200).json({
-        module,
-        quizzes
-      });
+      res.json({ module });
     } catch (error) {
-      console.error('Get module error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve module'
-      });
+      console.error('Error fetching module:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch module', status: 500 } });
     }
   });
-
+  
   // Get module by slug
   app.get('/v2/api/modules/slug/:slug', async (req: Request, res: Response) => {
     try {
       const slug = req.params.slug;
-      
       const module = await storage.getModuleBySlug(slug);
       
       if (!module) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Module not found'
-        });
+        return res.status(404).json({ error: { message: 'Module not found', status: 404 } });
       }
       
-      // Also get associated quizzes
-      const quizzes = await storage.getQuizzes({ moduleId: module.id });
+      // Check if user can access unpublished module
+      if (!module.published) {
+        if (!req.isAuthenticated()) {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+        
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        if (userRole !== 'admin' && userRole !== 'editor') {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+      }
       
-      return res.status(200).json({
-        module,
-        quizzes
-      });
+      res.json({ module });
     } catch (error) {
-      console.error('Get module by slug error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve module'
-      });
+      console.error('Error fetching module by slug:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch module', status: 500 } });
     }
   });
-
-  // Create a new module (admin only)
-  app.post('/v2/api/modules', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'You do not have permission to create modules'
-      });
-    }
-    
+  
+  // Create a new module (admin/editor only)
+  app.post('/v2/api/modules', requireAuth, requireRole(['admin', 'editor']), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const validatedData = moduleCreateSchema.parse(req.body);
+      const moduleData = moduleInsertSchema.parse(req.body);
       
-      const newModule = await storage.createModule({
-        title: validatedData.title,
-        slug: validatedData.slug,
-        description: validatedData.description,
-        category: validatedData.category,
-        difficulty: validatedData.difficulty,
-        authorId: req.session.userId,
-        content: validatedData.content,
-        estimatedMinutes: validatedData.estimatedMinutes,
-        published: validatedData.published || false,
-        tags: validatedData.tags || []
+      // Set author ID to current user
+      const userId = req.session.userId;
+      
+      const module = await storage.createModule({
+        ...moduleData,
+        authorId: userId,
+        estimatedMinutes: moduleData.estimatedMinutes || 15,
       });
       
-      return res.status(201).json({
-        message: 'Module created successfully',
-        module: newModule
-      });
+      res.status(201).json({ module });
     } catch (error) {
+      console.error('Error creating module:', error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        });
+        return res.status(400).json({ error: { message: 'Invalid module data', details: error.errors, status: 400 } });
       }
-      
-      console.error('Create module error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not create module'
-      });
+      res.status(500).json({ error: { message: 'Failed to create module', status: 500 } });
     }
   });
-
-  // Update a module (admin only)
-  app.patch('/v2/api/modules/:id', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'You do not have permission to update modules'
-      });
-    }
-    
+  
+  // Update a module (admin/editor only)
+  app.patch('/v2/api/modules/:id', requireAuth, requireRole(['admin', 'editor']), async (req: Request, res: Response) => {
     try {
-      const moduleId = parseInt(req.params.id);
+      const moduleId = parseInt(req.params.id, 10);
+      const moduleData = moduleInsertSchema.partial().parse(req.body);
       
-      if (isNaN(moduleId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Module ID must be a number'
-        });
+      const module = await storage.updateModule(moduleId, moduleData);
+      
+      if (!module) {
+        return res.status(404).json({ error: { message: 'Module not found', status: 404 } });
       }
       
-      const validatedData = insertModuleSchema.partial().parse(req.body);
-      
-      const updatedModule = await storage.updateModule(moduleId, validatedData);
-      
-      if (!updatedModule) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Module not found'
-        });
-      }
-      
-      return res.status(200).json({
-        message: 'Module updated successfully',
-        module: updatedModule
-      });
+      res.json({ module });
     } catch (error) {
+      console.error('Error updating module:', error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        });
+        return res.status(400).json({ error: { message: 'Invalid module data', details: error.errors, status: 400 } });
       }
-      
-      console.error('Update module error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not update module'
-      });
+      res.status(500).json({ error: { message: 'Failed to update module', status: 500 } });
     }
   });
 }
@@ -408,216 +387,215 @@ function registerQuizRoutes(app: Express) {
   // Get all quizzes (with optional filtering)
   app.get('/v2/api/quizzes', async (req: Request, res: Response) => {
     try {
-      const moduleId = req.query.moduleId ? parseInt(req.query.moduleId as string) : undefined;
+      const moduleId = req.query.moduleId ? parseInt(req.query.moduleId as string, 10) : undefined;
       const published = req.query.published === 'true';
       
-      const quizzes = await storage.getQuizzes({ moduleId, published });
-      
-      return res.status(200).json({
-        quizzes,
-        totalQuizzes: quizzes.length
-      });
-    } catch (error) {
-      console.error('Get quizzes error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve quizzes'
-      });
-    }
-  });
-
-  // Get quiz by ID with questions and options
-  app.get('/v2/api/quizzes/:id', async (req: Request, res: Response) => {
-    try {
-      const quizId = parseInt(req.params.id);
-      
-      if (isNaN(quizId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Quiz ID must be a number'
-        });
+      // Only return published quizzes for non-admin/editor users
+      let publishedFilter = published;
+      if (req.isAuthenticated()) {
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        if (userRole === 'admin' || userRole === 'editor') {
+          publishedFilter = req.query.published === 'true' ? true : undefined;
+        } else {
+          publishedFilter = true;
+        }
+      } else {
+        publishedFilter = true;
       }
       
+      const quizzes = await storage.getQuizzes({ 
+        moduleId, 
+        published: publishedFilter 
+      });
+      
+      res.json({ quizzes });
+    } catch (error) {
+      console.error('Error fetching quizzes:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch quizzes', status: 500 } });
+    }
+  });
+  
+  // Get quiz by ID
+  app.get('/v2/api/quizzes/:id', async (req: Request, res: Response) => {
+    try {
+      const quizId = parseInt(req.params.id, 10);
       const quiz = await storage.getQuizById(quizId);
       
       if (!quiz) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Quiz not found'
-        });
+        return res.status(404).json({ error: { message: 'Quiz not found', status: 404 } });
       }
       
-      // Get questions for this quiz
+      // Check if user can access unpublished quiz
+      if (!quiz.published) {
+        if (!req.isAuthenticated()) {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+        
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        if (userRole !== 'admin' && userRole !== 'editor') {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+      }
+      
+      // Get questions for the quiz
       const questions = await storage.getQuizQuestions(quizId);
       
       // Get options for each question
       const questionsWithOptions = await Promise.all(
         questions.map(async (question) => {
           const options = await storage.getQuizOptions(question.id);
-          return { ...question, options };
+          return {
+            ...question,
+            options
+          };
         })
       );
       
-      return res.status(200).json({
+      res.json({ 
         quiz,
         questions: questionsWithOptions
       });
     } catch (error) {
-      console.error('Get quiz error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve quiz'
-      });
+      console.error('Error fetching quiz:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch quiz', status: 500 } });
     }
   });
-
+  
   // Get quiz by slug
   app.get('/v2/api/quizzes/slug/:slug', async (req: Request, res: Response) => {
     try {
       const slug = req.params.slug;
-      
       const quiz = await storage.getQuizBySlug(slug);
       
       if (!quiz) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Quiz not found'
-        });
+        return res.status(404).json({ error: { message: 'Quiz not found', status: 404 } });
       }
       
-      // Get questions for this quiz
+      // Check if user can access unpublished quiz
+      if (!quiz.published) {
+        if (!req.isAuthenticated()) {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+        
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        if (userRole !== 'admin' && userRole !== 'editor') {
+          return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+        }
+      }
+      
+      // Get questions for the quiz
       const questions = await storage.getQuizQuestions(quiz.id);
       
       // Get options for each question
       const questionsWithOptions = await Promise.all(
         questions.map(async (question) => {
           const options = await storage.getQuizOptions(question.id);
-          return { ...question, options };
+          return {
+            ...question,
+            options
+          };
         })
       );
       
-      return res.status(200).json({
+      res.json({ 
         quiz,
         questions: questionsWithOptions
       });
     } catch (error) {
-      console.error('Get quiz by slug error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve quiz'
-      });
+      console.error('Error fetching quiz by slug:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch quiz', status: 500 } });
     }
   });
-
+  
   // Submit quiz answers
-  app.post('/v2/api/quizzes/:id/submit', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to submit quiz answers'
-      });
-    }
-    
+  app.post('/v2/api/quizzes/:id/submit', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const quizId = parseInt(req.params.id);
+      const quizId = parseInt(req.params.id, 10);
+      const userId = req.session.userId!;
+      const answers = req.body.answers as { questionId: number; selectedOptionId: number }[];
       
-      if (isNaN(quizId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Quiz ID must be a number'
-        });
-      }
-      
+      // Validate quiz exists
       const quiz = await storage.getQuizById(quizId);
-      
       if (!quiz) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Quiz not found'
-        });
+        return res.status(404).json({ error: { message: 'Quiz not found', status: 404 } });
       }
       
-      const { answers, timeSpent } = req.body;
-      
-      if (!answers || !Array.isArray(answers)) {
-        return res.status(400).json({
-          error: 'Invalid submission',
-          message: 'Answers must be provided as an array'
-        });
-      }
-      
-      // Get questions for this quiz
+      // Get questions for the quiz
       const questions = await storage.getQuizQuestions(quizId);
-      
-      // Get options for each question to determine correct answers
-      const questionsWithOptions = await Promise.all(
-        questions.map(async (question) => {
-          const options = await storage.getQuizOptions(question.id);
-          return { ...question, options };
-        })
-      );
       
       // Calculate score
       let score = 0;
-      let correctAnswers = 0;
+      const responses: Record<number, { 
+        questionId: number; 
+        selectedOptionId: number; 
+        isCorrect: boolean;
+        correctOptionId?: number;
+      }> = {};
       
-      answers.forEach((answer: { questionId: number, selectedOptionId: number }) => {
-        const question = questionsWithOptions.find(q => q.id === answer.questionId);
-        
-        if (question) {
-          const correctOption = question.options.find(o => o.isCorrect);
+      await Promise.all(
+        answers.map(async (answer) => {
+          const question = questions.find(q => q.id === answer.questionId);
+          if (!question) return;
           
-          if (correctOption && correctOption.id === answer.selectedOptionId) {
-            correctAnswers++;
+          // Get options for the question
+          const options = await storage.getQuizOptions(question.id);
+          const selectedOption = options.find(o => o.id === answer.selectedOptionId);
+          const correctOption = options.find(o => o.isCorrect);
+          
+          const isCorrect = selectedOption?.isCorrect || false;
+          if (isCorrect) {
+            score += question.points;
           }
-        }
-      });
+          
+          responses[question.id] = {
+            questionId: question.id,
+            selectedOptionId: answer.selectedOptionId,
+            isCorrect,
+            correctOptionId: correctOption?.id,
+          };
+        })
+      );
       
-      if (questions.length > 0) {
-        score = (correctAnswers / questions.length) * 100;
-      }
+      // Calculate percentage
+      const maxScore = questions.reduce((total, q) => total + q.points, 0);
+      const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      const passed = percentage >= quiz.passingScore;
       
-      const passed = score >= (quiz.passingScore || 70);
+      // Get existing progress or create new
+      let progress = await storage.getUserQuizProgress(userId, quizId);
       
-      // Save user's quiz progress
-      const existingProgress = await storage.getUserQuizProgress(req.session.userId, quizId);
-      
-      if (existingProgress) {
+      if (progress) {
         // Update existing progress
-        await storage.updateUserQuizProgress(req.session.userId, quizId, {
-          score,
-          passed,
-          attempts: existingProgress.attempts + 1,
-          answers: answers,
-          completedAt: new Date(),
-          timeSpent: timeSpent || null
+        progress = await storage.updateUserQuizProgress(userId, quizId, {
+          score: percentage,
+          attempts: progress.attempts + 1,
+          completed: passed,
+          lastAttemptAt: new Date(),
+          responses: responses,
         });
       } else {
-        // Create new progress record
-        await storage.createUserQuizProgress({
-          userId: req.session.userId,
+        // Create new progress
+        progress = await storage.createUserQuizProgress({
+          userId,
           quizId,
-          score,
-          passed,
+          score: percentage,
           attempts: 1,
-          answers: answers,
-          completedAt: new Date(),
-          timeSpent: timeSpent || null
+          completed: passed,
+          lastAttemptAt: new Date(),
+          responses: responses,
         });
       }
       
-      return res.status(200).json({
-        score,
+      res.json({
+        score: percentage,
+        maxScore,
         passed,
-        correctAnswers,
-        totalQuestions: questions.length
+        attempts: progress.attempts,
+        responses
       });
     } catch (error) {
-      console.error('Submit quiz error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not process quiz submission'
-      });
+      console.error('Error submitting quiz:', error);
+      res.status(500).json({ error: { message: 'Failed to submit quiz', status: 500 } });
     }
   });
 }
@@ -632,175 +610,108 @@ function registerDictionaryRoutes(app: Express) {
       const category = req.query.category as string | undefined;
       const searchQuery = req.query.search as string | undefined;
       
-      const terms = await storage.getDictionaryTerms({ category, searchQuery });
+      const terms = await storage.getDictionaryTerms({ 
+        category,
+        searchQuery 
+      });
       
-      // Get distinct categories for filtering
-      const termCategories = Array.from(new Set(terms.map(term => term.category)));
+      // Calculate categories
+      const categories = [...new Set(terms.map(t => t.category))];
       
-      return res.status(200).json({
+      res.json({ 
         terms,
-        categories: termCategories,
-        totalTerms: terms.length
+        categories,
+        total: terms.length
       });
     } catch (error) {
-      console.error('Get dictionary terms error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve dictionary terms'
-      });
+      console.error('Error fetching dictionary terms:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch dictionary terms', status: 500 } });
     }
   });
-
-  // Get dictionary term by ID
+  
+  // Get term by ID
   app.get('/v2/api/dictionary/:id', async (req: Request, res: Response) => {
     try {
-      const termId = parseInt(req.params.id);
-      
-      if (isNaN(termId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Term ID must be a number'
-        });
-      }
-      
+      const termId = parseInt(req.params.id, 10);
       const term = await storage.getDictionaryTermById(termId);
       
       if (!term) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Dictionary term not found'
-        });
+        return res.status(404).json({ error: { message: 'Term not found', status: 404 } });
       }
       
       // Increment view count
-      const updatedTerm = await storage.incrementDictionaryTermViewCount(termId);
+      await storage.incrementDictionaryTermViewCount(termId);
       
-      return res.status(200).json({
-        term: updatedTerm || term
-      });
+      res.json({ term });
     } catch (error) {
-      console.error('Get dictionary term error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve dictionary term'
-      });
+      console.error('Error fetching dictionary term:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch dictionary term', status: 500 } });
     }
   });
-
-  // Get dictionary term by slug
+  
+  // Get term by slug
   app.get('/v2/api/dictionary/slug/:slug', async (req: Request, res: Response) => {
     try {
       const slug = req.params.slug;
-      
       const term = await storage.getDictionaryTermBySlug(slug);
       
       if (!term) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Dictionary term not found'
-        });
+        return res.status(404).json({ error: { message: 'Term not found', status: 404 } });
       }
       
       // Increment view count
-      const updatedTerm = await storage.incrementDictionaryTermViewCount(term.id);
+      await storage.incrementDictionaryTermViewCount(term.id);
       
-      return res.status(200).json({
-        term: updatedTerm || term
-      });
+      res.json({ term });
     } catch (error) {
-      console.error('Get dictionary term by slug error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve dictionary term'
-      });
+      console.error('Error fetching dictionary term by slug:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch dictionary term', status: 500 } });
     }
   });
-
-  // Create a new dictionary term (admin only)
-  app.post('/v2/api/dictionary', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'You do not have permission to create dictionary terms'
-      });
-    }
-    
+  
+  // Create a new dictionary term (admin/editor only)
+  app.post('/v2/api/dictionary', requireAuth, requireRole(['admin', 'editor']), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const validatedData = insertDictionaryTermSchema.parse(req.body);
+      const termData = dictionaryTermInsertSchema.parse(req.body);
       
-      const newTerm = await storage.createDictionaryTerm({
-        ...validatedData,
-        authorId: req.session.userId,
+      // Set author ID to current user
+      const userId = req.session.userId;
+      
+      const term = await storage.createDictionaryTerm({
+        ...termData,
+        authorId: userId,
         viewCount: 0
       });
       
-      return res.status(201).json({
-        message: 'Dictionary term created successfully',
-        term: newTerm
-      });
+      res.status(201).json({ term });
     } catch (error) {
+      console.error('Error creating dictionary term:', error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        });
+        return res.status(400).json({ error: { message: 'Invalid term data', details: error.errors, status: 400 } });
       }
-      
-      console.error('Create dictionary term error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not create dictionary term'
-      });
+      res.status(500).json({ error: { message: 'Failed to create dictionary term', status: 500 } });
     }
   });
-
-  // Update a dictionary term (admin only)
-  app.patch('/v2/api/dictionary/:id', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'You do not have permission to update dictionary terms'
-      });
-    }
-    
+  
+  // Update a dictionary term (admin/editor only)
+  app.patch('/v2/api/dictionary/:id', requireAuth, requireRole(['admin', 'editor']), async (req: Request, res: Response) => {
     try {
-      const termId = parseInt(req.params.id);
+      const termId = parseInt(req.params.id, 10);
+      const termData = dictionaryTermInsertSchema.partial().parse(req.body);
       
-      if (isNaN(termId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Term ID must be a number'
-        });
+      const term = await storage.updateDictionaryTerm(termId, termData);
+      
+      if (!term) {
+        return res.status(404).json({ error: { message: 'Term not found', status: 404 } });
       }
       
-      const validatedData = insertDictionaryTermSchema.partial().parse(req.body);
-      
-      const updatedTerm = await storage.updateDictionaryTerm(termId, validatedData);
-      
-      if (!updatedTerm) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Dictionary term not found'
-        });
-      }
-      
-      return res.status(200).json({
-        message: 'Dictionary term updated successfully',
-        term: updatedTerm
-      });
+      res.json({ term });
     } catch (error) {
+      console.error('Error updating dictionary term:', error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        });
+        return res.status(400).json({ error: { message: 'Invalid term data', details: error.errors, status: 400 } });
       }
-      
-      console.error('Update dictionary term error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not update dictionary term'
-      });
+      res.status(500).json({ error: { message: 'Failed to update dictionary term', status: 500 } });
     }
   });
 }
@@ -812,80 +723,112 @@ function registerTradeAgreementRoutes(app: Express) {
   // Get all trade agreements (with optional filtering)
   app.get('/v2/api/agreements', async (req: Request, res: Response) => {
     try {
-      const status = req.query.status as string | undefined;
+      const status = req.query.status as "active" | "expired" | "proposed" | "renegotiating" | undefined;
       const searchQuery = req.query.search as string | undefined;
       
-      const agreements = await storage.getTradeAgreements({ status, searchQuery });
+      const agreements = await storage.getTradeAgreements({ 
+        status,
+        searchQuery 
+      });
       
-      return res.status(200).json({
+      // Calculate statistics
+      const totalActive = agreements.filter(a => a.status === 'active').length;
+      const totalExpired = agreements.filter(a => a.status === 'expired').length;
+      const totalProposed = agreements.filter(a => a.status === 'proposed').length;
+      const totalRenegotiating = agreements.filter(a => a.status === 'renegotiating').length;
+      
+      res.json({ 
         agreements,
-        totalAgreements: agreements.length
+        stats: {
+          totalActive,
+          totalExpired,
+          totalProposed,
+          totalRenegotiating,
+          total: agreements.length
+        }
       });
     } catch (error) {
-      console.error('Get trade agreements error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve trade agreements'
-      });
+      console.error('Error fetching trade agreements:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch trade agreements', status: 500 } });
     }
   });
-
-  // Get trade agreement by ID
+  
+  // Get agreement by ID
   app.get('/v2/api/agreements/:id', async (req: Request, res: Response) => {
     try {
-      const agreementId = parseInt(req.params.id);
-      
-      if (isNaN(agreementId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Agreement ID must be a number'
-        });
-      }
-      
+      const agreementId = parseInt(req.params.id, 10);
       const agreement = await storage.getTradeAgreementById(agreementId);
       
       if (!agreement) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Trade agreement not found'
-        });
+        return res.status(404).json({ error: { message: 'Agreement not found', status: 404 } });
       }
       
-      return res.status(200).json({
-        agreement
-      });
+      res.json({ agreement });
     } catch (error) {
-      console.error('Get trade agreement error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve trade agreement'
-      });
+      console.error('Error fetching trade agreement:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch trade agreement', status: 500 } });
     }
   });
-
-  // Get trade agreement by slug
+  
+  // Get agreement by slug
   app.get('/v2/api/agreements/slug/:slug', async (req: Request, res: Response) => {
     try {
       const slug = req.params.slug;
-      
       const agreement = await storage.getTradeAgreementBySlug(slug);
       
       if (!agreement) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Trade agreement not found'
-        });
+        return res.status(404).json({ error: { message: 'Agreement not found', status: 404 } });
       }
       
-      return res.status(200).json({
-        agreement
-      });
+      res.json({ agreement });
     } catch (error) {
-      console.error('Get trade agreement by slug error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve trade agreement'
+      console.error('Error fetching trade agreement by slug:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch trade agreement', status: 500 } });
+    }
+  });
+  
+  // Create a new trade agreement (admin/editor only)
+  app.post('/v2/api/agreements', requireAuth, requireRole(['admin', 'editor']), async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const agreementData = tradeAgreementInsertSchema.parse(req.body);
+      
+      // Set author ID to current user
+      const userId = req.session.userId;
+      
+      const agreement = await storage.createTradeAgreement({
+        ...agreementData,
+        authorId: userId,
       });
+      
+      res.status(201).json({ agreement });
+    } catch (error) {
+      console.error('Error creating trade agreement:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: { message: 'Invalid agreement data', details: error.errors, status: 400 } });
+      }
+      res.status(500).json({ error: { message: 'Failed to create trade agreement', status: 500 } });
+    }
+  });
+  
+  // Update a trade agreement (admin/editor only)
+  app.patch('/v2/api/agreements/:id', requireAuth, requireRole(['admin', 'editor']), async (req: Request, res: Response) => {
+    try {
+      const agreementId = parseInt(req.params.id, 10);
+      const agreementData = tradeAgreementInsertSchema.partial().parse(req.body);
+      
+      const agreement = await storage.updateTradeAgreement(agreementId, agreementData);
+      
+      if (!agreement) {
+        return res.status(404).json({ error: { message: 'Agreement not found', status: 404 } });
+      }
+      
+      res.json({ agreement });
+    } catch (error) {
+      console.error('Error updating trade agreement:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: { message: 'Invalid agreement data', details: error.errors, status: 400 } });
+      }
+      res.status(500).json({ error: { message: 'Failed to update trade agreement', status: 500 } });
     }
   });
 }
@@ -901,332 +844,263 @@ function registerChallengeRoutes(app: Express) {
       const challenge = await storage.getDailyChallenge(today);
       
       if (!challenge) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'No challenge available for today'
-        });
+        return res.status(404).json({ error: { message: 'No challenge available for today', status: 404 } });
       }
       
-      // Check if authenticated user has completed this challenge
+      // Check if user has completed the challenge
       let completed = false;
-      
-      if (req.session && req.session.userId) {
-        const completion = await storage.getChallengeCompletion(req.session.userId, challenge.id);
+      if (req.isAuthenticated()) {
+        const userId = (req.user as any).id;
+        const completion = await storage.getChallengeCompletion(userId, challenge.id);
         completed = !!completion;
       }
       
-      return res.status(200).json({
+      res.json({ 
         challenge,
         completed
       });
     } catch (error) {
-      console.error('Get today\'s challenge error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve today\'s challenge'
-      });
+      console.error('Error fetching today\'s challenge:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch daily challenge', status: 500 } });
     }
   });
-
-  // Get all daily challenges
-  app.get('/v2/api/challenges', async (req: Request, res: Response) => {
+  
+  // Get all daily challenges (admin/editor only)
+  app.get('/v2/api/challenges', requireAuth, requireRole(['admin', 'editor']), async (req: Request, res: Response) => {
     try {
       const challenges = await storage.getDailyChallenges();
-      
-      // Get completion status for authenticated user
-      let userCompletions: Record<number, boolean> = {};
-      
-      if (req.session && req.session.userId) {
-        const completions = await storage.getUserChallengeCompletions(req.session.userId);
-        userCompletions = completions.reduce((acc, completion) => {
-          acc[completion.challengeId] = true;
-          return acc;
-        }, {} as Record<number, boolean>);
-      }
-      
-      return res.status(200).json({
-        challenges,
-        userCompletions
-      });
+      res.json({ challenges });
     } catch (error) {
-      console.error('Get challenges error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve challenges'
-      });
+      console.error('Error fetching challenges:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch challenges', status: 500 } });
     }
   });
-
-  // Complete a challenge
-  app.post('/v2/api/challenges/:id/complete', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to complete challenges'
-      });
-    }
-    
+  
+  // Complete a daily challenge
+  app.post('/v2/api/challenges/:id/complete', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const challengeId = parseInt(req.params.id);
+      const challengeId = parseInt(req.params.id, 10);
+      const userId = req.session.userId!;
       
-      if (isNaN(challengeId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Challenge ID must be a number'
-        });
-      }
-      
+      // Validate challenge exists
       const challenge = await storage.getDailyChallenge();
-      
       if (!challenge || challenge.id !== challengeId) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Challenge not found or not available today'
-        });
+        return res.status(404).json({ error: { message: 'Challenge not found or not active today', status: 404 } });
       }
       
       // Check if already completed
-      const existingCompletion = await storage.getChallengeCompletion(req.session.userId, challengeId);
-      
+      const existingCompletion = await storage.getChallengeCompletion(userId, challengeId);
       if (existingCompletion) {
-        return res.status(409).json({
-          error: 'Already completed',
-          message: 'You have already completed this challenge'
-        });
+        return res.status(409).json({ error: { message: 'Challenge already completed', status: 409 } });
       }
       
       // Create completion record
       const completion = await storage.createChallengeCompletion({
-        userId: req.session.userId,
+        userId,
         challengeId,
-        completedAt: new Date()
+        completedAt: new Date(),
+        pointsEarned: challenge.points,
       });
       
-      return res.status(201).json({
-        message: 'Challenge completed successfully',
+      res.status(201).json({ 
         completion,
-        points: challenge.points || 10
+        pointsEarned: challenge.points
       });
     } catch (error) {
-      console.error('Complete challenge error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not complete challenge'
+      console.error('Error completing challenge:', error);
+      res.status(500).json({ error: { message: 'Failed to complete challenge', status: 500 } });
+    }
+  });
+  
+  // Create a new daily challenge (admin/editor only)
+  app.post('/v2/api/challenges', requireAuth, requireRole(['admin', 'editor']), async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const challengeData = dailyChallengeInsertSchema.parse(req.body);
+      
+      // Set author ID to current user
+      const userId = req.session.userId;
+      
+      const challenge = await storage.createDailyChallenge({
+        ...challengeData,
+        authorId: userId,
       });
+      
+      res.status(201).json({ challenge });
+    } catch (error) {
+      console.error('Error creating daily challenge:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: { message: 'Invalid challenge data', details: error.errors, status: 400 } });
+      }
+      res.status(500).json({ error: { message: 'Failed to create daily challenge', status: 500 } });
     }
   });
 }
 
 /**
- * Register user progress routes
+ * Register user progress tracking routes
  */
 function registerProgressRoutes(app: Express) {
-  // Get user's progress for all modules
-  app.get('/v2/api/progress/modules', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to access your progress'
-      });
-    }
-    
+  // Get user's module progress
+  app.get('/v2/api/progress/modules', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const progress = await storage.getUserModuleProgressByUser(req.session.userId);
+      const userId = req.session.userId!;
+      const progress = await storage.getUserModuleProgressByUser(userId);
       
-      return res.status(200).json({
-        moduleProgress: progress
-      });
+      res.json({ progress });
     } catch (error) {
-      console.error('Get module progress error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve module progress'
-      });
+      console.error('Error fetching module progress:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch module progress', status: 500 } });
     }
   });
-
-  // Get user's progress for all quizzes
-  app.get('/v2/api/progress/quizzes', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to access your progress'
-      });
-    }
-    
+  
+  // Get user's quiz progress
+  app.get('/v2/api/progress/quizzes', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const progress = await storage.getUserQuizProgressByUser(req.session.userId);
+      const userId = req.session.userId!;
+      const progress = await storage.getUserQuizProgressByUser(userId);
       
-      return res.status(200).json({
-        quizProgress: progress
-      });
+      res.json({ progress });
     } catch (error) {
-      console.error('Get quiz progress error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve quiz progress'
-      });
+      console.error('Error fetching quiz progress:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch quiz progress', status: 500 } });
     }
   });
-
-  // Update module progress
-  app.post('/v2/api/progress/modules/:id', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to update progress'
-      });
-    }
-    
+  
+  // Update a module's progress
+  app.post('/v2/api/progress/modules/:id', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const moduleId = parseInt(req.params.id);
+      const moduleId = parseInt(req.params.id, 10);
+      const userId = req.session.userId!;
       
-      if (isNaN(moduleId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Module ID must be a number'
-        });
-      }
+      const { 
+        status, 
+        progress: progressValue, 
+        currentSection, 
+        completed 
+      } = req.body;
       
-      const { progress } = req.body;
-      
-      if (typeof progress !== 'number' || progress < 0 || progress > 100) {
-        return res.status(400).json({
-          error: 'Invalid progress',
-          message: 'Progress must be a number between 0 and 100'
-        });
-      }
-      
-      // Check if module exists
+      // Validate module exists
       const module = await storage.getModuleById(moduleId);
-      
       if (!module) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Module not found'
-        });
+        return res.status(404).json({ error: { message: 'Module not found', status: 404 } });
       }
       
-      // Check if progress record exists
-      const existingProgress = await storage.getUserModuleProgress(req.session.userId, moduleId);
+      // Get existing progress or create new
+      let progress = await storage.getUserModuleProgress(userId, moduleId);
       
-      let moduleProgress;
-      
-      if (existingProgress) {
+      const now = new Date();
+      if (progress) {
         // Update existing progress
-        moduleProgress = await storage.updateUserModuleProgress(req.session.userId, moduleId, {
-          progress,
-          completedAt: progress === 100 ? new Date() : existingProgress.completedAt,
-          lastAccessedAt: new Date()
-        });
+        const updateData: any = {
+          lastAccessedAt: now,
+        };
+        
+        if (status) updateData.status = status;
+        if (progressValue !== undefined) updateData.progress = progressValue;
+        if (currentSection !== undefined) updateData.currentSection = currentSection;
+        
+        // Mark as completed if specified
+        if (completed) {
+          updateData.status = 'completed';
+          updateData.completedAt = now;
+          updateData.progress = 100;
+        }
+        
+        progress = await storage.updateUserModuleProgress(userId, moduleId, updateData);
       } else {
-        // Create new progress record
-        moduleProgress = await storage.createUserModuleProgress({
-          userId: req.session.userId,
+        // Create new progress
+        const insertData: any = {
+          userId,
           moduleId,
-          progress,
-          completedAt: progress === 100 ? new Date() : null,
-          lastAccessedAt: new Date()
-        });
+          lastAccessedAt: now,
+          startedAt: now,
+          status: status || 'in_progress',
+          progress: progressValue || 0,
+          currentSection: currentSection || 0,
+        };
+        
+        // Mark as completed if specified
+        if (completed) {
+          insertData.status = 'completed';
+          insertData.completedAt = now;
+          insertData.progress = 100;
+        }
+        
+        progress = await storage.createUserModuleProgress(insertData);
       }
       
-      return res.status(200).json({
-        message: 'Progress updated successfully',
-        moduleProgress
-      });
+      res.json({ progress });
     } catch (error) {
-      console.error('Update module progress error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not update module progress'
-      });
+      console.error('Error updating module progress:', error);
+      res.status(500).json({ error: { message: 'Failed to update module progress', status: 500 } });
     }
   });
-
-  // Get user certificates
-  app.get('/v2/api/certificates', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to access your certificates'
-      });
-    }
-    
+  
+  // Get user's certificates
+  app.get('/v2/api/certificates', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const certificates = await storage.getUserCertificates(req.session.userId);
+      const userId = req.session.userId!;
+      const certificates = await storage.getUserCertificates(userId);
       
-      return res.status(200).json({
-        certificates
-      });
+      res.json({ certificates });
     } catch (error) {
-      console.error('Get certificates error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve certificates'
-      });
+      console.error('Error fetching certificates:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch certificates', status: 500 } });
     }
   });
-
-  // Generate certificate (after completing all modules in a category)
-  app.post('/v2/api/certificates/category/:category', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to generate certificates'
-      });
-    }
-    
+  
+  // Generate a certificate for a category
+  app.post('/v2/api/certificates/category/:category', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const userId = req.session.userId!;
       const category = req.params.category;
       
-      // Get all modules in this category
+      // Get all modules for the category
       const modules = await storage.getModules({ category, published: true });
-      
       if (modules.length === 0) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'No modules found in this category'
+        return res.status(404).json({ error: { message: 'No modules found for category', status: 404 } });
+      }
+      
+      // Check user's progress for each module
+      const progress = await storage.getUserModuleProgressByUser(userId);
+      const categoryProgress = progress.filter(p => 
+        modules.some(m => m.id === p.moduleId)
+      );
+      
+      // Check if all modules are completed
+      const allCompleted = modules.every(module => 
+        categoryProgress.some(p => 
+          p.moduleId === module.id && p.status === 'completed'
+        )
+      );
+      
+      if (!allCompleted) {
+        return res.status(400).json({ 
+          error: { 
+            message: 'Not all modules in this category are completed', 
+            status: 400,
+            completedCount: categoryProgress.filter(p => p.status === 'completed').length,
+            totalCount: modules.length
+          } 
         });
       }
       
-      // Check if user has completed all modules
-      const moduleIds = modules.map(module => module.id);
-      const userProgress = await storage.getUserModuleProgressByUser(req.session.userId);
+      // Generate certificate
+      const verificationCode = Math.random().toString(36).substring(2, 15) + 
+                               Math.random().toString(36).substring(2, 15);
       
-      const completedModuleIds = userProgress
-        .filter(progress => progress.progress === 100 && progress.completedAt !== null)
-        .map(progress => progress.moduleId);
-      
-      const allModulesCompleted = moduleIds.every(id => completedModuleIds.includes(id));
-      
-      if (!allModulesCompleted) {
-        return res.status(400).json({
-          error: 'Incomplete',
-          message: 'You must complete all modules in this category to receive a certificate'
-        });
-      }
-      
-      // Create certificate
       const certificate = await storage.createCertificate({
-        userId: req.session.userId,
-        name: `${category.charAt(0).toUpperCase() + category.slice(1)} Expert`,
-        description: `Certification for completing all modules in the ${category} category`,
+        title: `${category.charAt(0).toUpperCase() + category.slice(1)} Certificate`,
+        userId,
+        verificationCode,
         issuedAt: new Date(),
-        expiresAt: null, // Certificates don't expire
         imageUrl: `/certificates/${category.toLowerCase()}.png`,
-        category
       });
       
-      return res.status(201).json({
-        message: 'Certificate generated successfully',
-        certificate
-      });
+      res.status(201).json({ certificate });
     } catch (error) {
-      console.error('Generate certificate error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not generate certificate'
-      });
+      console.error('Error generating certificate:', error);
+      res.status(500).json({ error: { message: 'Failed to generate certificate', status: 500 } });
     }
   });
 }
@@ -1239,44 +1113,20 @@ function registerBadgeRoutes(app: Express) {
   app.get('/v2/api/badges', async (req: Request, res: Response) => {
     try {
       const badges = await storage.getBadges();
-      
-      // Get user's earned badges if authenticated
-      let userBadges: Record<number, boolean> = {};
-      
-      if (req.session && req.session.userId) {
-        const earned = await storage.getUserBadges(req.session.userId);
-        userBadges = earned.reduce((acc, badge) => {
-          acc[badge.badgeId] = true;
-          return acc;
-        }, {} as Record<number, boolean>);
-      }
-      
-      return res.status(200).json({
-        badges,
-        userBadges
-      });
+      res.json({ badges });
     } catch (error) {
-      console.error('Get badges error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve badges'
-      });
+      console.error('Error fetching badges:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch badges', status: 500 } });
     }
   });
-
+  
   // Get user's badges
-  app.get('/v2/api/user/badges', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be logged in to access your badges'
-      });
-    }
-    
+  app.get('/v2/api/user/badges', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userBadges = await storage.getUserBadges(req.session.userId);
+      const userId = req.session.userId!;
+      const userBadges = await storage.getUserBadges(userId);
       
-      // Get full badge details for each user badge
+      // Get badge details for each user badge
       const badgesWithDetails = await Promise.all(
         userBadges.map(async (userBadge) => {
           const badge = await storage.getBadgeById(userBadge.badgeId);
@@ -1287,85 +1137,48 @@ function registerBadgeRoutes(app: Express) {
         })
       );
       
-      return res.status(200).json({
-        badges: badgesWithDetails
-      });
+      res.json({ badges: badgesWithDetails });
     } catch (error) {
-      console.error('Get user badges error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve user badges'
-      });
+      console.error('Error fetching user badges:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch user badges', status: 500 } });
     }
   });
-
-  // Award a badge (admin only)
-  app.post('/v2/api/badges/:id/award/:userId', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'You do not have permission to award badges'
-      });
-    }
-    
+  
+  // Award a badge to a user (admin/editor only)
+  app.post('/v2/api/badges/:id/award/:userId', requireAuth, requireRole(['admin', 'editor']), async (req: Request, res: Response) => {
     try {
-      const badgeId = parseInt(req.params.id);
-      const userId = parseInt(req.params.userId);
+      const badgeId = parseInt(req.params.id, 10);
+      const userId = parseInt(req.params.userId, 10);
       
-      if (isNaN(badgeId) || isNaN(userId)) {
-        return res.status(400).json({
-          error: 'Invalid ID',
-          message: 'Badge ID and User ID must be numbers'
-        });
-      }
-      
-      // Check if badge exists
+      // Validate badge exists
       const badge = await storage.getBadgeById(badgeId);
-      
       if (!badge) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Badge not found'
-        });
+        return res.status(404).json({ error: { message: 'Badge not found', status: 404 } });
       }
       
-      // Check if user exists
+      // Validate user exists
       const user = await storage.getUser(userId);
-      
       if (!user) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'User not found'
-        });
+        return res.status(404).json({ error: { message: 'User not found', status: 404 } });
       }
       
-      // Check if user already has this badge
+      // Check if user already has the badge
       const existingBadge = await storage.getUserBadge(userId, badgeId);
-      
       if (existingBadge) {
-        return res.status(409).json({
-          error: 'Already awarded',
-          message: 'User already has this badge'
-        });
+        return res.status(409).json({ error: { message: 'User already has this badge', status: 409 } });
       }
       
       // Award badge
       const userBadge = await storage.awardBadge({
         userId,
         badgeId,
-        awardedAt: new Date()
+        awardedAt: new Date(),
       });
       
-      return res.status(201).json({
-        message: 'Badge awarded successfully',
-        userBadge
-      });
+      res.status(201).json({ userBadge });
     } catch (error) {
-      console.error('Award badge error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not award badge'
-      });
+      console.error('Error awarding badge:', error);
+      res.status(500).json({ error: { message: 'Failed to award badge', status: 500 } });
     }
   });
 }
@@ -1377,96 +1190,88 @@ function registerFeatureFlagRoutes(app: Express) {
   // Get all feature flags
   app.get('/v2/api/feature-flags', async (req: Request, res: Response) => {
     try {
-      const flags = await storage.getFeatureFlags();
+      // Admin/editors see all flags, others see only user-relevant flags
+      let flags = await storage.getFeatureFlags();
       
-      return res.status(200).json({
-        flags
-      });
+      if (req.isAuthenticated()) {
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        if (userRole !== 'admin' && userRole !== 'editor') {
+          flags = flags.filter(flag => !flag.name.startsWith('admin'));
+        }
+      } else {
+        flags = flags.filter(flag => !flag.name.startsWith('admin'));
+      }
+      
+      res.json({ flags });
     } catch (error) {
-      console.error('Get feature flags error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve feature flags'
-      });
+      console.error('Error fetching feature flags:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch feature flags', status: 500 } });
     }
   });
-
-  // Get specific feature flag
+  
+  // Get a specific feature flag
   app.get('/v2/api/feature-flags/:name', async (req: Request, res: Response) => {
     try {
       const name = req.params.name;
+      
+      // Check if the flag is an admin flag and user is not admin/editor
+      if (name.startsWith('admin') && (!req.isAuthenticated() || 
+          ((req as AuthenticatedRequest).session.userRole !== 'admin' && 
+           (req as AuthenticatedRequest).session.userRole !== 'editor'))) {
+        return res.status(403).json({ error: { message: 'Access denied', status: 403 } });
+      }
+      
       const flag = await storage.getFeatureFlag(name);
       
       if (!flag) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Feature flag not found'
-        });
+        return res.status(404).json({ error: { message: 'Feature flag not found', status: 404 } });
       }
       
       // Check if user has access to this feature
-      let userHasAccess = flag.isEnabled; // Default to flag's global state
-      
-      if (req.session && req.session.userRole) {
-        const featureAccess = await storage.getFeatureAccess(name, req.session.userRole as any);
-        
-        if (featureAccess !== undefined) {
-          userHasAccess = featureAccess.isEnabled;
+      let isEnabled = flag.isEnabled;
+      if (req.isAuthenticated()) {
+        const userRole = (req as AuthenticatedRequest).session.userRole;
+        const featureAccess = await storage.getFeatureAccess(name, userRole!);
+        if (featureAccess) {
+          isEnabled = featureAccess.isEnabled;
         }
       }
       
-      return res.status(200).json({
+      // For anonymous users, premium features are disabled
+      if (!req.isAuthenticated() && name.startsWith('premium')) {
+        isEnabled = false;
+      }
+      
+      res.json({ 
         flag,
-        hasAccess: userHasAccess
+        isEnabled
       });
     } catch (error) {
-      console.error('Get feature flag error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not retrieve feature flag'
-      });
+      console.error('Error fetching feature flag:', error);
+      res.status(500).json({ error: { message: 'Failed to fetch feature flag', status: 500 } });
     }
   });
-
-  // Update feature flag (admin only)
-  app.patch('/v2/api/feature-flags/:name', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId || req.session.userRole !== 'admin') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'You do not have permission to update feature flags'
-      });
-    }
-    
+  
+  // Update a feature flag (admin only)
+  app.patch('/v2/api/feature-flags/:name', requireAuth, requireRole(['admin']), async (req: Request, res: Response) => {
     try {
       const name = req.params.name;
       const { isEnabled } = req.body;
       
       if (typeof isEnabled !== 'boolean') {
-        return res.status(400).json({
-          error: 'Invalid data',
-          message: 'isEnabled must be a boolean'
-        });
+        return res.status(400).json({ error: { message: 'isEnabled must be a boolean value', status: 400 } });
       }
       
-      const updatedFlag = await storage.updateFeatureFlag(name, isEnabled);
+      const flag = await storage.updateFeatureFlag(name, isEnabled);
       
-      if (!updatedFlag) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Feature flag not found'
-        });
+      if (!flag) {
+        return res.status(404).json({ error: { message: 'Feature flag not found', status: 404 } });
       }
       
-      return res.status(200).json({
-        message: 'Feature flag updated successfully',
-        flag: updatedFlag
-      });
+      res.json({ flag });
     } catch (error) {
-      console.error('Update feature flag error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not update feature flag'
-      });
+      console.error('Error updating feature flag:', error);
+      res.status(500).json({ error: { message: 'Failed to update feature flag', status: 500 } });
     }
   });
 }
@@ -1475,90 +1280,65 @@ function registerFeatureFlagRoutes(app: Express) {
  * Register email subscription routes
  */
 function registerEmailSubscriptionRoutes(app: Express) {
-  // Subscribe to email newsletter
+  // Subscribe to emails
   app.post('/v2/api/subscribe', async (req: Request, res: Response) => {
     try {
-      const validatedData = emailSubscriptionSchema.parse(req.body);
+      const { email, firstName, lastName } = req.body;
       
-      // Check if email already exists
-      const existingSubscriber = await storage.getEmailSubscriber(validatedData.email);
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: { message: 'Valid email is required', status: 400 } });
+      }
+      
+      // Check if already subscribed
+      const existingSubscriber = await storage.getEmailSubscriber(email);
       
       if (existingSubscriber) {
         if (existingSubscriber.status === 'subscribed') {
-          return res.status(409).json({
-            error: 'Already subscribed',
-            message: 'This email is already subscribed to our newsletter'
-          });
+          return res.status(200).json({ message: 'Already subscribed', status: 'already_subscribed' });
         } else {
-          // Reactivate subscription
-          await storage.updateEmailSubscriberStatus(validatedData.email, 'subscribed');
-          
-          return res.status(200).json({
-            message: 'Subscription reactivated successfully'
-          });
+          // Re-subscribe
+          const subscriber = await storage.updateEmailSubscriberStatus(email, 'subscribed');
+          return res.json({ subscriber, status: 'resubscribed' });
         }
       }
       
       // Create new subscriber
-      await storage.createEmailSubscriber({
-        email: validatedData.email,
-        firstName: validatedData.firstName || null,
-        lastName: validatedData.lastName || null,
+      const subscriber = await storage.createEmailSubscriber({
+        email,
         status: 'subscribed',
-        subscribedAt: new Date()
+        subscribedAt: new Date(),
       });
       
-      return res.status(201).json({
-        message: 'Successfully subscribed to newsletter'
-      });
+      res.status(201).json({ subscriber, status: 'subscribed' });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        });
-      }
-      
-      console.error('Newsletter subscription error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not process subscription request'
-      });
+      console.error('Error subscribing to emails:', error);
+      res.status(500).json({ error: { message: 'Failed to subscribe', status: 500 } });
     }
   });
-
-  // Unsubscribe from email newsletter
+  
+  // Unsubscribe from emails
   app.post('/v2/api/unsubscribe', async (req: Request, res: Response) => {
     try {
       const { email } = req.body;
       
       if (!email || typeof email !== 'string') {
-        return res.status(400).json({
-          error: 'Invalid data',
-          message: 'Email is required'
-        });
+        return res.status(400).json({ error: { message: 'Valid email is required', status: 400 } });
       }
       
-      const subscriber = await storage.getEmailSubscriber(email);
+      // Check if subscribed
+      const existingSubscriber = await storage.getEmailSubscriber(email);
       
-      if (!subscriber) {
-        return res.status(404).json({
-          error: 'Not found',
-          message: 'Email not found in our subscription list'
-        });
+      if (!existingSubscriber) {
+        return res.status(404).json({ error: { message: 'Email not found in subscribers list', status: 404 } });
       }
       
-      await storage.updateEmailSubscriberStatus(email, 'unsubscribed');
+      // Update status
+      const subscriber = await storage.updateEmailSubscriberStatus(email, 'unsubscribed');
       
-      return res.status(200).json({
-        message: 'Successfully unsubscribed from newsletter'
-      });
+      res.json({ subscriber, status: 'unsubscribed' });
     } catch (error) {
-      console.error('Newsletter unsubscribe error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: 'Could not process unsubscribe request'
-      });
+      console.error('Error unsubscribing from emails:', error);
+      res.status(500).json({ error: { message: 'Failed to unsubscribe', status: 500 } });
     }
   });
 }
