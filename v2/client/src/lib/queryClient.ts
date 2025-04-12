@@ -1,142 +1,145 @@
+import { QueryClient, QueryKey } from '@tanstack/react-query';
+
 /**
- * TanStack Query client configuration for TariffSmart Education (v2)
+ * Global query client instance
  */
-
-import { QueryClient } from '@tanstack/react-query';
-import { API_ENDPOINTS, TOAST_DURATION } from './constants';
-import { ApiError } from './types';
-
-// Global fetch wrapper for making API requests with error handling
-export async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  try {
-    // Replace any parameter tokens in the endpoint (e.g. :id)
-    const url = endpoint.includes('/api/') 
-      ? endpoint 
-      : `/api/${endpoint}`;
-    
-    const mergedOptions: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    };
-
-    const response = await fetch(url, mergedOptions);
-    
-    // Handle API error responses
-    if (!response.ok) {
-      // Try to parse error response as JSON
-      let errorData: ApiError;
-      try {
-        errorData = await response.json();
-      } catch (e) {
-        // If parsing fails, create a generic error
-        errorData = {
-          statusCode: response.status,
-          message: response.statusText || 'An unexpected error occurred',
-        };
-      }
-      
-      throw errorData;
-    }
-    
-    // Parse JSON response if any
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return response.json();
-    }
-    
-    // Return an empty object for non-JSON responses
-    return {} as T;
-  } catch (error) {
-    // Rethrow ApiError instances directly
-    if (typeof error === 'object' && error !== null && 'statusCode' in error) {
-      throw error;
-    }
-    
-    // Convert other errors to ApiError format
-    throw {
-      statusCode: 500,
-      message: error instanceof Error ? error.message : 'An unexpected error occurred',
-      details: { error },
-    } as ApiError;
-  }
-}
-
-// Configure the global query client with default options
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Use our custom fetcher by default
-      queryFn: async ({ queryKey }) => {
-        // Support both string and array queryKey formats
-        const endpoint = Array.isArray(queryKey) 
-          ? queryKey.join('/').replace(/\/+/g, '/') 
-          : queryKey as string;
-        
-        return apiRequest(endpoint);
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
       refetchOnWindowFocus: false,
-    },
-    mutations: {
-      // Don't retry failed mutations by default
-      retry: 0,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });
 
 /**
- * Helper function to format API endpoint with path parameters
- * @example
- * const endpoint = formatEndpoint(API_ENDPOINTS.MODULE_BY_ID, { id: '123' });
- * // Result: '/api/v2/modules/123'
+ * Error type from API responses
  */
-export function formatEndpoint(endpoint: string, params: Record<string, string | number>): string {
-  let result = endpoint;
-  Object.entries(params).forEach(([key, value]) => {
-    result = result.replace(`:${key}`, String(value));
+export interface ApiError {
+  message: string;
+  status: number;
+  details?: any;
+}
+
+/**
+ * Type guard for API errors
+ */
+export function isApiError(obj: any): obj is ApiError {
+  return (
+    obj && 
+    typeof obj === 'object' && 
+    'message' in obj && 
+    'status' in obj
+  );
+}
+
+/**
+ * Base URL for API requests
+ */
+const API_BASE_URL = '/v2/api';
+
+/**
+ * Fetch wrapper for API requests
+ * @param endpoint - API endpoint to fetch
+ * @param init - Fetch init options
+ * @returns Promise with the parsed response data
+ */
+export async function apiFetch<T = any>(
+  endpoint: string,
+  init?: RequestInit
+): Promise<T> {
+  const url = endpoint.startsWith('http') 
+    ? endpoint 
+    : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...init?.headers,
+    },
+    credentials: 'include',
   });
-  return result;
-}
 
-/**
- * Helper to generate prefixed query keys
- * @example
- * const key = createQueryKey('modules');
- * // Result: ['v2', 'modules']
- * 
- * const detailKey = createQueryKey('modules', '123');
- * // Result: ['v2', 'modules', '123']
- */
-export function createQueryKey(base: string, ...parts: (string | number)[]): string[] {
-  return ['v2', base, ...parts.map(part => String(part))];
-}
-
-/**
- * Handle API errors in a consistent way
- */
-export function handleApiError(error: unknown): string {
-  if (typeof error === 'object' && error !== null) {
-    if ('message' in error && typeof error.message === 'string') {
-      return error.message;
-    }
-    if ('statusCode' in error && 'message' in error) {
-      const apiError = error as ApiError;
-      return `Error ${apiError.statusCode}: ${apiError.message}`;
-    }
+  // For non-JSON responses, return the Response object
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    return response as unknown as T;
   }
-  return 'An unexpected error occurred. Please try again later.';
+
+  const data = await response.json();
+
+  // Handle error responses
+  if (!response.ok) {
+    const error = data.error || { message: 'An unknown error occurred', status: response.status };
+    throw error;
+  }
+
+  return data;
 }
 
 /**
- * Sleep utility for simulating API delays in development
+ * API request for mutations (POST, PATCH, DELETE)
+ * @param endpoint - API endpoint to call
+ * @param method - HTTP method
+ * @param data - Request body data
+ * @returns Promise with the parsed response data
  */
-export async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export async function apiRequest<TData = any, TResult = any>(
+  endpoint: string,
+  method: 'POST' | 'PATCH' | 'DELETE' | 'PUT',
+  data?: TData
+): Promise<TResult> {
+  return apiFetch<TResult>(endpoint, {
+    method,
+    body: data ? JSON.stringify(data) : undefined,
+  });
+}
+
+/**
+ * Helper to invalidate a query by key
+ * @param queryKey - Query key to invalidate
+ */
+export function invalidateQuery(queryKey: QueryKey): void {
+  queryClient.invalidateQueries({ queryKey });
+}
+
+/**
+ * Helper to set query data directly
+ * @param queryKey - Query key to update
+ * @param data - New data
+ */
+export function setQueryData<T>(queryKey: QueryKey, data: T): void {
+  queryClient.setQueryData(queryKey, data);
+}
+
+/**
+ * Default query function that can be used with useQuery
+ * @param queryKey - Query key array
+ * @returns Promise with the parsed response data
+ */
+export const defaultQueryFn = async ({ queryKey }: { queryKey: QueryKey }) => {
+  // Convert query key to a path string
+  // For example: ['/users', 1, 'posts'] becomes '/users/1/posts'
+  const endpoint = queryKey.join('/').replace(/\/+/g, '/');
+  return apiFetch(endpoint);
+};
+
+/**
+ * Resets the entire query cache
+ */
+export function resetQueryCache(): void {
+  queryClient.resetQueries();
+}
+
+/**
+ * Prefetch data for a specific query
+ * @param queryKey - Query key to prefetch
+ */
+export async function prefetchQuery(queryKey: QueryKey): Promise<void> {
+  await queryClient.prefetchQuery({
+    queryKey,
+    queryFn: () => defaultQueryFn({ queryKey }),
+  });
 }

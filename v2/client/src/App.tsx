@@ -1,49 +1,71 @@
-import { Router, Route, Switch } from 'wouter';
-import { Suspense, lazy } from 'react';
-import { Header } from './components/layout/Header';
-import { Footer } from './components/layout/Footer';
-import HomePage from './pages/Home';
+import React from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { Route, Switch } from 'wouter';
+import { queryClient } from './lib/queryClient';
+import { PATHS } from './lib/constants';
 
-// Lazy-loaded pages
-const ModulesPage = lazy(() => import('./pages/Modules'));
-const ModuleDetailPage = lazy(() => import('./pages/ModuleDetail'));
-const DictionaryPage = lazy(() => import('./pages/Dictionary'));
-const DictionaryTermPage = lazy(() => import('./pages/DictionaryTerm'));
-const AgreementsPage = lazy(() => import('./pages/Agreements'));
-const AgreementDetailPage = lazy(() => import('./pages/AgreementDetail'));
-const ChallengePage = lazy(() => import('./pages/Challenge'));
-const QuizPage = lazy(() => import('./pages/Quiz'));
-const NotFoundPage = lazy(() => import('./pages/NotFound'));
+// Layout components
+import Layout from './components/layout/Layout';
 
-const Loading = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-  </div>
-);
+// Page components
+import Home from './pages/Home';
+import Modules from './pages/Modules';
+import ModuleDetail from './pages/ModuleDetail';
+import Dictionary from './pages/Dictionary';
+import DictionaryTerm from './pages/DictionaryTerm';
+import Agreements from './pages/Agreements';
+import AgreementDetail from './pages/AgreementDetail';
+import Challenge from './pages/Challenge';
+import Quiz from './pages/Quiz';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import Dashboard from './pages/auth/Dashboard';
+import Profile from './pages/auth/Profile';
+import Certificates from './pages/auth/Certificates';
+import Badges from './pages/auth/Badges';
+import About from './pages/About';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import NotFound from './pages/NotFound';
 
-export function App() {
+/**
+ * Main application component
+ */
+export default function App() {
   return (
-    <Router base="/v2">
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1">
-          <Suspense fallback={<Loading />}>
-            <Switch>
-              <Route path="/" component={HomePage} />
-              <Route path="/modules" component={ModulesPage} />
-              <Route path="/modules/:id" component={ModuleDetailPage} />
-              <Route path="/dictionary" component={DictionaryPage} />
-              <Route path="/dictionary/:id" component={DictionaryTermPage} />
-              <Route path="/agreements" component={AgreementsPage} />
-              <Route path="/agreements/:id" component={AgreementDetailPage} />
-              <Route path="/challenge" component={ChallengePage} />
-              <Route path="/quiz/:id" component={QuizPage} />
-              <Route component={NotFoundPage} />
-            </Switch>
-          </Suspense>
-        </main>
-        <Footer />
-      </div>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <AppRoutes />
+    </QueryClientProvider>
+  );
+}
+
+/**
+ * Application routes
+ */
+function AppRoutes() {
+  return (
+    <Layout>
+      <Switch>
+        <Route path={PATHS.HOME} component={Home} />
+        <Route path={PATHS.MODULES} component={Modules} />
+        <Route path={PATHS.MODULE_DETAIL} component={ModuleDetail} />
+        <Route path={PATHS.DICTIONARY} component={Dictionary} />
+        <Route path={PATHS.DICTIONARY_TERM} component={DictionaryTerm} />
+        <Route path={PATHS.AGREEMENTS} component={Agreements} />
+        <Route path={PATHS.AGREEMENT_DETAIL} component={AgreementDetail} />
+        <Route path={PATHS.CHALLENGE} component={Challenge} />
+        <Route path={PATHS.QUIZ} component={Quiz} />
+        <Route path={PATHS.LOGIN} component={Login} />
+        <Route path={PATHS.REGISTER} component={Register} />
+        <Route path={PATHS.DASHBOARD} component={Dashboard} />
+        <Route path={PATHS.PROFILE} component={Profile} />
+        <Route path={PATHS.CERTIFICATES} component={Certificates} />
+        <Route path={PATHS.BADGES} component={Badges} />
+        <Route path={PATHS.ABOUT} component={About} />
+        <Route path={PATHS.TERMS} component={Terms} />
+        <Route path={PATHS.PRIVACY} component={Privacy} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
   );
 }

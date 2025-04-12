@@ -1,206 +1,248 @@
 /**
- * Application constants for TariffSmart Education (v2)
+ * Application name
  */
+export const APP_NAME = 'TariffSmart';
 
-// App Information
-export const APP_NAME = "TariffSmart";
-export const APP_FULL_NAME = "TariffSmart Education";
-export const APP_DESCRIPTION = "Your comprehensive learning platform for understanding tariffs, trade policies, and international commerce dynamics.";
-export const APP_VERSION = "2.0.0";
-export const COPYRIGHT_YEAR = "2025";
+/**
+ * Application version
+ */
+export const APP_VERSION = 'v2.0.0';
 
-// Navigation Links
-export const ROUTES = {
-  HOME: "/v2",
-  MODULES: "/v2/modules",
-  MODULE_DETAIL: "/v2/modules/:id",
-  QUIZ: "/v2/quiz/:id",
-  DICTIONARY: "/v2/dictionary",
-  DICTIONARY_TERM: "/v2/dictionary/term/:name",
-  AGREEMENTS: "/v2/trade-agreements",
-  AGREEMENT_DETAIL: "/v2/trade-agreements/:id",
-  CHALLENGE: "/v2/challenge",
-  PROFILE: "/v2/profile",
-  SETTINGS: "/v2/settings",
-  LOGIN: "/v2/login",
-  REGISTER: "/v2/register",
-  NOT_FOUND: "/v2/not-found",
+/**
+ * Application description
+ */
+export const APP_DESCRIPTION = 'Educational platform for understanding international trade and tariffs';
+
+/**
+ * Support email
+ */
+export const SUPPORT_EMAIL = 'support@tariffsmart.com';
+
+/**
+ * Content license
+ */
+export const CONTENT_LICENSE = 'Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License';
+
+/**
+ * Content license URL
+ */
+export const CONTENT_LICENSE_URL = 'https://creativecommons.org/licenses/by-nc-sa/4.0/';
+
+/**
+ * Copyright year
+ */
+export const COPYRIGHT_YEAR = new Date().getFullYear().toString();
+
+/**
+ * Default page size for paginated content
+ */
+export const DEFAULT_PAGE_SIZE = 10;
+
+/**
+ * URL paths
+ */
+export const PATHS = {
+  HOME: '/v2',
+  MODULES: '/v2/modules',
+  MODULE_DETAIL: '/v2/modules/:slug',
+  DICTIONARY: '/v2/dictionary',
+  DICTIONARY_TERM: '/v2/dictionary/:slug',
+  AGREEMENTS: '/v2/agreements',
+  AGREEMENT_DETAIL: '/v2/agreements/:slug',
+  CHALLENGE: '/v2/challenge',
+  QUIZ: '/v2/quiz/:id',
+  DASHBOARD: '/v2/dashboard',
+  LOGIN: '/v2/login',
+  REGISTER: '/v2/register',
+  PROFILE: '/v2/profile',
+  CERTIFICATES: '/v2/certificates',
+  BADGES: '/v2/badges',
+  ABOUT: '/v2/about',
+  TERMS: '/v2/terms',
+  PRIVACY: '/v2/privacy',
+  NOT_FOUND: '/v2/404',
 };
 
-export const NAVIGATION_LINKS = [
-  { name: "Home", href: ROUTES.HOME },
-  { name: "Modules", href: ROUTES.MODULES },
-  { name: "Dictionary", href: ROUTES.DICTIONARY },
-  { name: "Trade Agreements", href: ROUTES.AGREEMENTS },
-  { name: "Daily Challenge", href: ROUTES.CHALLENGE },
+/**
+ * Navigation items
+ */
+export const NAV_ITEMS = [
+  { 
+    name: 'Home', 
+    path: PATHS.HOME,
+    public: true
+  },
+  { 
+    name: 'Learning Modules', 
+    path: PATHS.MODULES,
+    public: true 
+  },
+  { 
+    name: 'Trade Dictionary', 
+    path: PATHS.DICTIONARY,
+    public: true 
+  },
+  { 
+    name: 'Agreements', 
+    path: PATHS.AGREEMENTS,
+    public: true 
+  },
+  { 
+    name: 'Daily Challenge', 
+    path: PATHS.CHALLENGE,
+    public: false 
+  },
+  { 
+    name: 'Dashboard', 
+    path: PATHS.DASHBOARD,
+    public: false 
+  },
 ];
 
-export const FOOTER_LINKS = {
-  product: [
-    { name: "Features", href: `${ROUTES.HOME}#features` },
-    { name: "Pricing", href: `${ROUTES.HOME}#pricing` },
-    { name: "Updates", href: `${ROUTES.HOME}#updates` },
-  ],
-  resources: [
-    { name: "Help Center", href: "/help" },
-    { name: "API Documentation", href: "/docs/api" },
-    { name: "Community", href: "/community" },
-  ],
-  company: [
-    { name: "About", href: "/about" },
-    { name: "Blog", href: "/blog" },
-    { name: "Contact", href: "/contact" },
-  ],
-  legal: [
-    { name: "Privacy", href: "/privacy" },
-    { name: "Terms", href: "/terms" },
-  ],
-};
-
-// API Endpoints
-export const API_ENDPOINTS = {
-  // Modules
-  MODULES: "/api/v2/modules",
-  MODULE_BY_ID: "/api/v2/modules/:id",
-  MODULE_COMPLETE: "/api/v2/modules/:id/complete",
-  MODULE_SIMULATIONS: "/api/v2/modules/:id/simulations",
-  MODULE_QUIZZES: "/api/v2/modules/:id/quizzes",
-  
-  // Quizzes
-  QUIZZES: "/api/v2/quizzes",
-  QUIZ_BY_ID: "/api/v2/quizzes/:id",
-  QUIZ_SUBMIT: "/api/v2/quizzes/:id/submit",
-  
-  // Dictionary
-  DICTIONARY: "/api/v2/dictionary",
-  DICTIONARY_TERM: "/api/v2/dictionary/:id",
-  DICTIONARY_TERM_BY_NAME: "/api/v2/dictionary/term/:name",
-  DICTIONARY_CATEGORY: "/api/v2/dictionary/category/:category",
-  
-  // Trade Agreements
-  TRADE_AGREEMENTS: "/api/v2/trade-agreements",
-  TRADE_AGREEMENT_BY_ID: "/api/v2/trade-agreements/:id",
-  
-  // User Progress
-  USER_PROGRESS: "/api/v2/progress",
-  
-  // Daily Challenge
-  DAILY_CHALLENGE: "/api/v2/daily-challenge",
-  DAILY_CHALLENGE_COMPLETE: "/api/v2/daily-challenge/:id/complete",
-  
-  // Simulations
-  SIMULATIONS: "/api/v2/simulations",
-  SIMULATION_BY_ID: "/api/v2/simulations/:id",
-};
-
-// MVP Module Topics
-export const MVP_MODULE_TOPICS = [
-  "Tariff Classifications",
-  "Tariff Calculations",
-  "Trade Agreements",
-  "Trade Policy Fundamentals",
-  "Global Supply Chains",
-  "Import/Export Documentation",
-  "Customs Compliance",
-  "Trade Remedies",
-  "International Regulations",
-  "Shipping Terms and Incoterms",
-  "Customs Valuation Methods",
-  "Anti-Dumping Duties"
+/**
+ * Footer links
+ */
+export const FOOTER_LINKS = [
+  { name: 'About', path: PATHS.ABOUT },
+  { name: 'Terms', path: PATHS.TERMS },
+  { name: 'Privacy', path: PATHS.PRIVACY },
 ];
 
-// Query Keys
-export const QUERY_KEYS = {
-  modules: "modules",
-  module: "module",
-  quizzes: "quizzes",
-  quiz: "quiz",
-  dictionary: "dictionary",
-  dictionaryTerm: "dictionaryTerm",
-  tradeAgreements: "tradeAgreements",
-  tradeAgreement: "tradeAgreement",
-  userProgress: "userProgress",
-  dailyChallenge: "dailyChallenge",
-  simulations: "simulations",
-  simulation: "simulation",
-};
-
-// Enums
-export const MODULE_DIFFICULTY = {
-  BEGINNER: "beginner",
-  INTERMEDIATE: "intermediate",
-  ADVANCED: "advanced",
-};
-
+/**
+ * Module categories with display names
+ */
 export const MODULE_CATEGORIES = {
-  TARIFFS: "tariffs",
-  TRADE_POLICY: "trade_policy",
-  CUSTOMS: "customs",
-  SHIPPING: "shipping",
-  REGULATIONS: "regulations",
-  AGREEMENTS: "agreements",
+  TARIFFS: 'Tariffs',
+  TRADE_POLICY: 'Trade Policy',
+  CUSTOMS: 'Customs',
+  SHIPPING: 'Shipping',
+  REGULATIONS: 'Regulations',
+  AGREEMENTS: 'Trade Agreements',
 };
 
+/**
+ * Dictionary categories with display names
+ */
 export const DICTIONARY_CATEGORIES = {
-  TARIFFS: "Tariffs",
-  TRADE_POLICY: "Trade Policy",
-  SHIPPING: "Shipping",
-  CUSTOMS: "Customs",
-  REGULATIONS: "Regulations",
-  AGREEMENTS: "Agreements",
+  TARIFFS: 'Tariffs',
+  TRADE_POLICY: 'Trade Policy',
+  CUSTOMS: 'Customs',
+  SHIPPING: 'Shipping',
+  REGULATIONS: 'Regulations',
+  AGREEMENTS: 'Trade Agreements',
 };
 
-export const QUIZ_TYPES = {
-  MULTIPLE_CHOICE: "multiple_choice",
-  TRUE_FALSE: "true_false",
-  MATCHING: "matching",
-  SHORT_ANSWER: "short_answer",
+/**
+ * Difficulty levels with display names and colors
+ */
+export const DIFFICULTY_LEVELS = {
+  BEGINNER: { 
+    name: 'Beginner', 
+    value: 'beginner',
+    color: 'bg-green-100 text-green-800 border-green-200',
+    icon: 'Star' 
+  },
+  INTERMEDIATE: { 
+    name: 'Intermediate', 
+    value: 'intermediate',
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    icon: 'Stars' 
+  },
+  ADVANCED: { 
+    name: 'Advanced', 
+    value: 'advanced',
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+    icon: 'Award' 
+  },
 };
 
-export const CHALLENGE_TYPES = {
-  QUIZ: "quiz",
-  CALCULATION: "calculation",
-  CASE_STUDY: "case_study",
-  SIMULATION: "simulation",
-};
-
-export const AGREEMENT_STATUS = {
-  ACTIVE: "active",
-  PROPOSED: "proposed",
-  EXPIRED: "expired",
-  RENEGOTIATING: "renegotiating",
-};
-
+/**
+ * User roles with display names and colors
+ */
 export const USER_ROLES = {
-  ADMIN: "admin",
-  EDITOR: "editor",
-  PREMIUM: "premium",
-  BASIC: "basic",
+  ADMIN: { 
+    name: 'Admin', 
+    value: 'admin',
+    color: 'bg-red-100 text-red-800 border-red-200',
+  },
+  EDITOR: { 
+    name: 'Editor', 
+    value: 'editor',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+  },
+  PREMIUM: { 
+    name: 'Premium', 
+    value: 'premium',
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+  },
+  BASIC: { 
+    name: 'Basic', 
+    value: 'basic',
+    color: 'bg-gray-100 text-gray-800 border-gray-200',
+  },
 };
 
-export const SUBSCRIPTION_TIERS = {
-  BASIC: "basic",
-  PREMIUM: "premium",
-  PROFESSIONAL: "professional",
-  ENTERPRISE: "enterprise",
+/**
+ * Agreement statuses with display names and colors
+ */
+export const AGREEMENT_STATUSES = {
+  ACTIVE: { 
+    name: 'Active', 
+    value: 'active',
+    color: 'bg-green-100 text-green-800 border-green-200',
+  },
+  EXPIRED: { 
+    name: 'Expired', 
+    value: 'expired',
+    color: 'bg-gray-100 text-gray-800 border-gray-200',
+  },
+  PROPOSED: { 
+    name: 'Proposed', 
+    value: 'proposed',
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+  },
+  RENEGOTIATING: { 
+    name: 'Renegotiating', 
+    value: 'renegotiating',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  },
 };
 
-export const PROGRESS_STATUS = {
-  NOT_STARTED: "not_started",
-  IN_PROGRESS: "in_progress",
-  COMPLETED: "completed",
-};
+/**
+ * Features that require authentication
+ */
+export const AUTHENTICATED_FEATURES = [
+  PATHS.DASHBOARD,
+  PATHS.PROFILE,
+  PATHS.CERTIFICATES,
+  PATHS.BADGES,
+  PATHS.CHALLENGE,
+];
 
-// UI Constants
-export const ITEMS_PER_PAGE = 10;
-export const TOAST_DURATION = 5000; // milliseconds
+/**
+ * Features that require premium subscription
+ */
+export const PREMIUM_FEATURES = [
+  'advanced-quizzes',
+  'certificate-export',
+  'custom-learning-path',
+];
 
-// Feature flags
-export const FEATURE_FLAGS = {
-  ENABLE_DICTIONARY: "enable_dictionary",
-  ENABLE_DAILY_CHALLENGE: "enable_daily_challenge",
-  ENABLE_SIMULATIONS: "enable_simulations",
-  ENABLE_TRADE_AGREEMENTS: "enable_trade_agreements",
-  SHOW_ADS: "show_ads",
-  BETA_FEATURES: "beta_features",
-};
+/**
+ * Default profile picture URL (placeholder)
+ */
+export const DEFAULT_PROFILE_PICTURE = 'https://via.placeholder.com/150';
+
+/**
+ * Format date string to a human-readable format
+ * @param dateString - ISO date string
+ * @returns Formatted date string
+ */
+export function formatDate(dateString: string | Date): string {
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric'
+  });
+}
