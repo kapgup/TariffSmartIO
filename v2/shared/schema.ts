@@ -1,204 +1,224 @@
-import { pgTable, serial, text, timestamp, boolean, integer, uuid, json } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { pgEnum, pgTable, serial, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Learning Modules
+// Enums
+export const difficultyEnum = pgEnum("difficulty", ["beginner", "intermediate", "advanced"]);
+export const moduleStatusEnum = pgEnum("module_status", ["not_started", "in_progress", "completed"]);
+export const quizTypeEnum = pgEnum("quiz_type", ["multiple_choice", "true_false", "fill_blank", "matching"]);
+export const challengeTypeEnum = pgEnum("challenge_type", ["quiz", "flashcard", "matching", "true_false"]);
+export const dictionaryCategoryEnum = pgEnum("dictionary_category", ["tariffs", "trade_policy", "shipping", "customs", "regulations", "agreements"]);
+export const moduleCategoryEnum = pgEnum("module_category", ["tariffs", "trade_policy", "treaties", "customs", "shipping", "compliance"]);
+export const agreementStatusEnum = pgEnum("agreement_status", ["active", "pending", "expired", "proposed"]);
+
+// Modules
 export const modules = pgTable("modules", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  order: integer("order").notNull(),
-  content: text("content").notNull(), // JSON content of the module
-  estimatedMinutes: integer("estimated_minutes").notNull().default(5),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  difficulty: difficultyEnum("difficulty").notNull(),
+  estimatedMinutes: integer("estimated_minutes").notNull(),
+  category: moduleCategoryEnum("category").notNull(),
+  content: text("content").notNull(),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertModuleSchema = createInsertSchema(modules).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertModuleSchema = createInsertSchema(modules).pick({
+  title: true,
+  description: true, 
+  difficulty: true,
+  estimatedMinutes: true,
+  category: true,
+  content: true,
+  published: true,
 });
 
 // Quizzes
 export const quizzes = pgTable("quizzes", {
   id: serial("id").primaryKey(),
-  moduleId: integer("module_id").references(() => modules.id),
   title: text("title").notNull(),
   description: text("description"),
-  isStandalone: boolean("is_standalone").default(false), // If true, not associated with a module
-  type: text("type").notNull(), // "multiple-choice", "true-false", "myth-vs-fact"
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  type: quizTypeEnum("type").notNull(),
+  moduleId: integer("module_id").references(() => modules.id),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertQuizSchema = createInsertSchema(quizzes).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertQuizSchema = createInsertSchema(quizzes).pick({
+  title: true,
+  description: true,
+  type: true,
+  moduleId: true,
+  published: true,
 });
 
 // Quiz Questions
 export const quizQuestions = pgTable("quiz_questions", {
   id: serial("id").primaryKey(),
-  quizId: integer("quiz_id").references(() => quizzes.id).notNull(),
+  quizId: integer("quiz_id").notNull().references(() => quizzes.id),
   question: text("question").notNull(),
-  options: json("options").notNull(), // JSON array of options
+  options: text("options").notNull(), // JSON string array for multiple choice, or string for fill_blank
   correctAnswer: text("correct_answer").notNull(),
-  explanation: text("explanation"), // Explanation for the answer
+  explanation: text("explanation"),
+  points: integer("points").notNull().default(1),
   order: integer("order").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertQuizQuestionSchema = createInsertSchema(quizQuestions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertQuizQuestionSchema = createInsertSchema(quizQuestions).pick({
+  quizId: true,
+  question: true,
+  options: true,
+  correctAnswer: true,
+  explanation: true,
+  points: true,
+  order: true,
 });
 
 // Dictionary Terms
 export const dictionaryTerms = pgTable("dictionary_terms", {
   id: serial("id").primaryKey(),
-  term: text("term").notNull().unique(),
+  term: text("term").notNull(),
   definition: text("definition").notNull(),
-  category: text("category"), // Optional category for grouping
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  category: dictionaryCategoryEnum("category").notNull(),
+  example: text("example"),
+  relatedTerms: text("related_terms"), // JSON string array
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertDictionaryTermSchema = createInsertSchema(dictionaryTerms).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertDictionaryTermSchema = createInsertSchema(dictionaryTerms).pick({
+  term: true,
+  definition: true,
+  category: true,
+  example: true,
+  relatedTerms: true,
 });
 
-// Trade Agreement Summaries
-export const tradeAgreements = pgTable("trade_agreements", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  shortDescription: text("short_description").notNull(),
-  fullDescription: text("full_description").notNull(),
-  keyPoints: json("key_points"), // JSON array of key points
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertTradeAgreementSchema = createInsertSchema(tradeAgreements).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// User Progress
-export const userProgress = pgTable("user_progress", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(), // Reference to user id
-  moduleId: integer("module_id").references(() => modules.id),
-  quizId: integer("quiz_id").references(() => quizzes.id),
-  completed: boolean("completed").default(false),
-  score: integer("score"), // For quizzes
-  lastAccessedAt: timestamp("last_accessed_at").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertUserProgressSchema = createInsertSchema(userProgress).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Dictionary Term Views (for gamification)
-export const dictionaryViews = pgTable("dictionary_views", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(), // Reference to user id
-  termId: integer("term_id").references(() => dictionaryTerms.id).notNull(),
-  viewCount: integer("view_count").default(1).notNull(),
-  lastViewedAt: timestamp("last_viewed_at").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertDictionaryViewSchema = createInsertSchema(dictionaryViews).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-// Daily Challenge
+// Daily Challenges
 export const dailyChallenges = pgTable("daily_challenges", {
   id: serial("id").primaryKey(),
-  date: timestamp("date").defaultNow().notNull(),
-  type: text("type").notNull(), // "term", "quiz", etc.
-  content: json("content").notNull(), // Content depends on the type
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertDailyChallengeSchema = createInsertSchema(dailyChallenges).omit({
-  id: true,
-  createdAt: true,
-});
-
-// User Challenge Completions
-export const challengeCompletions = pgTable("challenge_completions", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(), // Reference to user id
-  challengeId: integer("challenge_id").references(() => dailyChallenges.id).notNull(),
-  completed: boolean("completed").default(true).notNull(),
-  score: integer("score"), // Optional score if applicable
-  completedAt: timestamp("completed_at").defaultNow().notNull(),
-});
-
-export const insertChallengeCompletionSchema = createInsertSchema(challengeCompletions).omit({
-  id: true,
-});
-
-// Interactive Simulations
-export const simulations = pgTable("simulations", {
-  id: serial("id").primaryKey(),
-  moduleId: integer("module_id").references(() => modules.id),
   title: text("title").notNull(),
-  description: text("description").notNull(),
-  type: text("type").notNull(), // Type of simulation
-  config: json("config").notNull(), // Configuration for the simulation
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  type: challengeTypeEnum("type").notNull(),
+  difficulty: difficultyEnum("difficulty").notNull(),
+  content: text("content").notNull(), // JSON string
+  date: timestamp("date").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertSimulationSchema = createInsertSchema(simulations).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertDailyChallengeSchema = createInsertSchema(dailyChallenges).pick({
+  title: true,
+  type: true,
+  difficulty: true,
+  content: true,
+  date: true,
 });
 
-// Export types
-export type Module = typeof modules.$inferSelect;
+// Trade Agreements
+export const tradeAgreements = pgTable("trade_agreements", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  shortDescription: text("short_description").notNull(),
+  fullDescription: text("full_description").notNull(),
+  keyPoints: text("key_points").notNull(), // JSON string array
+  countries: text("countries").notNull(), // JSON string array
+  year: integer("year").notNull(),
+  status: agreementStatusEnum("status").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTradeAgreementSchema = createInsertSchema(tradeAgreements).pick({
+  name: true,
+  shortDescription: true,
+  fullDescription: true,
+  keyPoints: true,
+  countries: true,
+  year: true,
+  status: true,
+});
+
+// User Progress Tables
+export const userModuleProgress = pgTable("user_module_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(), // Reference to users table in v1
+  moduleId: integer("module_id").notNull().references(() => modules.id),
+  status: moduleStatusEnum("status").notNull().default("not_started"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertUserModuleProgressSchema = createInsertSchema(userModuleProgress).pick({
+  userId: true,
+  moduleId: true,
+  status: true,
+  completedAt: true,
+});
+
+export const userQuizProgress = pgTable("user_quiz_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(), // Reference to users table in v1
+  quizId: integer("quiz_id").notNull().references(() => quizzes.id),
+  score: integer("score").notNull(),
+  completedAt: timestamp("completed_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertUserQuizProgressSchema = createInsertSchema(userQuizProgress).pick({
+  userId: true,
+  quizId: true,
+  score: true,
+  completedAt: true,
+});
+
+export const userChallengeProgress = pgTable("user_challenge_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(), // Reference to users table in v1
+  challengeId: integer("challenge_id").notNull().references(() => dailyChallenges.id),
+  date: timestamp("date").notNull(),
+  completedAt: timestamp("completed_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertUserChallengeProgressSchema = createInsertSchema(userChallengeProgress).pick({
+  userId: true,
+  challengeId: true,
+  date: true,
+  completedAt: true,
+});
+
+// Type exports
 export type InsertModule = z.infer<typeof insertModuleSchema>;
+export type Module = typeof modules.$inferSelect;
 
-export type Quiz = typeof quizzes.$inferSelect;
 export type InsertQuiz = z.infer<typeof insertQuizSchema>;
+export type Quiz = typeof quizzes.$inferSelect;
 
-export type QuizQuestion = typeof quizQuestions.$inferSelect;
 export type InsertQuizQuestion = z.infer<typeof insertQuizQuestionSchema>;
+export type QuizQuestion = typeof quizQuestions.$inferSelect;
 
-export type DictionaryTerm = typeof dictionaryTerms.$inferSelect;
 export type InsertDictionaryTerm = z.infer<typeof insertDictionaryTermSchema>;
+export type DictionaryTerm = typeof dictionaryTerms.$inferSelect;
 
-export type TradeAgreement = typeof tradeAgreements.$inferSelect;
-export type InsertTradeAgreement = z.infer<typeof insertTradeAgreementSchema>;
-
-export type UserProgress = typeof userProgress.$inferSelect;
-export type InsertUserProgress = z.infer<typeof insertUserProgressSchema>;
-
-export type DictionaryView = typeof dictionaryViews.$inferSelect;
-export type InsertDictionaryView = z.infer<typeof insertDictionaryViewSchema>;
-
-export type DailyChallenge = typeof dailyChallenges.$inferSelect;
 export type InsertDailyChallenge = z.infer<typeof insertDailyChallengeSchema>;
+export type DailyChallenge = typeof dailyChallenges.$inferSelect;
 
-export type ChallengeCompletion = typeof challengeCompletions.$inferSelect;
-export type InsertChallengeCompletion = z.infer<typeof insertChallengeCompletionSchema>;
+export type InsertTradeAgreement = z.infer<typeof insertTradeAgreementSchema>;
+export type TradeAgreement = typeof tradeAgreements.$inferSelect;
 
-export type Simulation = typeof simulations.$inferSelect;
-export type InsertSimulation = z.infer<typeof insertSimulationSchema>;
+export type InsertUserModuleProgress = z.infer<typeof insertUserModuleProgressSchema>;
+export type UserModuleProgress = typeof userModuleProgress.$inferSelect;
+
+export type InsertUserQuizProgress = z.infer<typeof insertUserQuizProgressSchema>;
+export type UserQuizProgress = typeof userQuizProgress.$inferSelect;
+
+export type InsertUserChallengeProgress = z.infer<typeof insertUserChallengeProgressSchema>;
+export type UserChallengeProgress = typeof userChallengeProgress.$inferSelect;
