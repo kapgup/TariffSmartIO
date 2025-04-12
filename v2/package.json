@@ -1,0 +1,20 @@
+{
+  "name": "tariffsmart-v2",
+  "version": "1.0.0",
+  "description": "TariffSmart v2 - Educational Platform for Trade and Tariff Learning",
+  "main": "server/index.ts",
+  "scripts": {
+    "dev": "tsx server/index.ts",
+    "build": "vite build",
+    "db:push": "drizzle-kit push:pg",
+    "db:studio": "drizzle-kit studio"
+  },
+  "keywords": [
+    "tariffs",
+    "education",
+    "trade",
+    "interactive"
+  ],
+  "author": "",
+  "license": "MIT"
+}
