@@ -1,4 +1,4 @@
-// Module types
+// Module Types
 export interface Module {
   id: number;
   title: string;
@@ -33,7 +33,7 @@ export interface ModuleSection {
   id?: number;
 }
 
-// Quiz types
+// Quiz Types
 export interface Quiz {
   id: number;
   title: string;
@@ -89,7 +89,7 @@ export interface QuizResult {
   results: QuizResultItem[];
 }
 
-// Dictionary types
+// Dictionary Types
 export interface DictionaryTerm {
   id: number;
   term: string;
@@ -110,7 +110,7 @@ export interface DictionaryResponse {
   totalCount: number;
 }
 
-// Trade Agreement types
+// Trade Agreement Types
 export interface TradeAgreement {
   id: number;
   name: string;
@@ -132,7 +132,7 @@ export interface TradeAgreementsResponse {
   agreements: TradeAgreement[];
 }
 
-// Daily Challenge types
+// Daily Challenge Types
 export interface DailyChallenge {
   id: number;
   title: string;
@@ -149,7 +149,7 @@ export interface DailyChallengeResponse {
   completed: boolean;
 }
 
-// User Progress types
+// User Progress Types
 export interface ModuleProgress {
   moduleId: number;
   status: string;
@@ -174,4 +174,8 @@ export interface UserProgress {
   challenges: ChallengeProgress[];
   streakCount: number;
   totalPoints: number;
+}
+
+export interface UserProgressResponse {
+  progress: UserProgress;
 }
