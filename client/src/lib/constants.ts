@@ -2,8 +2,14 @@ export const APP_NAME = "TariffSmart";
 
 // Implementation dates
 export const BASELINE_TARIFF_DATE = "April 5, 2025";
-export const RECIPROCAL_TARIFF_DATE = "April 9, 2025";
-export const RETAIL_PRICE_CHANGE_PERIOD = "Late April - May 2025";
+export const CHINA_TARIFF_DATE = "April 9, 2025";
+export const OTHER_COUNTRIES_TARIFF_DATE = "July 8, 2025";
+export const CHINA_RETAIL_PRICE_CHANGE_PERIOD = "Late April - May 2025";
+export const OTHER_COUNTRIES_RETAIL_PRICE_CHANGE_PERIOD = "October - November 2025";
+
+// Legacy names (for backward compatibility)
+export const RECIPROCAL_TARIFF_DATE = CHINA_TARIFF_DATE;
+export const RETAIL_PRICE_CHANGE_PERIOD = CHINA_RETAIL_PRICE_CHANGE_PERIOD;
 
 // Tariff impacts
 export const IMPACT_LEVELS = {

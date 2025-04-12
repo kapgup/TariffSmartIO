@@ -62,7 +62,7 @@ export function TariffOverview() {
               </div>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Implementation Timeline</h3>
-            <p className="text-neutral-600">China tariffs start April 9th, 2025. All other countries now start July 8th, 2025. Retail price changes may occur gradually.</p>
+            <p className="text-neutral-600">China tariffs started April 9th, 2025. All other countries start July 8th, 2025. Chinese retail price changes by May; other countries by October-November.</p>
           </div>
           
           {/* Exempt Products Card */}
