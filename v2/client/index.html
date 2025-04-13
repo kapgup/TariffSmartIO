@@ -1,16 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TariffSmart v2 - Learn about Tariffs and Trade</title>
-  <meta name="description" content="TariffSmart v2 - An educational platform for learning about international trade, tariffs, and global commerce." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TariffSmart Education Platform</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex flex-col">
+    <header class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex items-center">
+            <a href="/" class="flex items-center space-x-2">
+              <span class="text-xl font-bold text-gray-900">TariffSmart</span>
+              <span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">Education</span>
+            </a>
+          </div>
+          <nav class="hidden md:flex space-x-6">
+            <a href="#" class="text-gray-900 hover:text-blue-600">Modules</a>
+            <a href="#" class="text-gray-900 hover:text-blue-600">Dictionary</a>
+            <a href="#" class="text-gray-900 hover:text-blue-600">About</a>
+            <a href="/" class="text-gray-900 hover:text-blue-600">Main Platform</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-grow">
+      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight">
+            Welcome to TariffSmart Education
+          </h1>
+          <p class="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+            Your comprehensive resource for understanding international trade, tariffs, and global commerce.
+          </p>
+        </div>
+
+        <div class="mt-12 grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-6">
+              <h3 class="text-lg font-medium text-gray-900">Learning Modules</h3>
+              <p class="mt-2 text-gray-600">
+                Structured courses on tariffs, trade agreements, and international commerce fundamentals.
+              </p>
+              <div class="mt-4">
+                <a href="#" class="text-blue-600 hover:text-blue-800">
+                  Browse modules →
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-6">
+              <h3 class="text-lg font-medium text-gray-900">Trade Dictionary</h3>
+              <p class="mt-2 text-gray-600">
+                Comprehensive glossary of international trade and tariff terminology.
+              </p>
+              <div class="mt-4">
+                <a href="#" class="text-blue-600 hover:text-blue-800">
+                  Explore dictionary →
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-6">
+              <h3 class="text-lg font-medium text-gray-900">Interactive Quizzes</h3>
+              <p class="mt-2 text-gray-600">
+                Test your knowledge with quizzes that reinforce key concepts from each module.
+              </p>
+              <div class="mt-4">
+                <a href="#" class="text-blue-600 hover:text-blue-800">
+                  Take a quiz →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bg-gray-800">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-gray-300">
+          &copy; 2025 TariffSmart. All rights reserved.
+        </p>
+      </div>
+    </footer>
+  </div>
 </body>
 </html>

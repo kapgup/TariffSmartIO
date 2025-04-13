@@ -26,6 +26,7 @@ const navItems = [
   { title: 'Products', href: '/products' },
   { title: 'Countries', href: '/countries' },
   { title: 'Timeline', href: '/timeline' },
+  { title: 'Education', href: '/education' },
   { title: 'About', href: '/about' },
 ];
 
