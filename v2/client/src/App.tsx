@@ -7,31 +7,20 @@ import { PATHS } from './lib/constants';
 // Layout components
 import Layout from './components/layout/Layout';
 
-// Page components
+// Page components - only import what exists
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 
-/**
- * Main application component
- */
+// Main application component
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppRoutes />
+      <Layout>
+        <Switch>
+          <Route path={PATHS.HOME} component={Home} />
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
     </QueryClientProvider>
-  );
-}
-
-/**
- * Application routes
- */
-function AppRoutes() {
-  return (
-    <Layout>
-      <Switch>
-        <Route path={PATHS.HOME} component={Home} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
   );
 }
