@@ -16,9 +16,25 @@ export default defineConfig({
       '@shared': path.resolve(__dirname, './shared'),
     },
   },
+  preview: {
+    host: true,
+    port: 3000,
+  },
   server: {
-    host: true, // Listen on all addresses
-    strictPort: true,
+    host: '0.0.0.0',
+    port: 3000,
+    strictPort: false,
+    cors: {
+      origin: '*',
+    },
+    hmr: {
+      clientPort: 443,
+      host: '5a6bca4a-2b7c-4dbe-adbb-6c6324cb6c03-00-24h17hqacvzwc.spock.replit.dev',
+    },
+    fs: {
+      // Allow serving files from one level up (to the project root)
+      allow: ['..'],
+    },
     proxy: {
       '/v2/api': {
         target: 'http://localhost:5000',
