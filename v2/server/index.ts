@@ -53,6 +53,11 @@ async function init() {
   const v2ClientPath = path.resolve(__dirname, '../client');
   const v2PublicPath = path.resolve(__dirname, '../client/public');
   
+  // Create a specific route for the logo that serves directly from public
+  app.get('/v2/assets/logo.svg', (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(v2PublicPath, 'logo.svg'));
+  });
+  
   // Serve static files from public directory first
   app.use('/v2/assets', express.static(v2PublicPath));
   
