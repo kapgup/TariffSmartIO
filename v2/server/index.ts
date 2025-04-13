@@ -51,11 +51,12 @@ async function init() {
   
   // Serve static assets for the v2 client
   const v2ClientPath = path.resolve(__dirname, '../client');
-  app.use('/v2/assets', express.static(path.join(v2ClientPath, 'assets')));
+  app.use('/v2/assets', express.static(v2ClientPath));
   
-  // Handle all v2 routes using the main index.html for client-side routing
+  // Handle all v2 routes using the v2 index.html for client-side routing
   app.get("/v2*", (_req: Request, res: Response) => {
-    res.sendFile(path.resolve(__dirname, '../../client/index.html'));
+    console.log('[v2] Serving v2 index.html');
+    res.sendFile(path.resolve(__dirname, '../client/index.html'));
   });
   
   // Error handler

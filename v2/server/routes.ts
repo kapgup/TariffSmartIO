@@ -1,7 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { db } from './db';
-import { featureFlags } from '../shared/schema';
-import { eq } from 'drizzle-orm';
+import { featureFlags, learningModules, dictionaryTerms } from '../shared/schema';
+import { eq, not, sql } from 'drizzle-orm';
 
 /**
  * Set up API routes for the v2 platform
@@ -64,163 +64,129 @@ export async function setupRoutes(app: Express) {
     });
   });
 
-  // Modules API stub
-  app.get('/v2/api/modules', (_req: Request, res: Response) => {
-    // We'll return stub data for now until we implement the actual database
-    const modules = [
-      {
-        id: 1,
-        title: "Introduction to Tariffs",
-        slug: "intro-to-tariffs",
-        description: "Learn about the basics of tariffs, their purpose, and how they impact global trade.",
-        content: "# Introduction to Tariffs\n\nTariffs are taxes imposed on imported goods and services...",
-        category: "tariffs",
-        difficulty: "beginner",
-        estimatedMinutes: 30,
-        featured: true,
-        order: 1,
-        createdAt: "2025-03-15T00:00:00Z",
-        updatedAt: "2025-03-15T00:00:00Z"
-      },
-      {
-        id: 2,
-        title: "Trade Agreements Fundamentals",
-        slug: "trade-agreements-fundamentals",
-        description: "Understand the structure and purpose of international trade agreements and their role in global commerce.",
-        content: "# Trade Agreements Fundamentals\n\nTrade agreements are contracts between countries that reduce barriers to trade...",
-        category: "agreements",
-        difficulty: "beginner",
-        estimatedMinutes: 45,
-        featured: true,
-        order: 2,
-        createdAt: "2025-03-20T00:00:00Z",
-        updatedAt: "2025-03-20T00:00:00Z"
-      },
-      {
-        id: 3,
-        title: "Advanced Tariff Classification",
-        slug: "advanced-tariff-classification",
-        description: "Master the complexities of the Harmonized System and learn how to properly classify goods for customs purposes.",
-        content: "# Advanced Tariff Classification\n\nThe Harmonized System (HS) is an international nomenclature...",
-        category: "tariffs",
-        difficulty: "advanced",
-        estimatedMinutes: 60,
-        featured: true,
-        order: 3,
-        createdAt: "2025-03-25T00:00:00Z",
-        updatedAt: "2025-03-25T00:00:00Z"
-      }
-    ];
-    
-    res.json({
-      modules,
-      categories: ["tariffs", "trade_policy", "customs", "shipping", "regulations", "agreements"],
-      totalModules: modules.length
-    });
-  });
-
-  // Dictionary API stub
-  app.get('/v2/api/dictionary', (_req: Request, res: Response) => {
-    // We'll return stub data for now until we implement the actual database
-    const terms = [
-      {
-        id: 1,
-        term: "Tariff",
-        slug: "tariff",
-        definition: "A tax imposed on imported goods and services. Tariffs are used to restrict trade, as they increase the price of imported goods and services, making them more expensive to consumers.",
-        category: "tariffs",
-        createdAt: "2025-03-15T00:00:00Z",
-        updatedAt: "2025-03-15T00:00:00Z"
-      },
-      {
-        id: 2,
-        term: "Most Favored Nation (MFN)",
-        slug: "most-favored-nation",
-        definition: "A status or level of treatment accorded by one state to another in international trade. The term means the country which is the recipient of this treatment must receive equal trade advantages as the 'most favored nation' by the country granting such treatment.",
-        category: "trade_policy",
-        createdAt: "2025-03-16T00:00:00Z",
-        updatedAt: "2025-03-16T00:00:00Z"
-      },
-      {
-        id: 3,
-        term: "Harmonized System (HS)",
-        slug: "harmonized-system",
-        definition: "An international nomenclature for the classification of products. It allows participating countries to classify traded goods on a common basis for customs purposes.",
-        category: "customs",
-        createdAt: "2025-03-17T00:00:00Z",
-        updatedAt: "2025-03-17T00:00:00Z"
-      }
-    ];
-    
-    res.json({
-      terms,
-      categories: ["tariffs", "trade_policy", "customs", "shipping", "regulations", "agreements"],
-      totalTerms: terms.length
-    });
-  });
-
-  // Dictionary term API stub
-  app.get('/v2/api/dictionary/:slug', (req: Request, res: Response) => {
-    const { slug } = req.params;
-    
-    // Sample terms
-    const terms = [
-      {
-        id: 1,
-        term: "Tariff",
-        slug: "tariff",
-        definition: "A tax imposed on imported goods and services. Tariffs are used to restrict trade, as they increase the price of imported goods and services, making them more expensive to consumers.",
-        category: "tariffs",
-        examples: [
-          "A 25% tariff on imported steel",
-          "Reciprocal tariffs between trading nations"
-        ],
-        createdAt: "2025-03-15T00:00:00Z",
-        updatedAt: "2025-03-15T00:00:00Z"
-      },
-      {
-        id: 2,
-        term: "Most Favored Nation (MFN)",
-        slug: "most-favored-nation",
-        definition: "A status or level of treatment accorded by one state to another in international trade. The term means the country which is the recipient of this treatment must receive equal trade advantages as the 'most favored nation' by the country granting such treatment.",
-        category: "trade_policy",
-        examples: [
-          "WTO members must extend MFN status to all other members",
-          "Permanent Normal Trade Relations (PNTR) is the US term for MFN"
-        ],
-        createdAt: "2025-03-16T00:00:00Z",
-        updatedAt: "2025-03-16T00:00:00Z"
-      },
-      {
-        id: 3,
-        term: "Harmonized System (HS)",
-        slug: "harmonized-system",
-        definition: "An international nomenclature for the classification of products. It allows participating countries to classify traded goods on a common basis for customs purposes.",
-        category: "customs",
-        examples: [
-          "HS code 8471.30 for portable computers",
-          "Six-digit HS codes are used globally, while countries may add additional digits for local specificity"
-        ],
-        createdAt: "2025-03-17T00:00:00Z",
-        updatedAt: "2025-03-17T00:00:00Z"
-      }
-    ];
-    
-    const term = terms.find(t => t.slug === slug);
-    
-    if (!term) {
-      return res.status(404).json({
-        message: `Term with slug '${slug}' not found`
+  // Modules API - Get all modules
+  app.get('/v2/api/modules', async (req: Request, res: Response) => {
+    try {
+      const modules = await db.select().from(learningModules);
+      
+      // Extract unique categories
+      const categories = [...new Set(modules.map(module => module.category))];
+      
+      res.json({
+        modules,
+        categories,
+        totalModules: modules.length
+      });
+    } catch (error) {
+      console.error('[v2] Error fetching modules:', error);
+      res.status(500).json({
+        message: 'Failed to fetch modules'
       });
     }
-    
-    // Find related terms (for demo purposes, just return other terms)
-    const related = terms.filter(t => t.id !== term.id);
-    
-    res.json({
-      term,
-      related
-    });
+  });
+  
+  // Get module by slug
+  app.get('/v2/api/modules/:slug', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      
+      const [module] = await db
+        .select()
+        .from(learningModules)
+        .where(eq(learningModules.slug, slug));
+      
+      if (!module) {
+        return res.status(404).json({
+          message: `Module with slug '${slug}' not found`
+        });
+      }
+      
+      // Get related modules (same category, excluding current module)
+      const relatedModules = await db
+        .select()
+        .from(learningModules)
+        .where(eq(learningModules.category, module.category))
+        .where(not(eq(learningModules.id, module.id)))
+        .limit(3);
+      
+      res.json({
+        module,
+        related: relatedModules
+      });
+    } catch (error) {
+      console.error('[v2] Error fetching module:', error);
+      res.status(500).json({
+        message: 'Failed to fetch module'
+      });
+    }
+  });
+
+  // Dictionary API - Get all terms
+  app.get('/v2/api/dictionary', async (_req: Request, res: Response) => {
+    try {
+      const terms = await db.select().from(dictionaryTerms);
+      
+      // Extract unique categories
+      const categories = [...new Set(terms.map(term => term.category))];
+      
+      res.json({
+        terms,
+        categories,
+        totalTerms: terms.length
+      });
+    } catch (error) {
+      console.error('[v2] Error fetching dictionary terms:', error);
+      res.status(500).json({
+        message: 'Failed to fetch dictionary terms'
+      });
+    }
+  });
+
+  // Dictionary term API - Get term by slug
+  app.get('/v2/api/dictionary/:slug', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      
+      const [term] = await db
+        .select()
+        .from(dictionaryTerms)
+        .where(eq(dictionaryTerms.slug, slug));
+      
+      if (!term) {
+        return res.status(404).json({
+          message: `Term with slug '${slug}' not found`
+        });
+      }
+      
+      // Get related terms based on the related_terms array in the current term
+      let related = [];
+      if (term.relatedTerms && term.relatedTerms.length > 0) {
+        related = await db
+          .select()
+          .from(dictionaryTerms)
+          .where(sql`${dictionaryTerms.slug} = ANY(${term.relatedTerms})`);
+      }
+      
+      // If no related terms found or none defined, get terms from the same category
+      if (related.length === 0) {
+        related = await db
+          .select()
+          .from(dictionaryTerms)
+          .where(eq(dictionaryTerms.category, term.category))
+          .where(not(eq(dictionaryTerms.id, term.id)))
+          .limit(3);
+      }
+      
+      res.json({
+        term,
+        related
+      });
+    } catch (error) {
+      console.error('[v2] Error fetching dictionary term:', error);
+      res.status(500).json({
+        message: 'Failed to fetch dictionary term'
+      });
+    }
   });
 
   console.log('[v2] API routes initialized');
