@@ -58,10 +58,15 @@ async function init() {
     res.sendFile(path.resolve(v2PublicPath, 'logo.svg'));
   });
   
-  // Serve static assets from public directory
+  // Serve static HTML files first
   serveStatic(app);
   
-  // Set up Vite for development
+  // Explicitly serve the v2 index page
+  app.get('/v2', (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(__dirname, '../client/index.html'));
+  });
+  
+  // Set up Vite for development (this should be last as it has a catch-all route)
   await setupVite(app, httpServer);
   
   // Error handler
