@@ -84,6 +84,21 @@ export const invalidateQuery = (queryKey: unknown[]) => {
 };
 
 /**
+ * Helper function for API mutations
+ * @param endpoint - API endpoint path
+ * @param method - HTTP method
+ * @returns Mutation function
+ */
+export const apiMutation = <TData = any, TResponse = any>(
+  endpoint: string,
+  method: HttpMethod = 'POST'
+) => {
+  return async (data?: TData): Promise<TResponse> => {
+    return apiRequest<TData, TResponse>(endpoint, method, data);
+  };
+};
+
+/**
  * React Query client instance
  */
 export const queryClient = new QueryClient({

@@ -246,3 +246,37 @@ export function formatDate(dateString: string | Date): string {
     day: 'numeric'
   });
 }
+
+/**
+ * Daily challenge types with display names and descriptions
+ */
+export const CHALLENGE_TYPES = {
+  QUIZ: {
+    name: 'Quiz Challenge',
+    value: 'quiz',
+    description: 'Test your knowledge with a short quiz on tariff and trade topics',
+    icon: 'HelpCircle',
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+  },
+  ANALYSIS: {
+    name: 'Trade Analysis',
+    value: 'analysis',
+    description: 'Analyze a trade scenario and make the best decision',
+    icon: 'BarChart2',
+    color: 'bg-green-100 text-green-800 border-green-200',
+  },
+  CALCULATION: {
+    name: 'Tariff Calculation',
+    value: 'calculation',
+    description: 'Calculate complex tariffs based on product category and country of origin',
+    icon: 'Calculator',
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+  },
+  RESEARCH: {
+    name: 'Trade Research',
+    value: 'research',
+    description: 'Research and report on a current trade issue or policy',
+    icon: 'Search',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+  },
+};

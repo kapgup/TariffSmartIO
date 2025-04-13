@@ -17,6 +17,8 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // Listen on all addresses
+    strictPort: true,
     proxy: {
       '/v2/api': {
         target: 'http://localhost:5000',
