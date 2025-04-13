@@ -20,7 +20,16 @@ export async function setupVite(app: Express, server: Server) {
   if (!isProduction) {
     // Create Vite server in middleware mode
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        hmr: {
+          server,
+          clientPort: 443,
+          host: '5a6bca4a-2b7c-4dbe-adbb-6c6324cb6c03-00-24h17hqacvzwc.spock.replit.dev'
+        },
+        host: '0.0.0.0',
+        cors: true
+      },
       appType: 'spa',
       root: path.resolve(__dirname, '../client')
     });
