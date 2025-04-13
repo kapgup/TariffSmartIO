@@ -51,9 +51,15 @@ async function init() {
   
   // Serve static assets for the v2 client
   const v2ClientPath = path.resolve(__dirname, '../client');
+  const v2PublicPath = path.resolve(__dirname, '../client/public');
+  
+  // Serve static files from public directory first
+  app.use('/v2/assets', express.static(v2PublicPath));
+  
+  // Then serve other client assets
   app.use('/v2/assets', express.static(v2ClientPath));
   
-  // Handle all v2 routes using the v2 index.html for client-side routing
+  // Handle all other v2 routes using the v2 index.html for client-side routing
   app.get("/v2*", (_req: Request, res: Response) => {
     console.log('[v2] Serving v2 index.html');
     res.sendFile(path.resolve(__dirname, '../client/index.html'));
