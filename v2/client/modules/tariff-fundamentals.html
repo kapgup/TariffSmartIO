@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tariff Fundamentals - TariffSmart Education Platform</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .lesson-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .lesson-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+    .lesson-content p { margin-bottom: 1rem; line-height: 1.7; }
+    .lesson-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+    .lesson-content ul li { margin-bottom: 0.5rem; }
+    .lesson-content blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; margin-left: 0; margin-right: 0; font-style: italic; margin-bottom: 1rem; }
+    .lesson-content .info-box { background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.25rem; }
+    .lesson-content .tip-box { background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.25rem; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/v2" class="flex items-center space-x-2">
+          <img src="/v2/assets/logo.svg" alt="TariffSmart Logo" class="h-8 w-8" />
+          <span class="text-xl font-bold text-blue-600">TariffSmart</span>
+        </a>
+        <span class="text-gray-400">|</span>
+        <span class="text-gray-600">Education Platform</span>
+      </div>
+      <nav>
+        <ul class="flex space-x-6">
+          <li><a href="/v2/modules" class="text-blue-600 font-medium">Modules</a></li>
+          <li><a href="/v2/dictionary" class="text-gray-600 hover:text-blue-600">Dictionary</a></li>
+          <li><a href="/" class="text-gray-600 hover:text-blue-600">Main App</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Breadcrumbs -->
+  <div class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4 py-3">
+      <div class="flex items-center space-x-2 text-sm text-gray-500">
+        <a href="/v2" class="hover:text-blue-600">Home</a>
+        <span>/</span>
+        <a href="/v2/modules" class="hover:text-blue-600">Modules</a>
+        <span>/</span>
+        <span class="text-gray-900 font-medium">Tariff Fundamentals</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Left Sidebar - Module Navigation -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
+          <div class="flex items-center mb-6">
+            <div class="bg-blue-600 rounded-full h-10 w-10 flex items-center justify-center mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Tariff Fundamentals</h2>
+          </div>
+
+          <div class="mb-4">
+            <span class="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">Beginner</span>
+            <div class="flex items-center mt-2 text-sm text-gray-500">
+              <span class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                30-45 minutes
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">Module Lessons</h3>
+            <ul class="space-y-3">
+              <li>
+                <a href="#introduction" class="flex items-center text-blue-600 font-medium">
+                  <span class="bg-blue-100 text-blue-600 rounded-full h-6 w-6 flex items-center justify-center text-sm mr-3 font-semibold">1</span>
+                  Introduction to Tariffs
+                </a>
+              </li>
+              <li>
+                <a href="#types" class="flex items-center text-gray-700 hover:text-blue-600">
+                  <span class="bg-gray-100 text-gray-500 rounded-full h-6 w-6 flex items-center justify-center text-sm mr-3 font-semibold">2</span>
+                  Types of Tariffs
+                </a>
+              </li>
+              <li>
+                <a href="#purposes" class="flex items-center text-gray-700 hover:text-blue-600">
+                  <span class="bg-gray-100 text-gray-500 rounded-full h-6 w-6 flex items-center justify-center text-sm mr-3 font-semibold">3</span>
+                  Purposes of Tariffs
+                </a>
+              </li>
+              <li>
+                <a href="#economic-impact" class="flex items-center text-gray-700 hover:text-blue-600">
+                  <span class="bg-gray-100 text-gray-500 rounded-full h-6 w-6 flex items-center justify-center text-sm mr-3 font-semibold">4</span>
+                  Economic Impact
+                </a>
+              </li>
+              <li>
+                <a href="#case-studies" class="flex items-center text-gray-700 hover:text-blue-600">
+                  <span class="bg-gray-100 text-gray-500 rounded-full h-6 w-6 flex items-center justify-center text-sm mr-3 font-semibold">5</span>
+                  Historical Case Studies
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-gray-200">
+            <a href="#quiz" class="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Take Quiz
+            </a>
+            <a href="/v2/modules/reciprocal-tariffs.html" class="flex items-center justify-center px-4 py-2 mt-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+              Next Module
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="lg:col-span-3">
+        <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+          <div class="flex items-center mb-6">
+            <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">Lesson 1 of 5</span>
+          </div>
+
+          <h1 class="text-3xl font-bold text-gray-900 mb-6" id="introduction">Introduction to Tariffs</h1>
+
+          <div class="lesson-content text-gray-700">
+            <p class="lead text-lg">Tariffs are taxes imposed by governments on imported goods and services. They serve as a key instrument of trade policy and have been used throughout economic history to influence trade patterns, protect domestic industries, and generate revenue.</p>
+
+            <div class="info-box">
+              <p class="font-medium text-blue-800 mb-1">Key Concept</p>
+              <p class="mb-0">A tariff is a tax on imports or exports between sovereign states. It is a form of regulation of foreign trade and a policy that taxes foreign products to encourage or safeguard domestic industry.</p>
+            </div>
+
+            <h2>What Are Tariffs?</h2>
+            <p>At their most basic, tariffs are customs duties that are levied on merchandise imports. They are typically charged as a percentage of the transaction value (the price paid or payable for the imported items). Tariffs raise the prices of imported goods, making them more expensive to consumers. This can encourage domestic production by giving a price advantage to locally-produced goods over similar imported items.</p>
+
+            <h3>Brief Historical Context</h3>
+            <p>Tariffs have been used throughout economic history:</p>
+            <ul>
+              <li>In ancient times, duties were collected on goods entering city-states</li>
+              <li>During the Middle Ages, cities and feudal lords imposed duties on merchants traveling through their territories</li>
+              <li>In the 17th-19th centuries, mercantilist economic theories encouraged high tariffs to maximize exports and minimize imports</li>
+              <li>The early 20th century saw high tariff barriers before and during the Great Depression</li>
+              <li>Post-WWII, a general movement toward trade liberalization and tariff reduction began through GATT and later the WTO</li>
+              <li>The 21st century has seen both continued liberalization and occasional protectionist measures</li>
+            </ul>
+
+            <h2>How Tariffs Work</h2>
+            <p>When a country imposes a tariff on an imported product, the immediate effect is to increase the price of that product in the domestic market. This price increase can have several consequences:</p>
+
+            <div class="tip-box">
+              <p class="font-medium text-green-800 mb-1">Example</p>
+              <p>If Country A imposes a 20% tariff on automobiles imported from Country B, and an automobile costs $20,000 before the tariff, the importer would need to pay a $4,000 tariff duty. This cost is typically passed on to consumers, making the imported automobile cost $24,000.</p>
+            </div>
+
+            <blockquote>
+              "Tariffs are the most common type of barrier to trade; indeed, one of the purposes of the World Trade Organization (WTO) is to enable Member States to negotiate mutual tariff reductions." - World Trade Organization
+            </blockquote>
+
+            <p>In the next lesson, we will explore the different types of tariffs and how they are applied in international trade.</p>
+
+            <div class="mt-12 flex justify-between border-t border-gray-200 pt-6">
+              <a href="/v2/modules" class="flex items-center text-gray-600 hover:text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                Back to Modules
+              </a>
+              <a href="#types" class="flex items-center text-blue-600 hover:text-blue-800">
+                Next Lesson: Types of Tariffs
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 md:p-8 mt-8" id="quiz">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Module Quiz</h2>
+          <p class="text-gray-600 mb-6">Test your knowledge of tariff fundamentals with this short quiz. Complete all questions to receive your score.</p>
+
+          <form>
+            <!-- Question 1 -->
+            <div class="mb-8 p-5 border border-gray-200 rounded-lg">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">1. What is a tariff?</h3>
+              <div class="space-y-3">
+                <div class="flex items-start">
+                  <input type="radio" id="q1-a" name="q1" class="mt-1">
+                  <label for="q1-a" class="ml-2 text-gray-700">A voluntary payment made by exporters</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q1-b" name="q1" class="mt-1">
+                  <label for="q1-b" class="ml-2 text-gray-700">A tax imposed on exported goods</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q1-c" name="q1" class="mt-1">
+                  <label for="q1-c" class="ml-2 text-gray-700">A tax imposed on imported goods</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q1-d" name="q1" class="mt-1">
+                  <label for="q1-d" class="ml-2 text-gray-700">A subsidy given to domestic producers</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="mb-8 p-5 border border-gray-200 rounded-lg">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">2. Which of the following is NOT a primary purpose of tariffs?</h3>
+              <div class="space-y-3">
+                <div class="flex items-start">
+                  <input type="radio" id="q2-a" name="q2" class="mt-1">
+                  <label for="q2-a" class="ml-2 text-gray-700">To raise government revenue</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q2-b" name="q2" class="mt-1">
+                  <label for="q2-b" class="ml-2 text-gray-700">To protect domestic industries from foreign competition</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q2-c" name="q2" class="mt-1">
+                  <label for="q2-c" class="ml-2 text-gray-700">To encourage foreign investment in the domestic economy</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q2-d" name="q2" class="mt-1">
+                  <label for="q2-d" class="ml-2 text-gray-700">To respond to unfair trade practices by other countries</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="mb-8 p-5 border border-gray-200 rounded-lg">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">3. What typically happens to the price of imported goods when a tariff is imposed?</h3>
+              <div class="space-y-3">
+                <div class="flex items-start">
+                  <input type="radio" id="q3-a" name="q3" class="mt-1">
+                  <label for="q3-a" class="ml-2 text-gray-700">Prices decrease as importers absorb the cost</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q3-b" name="q3" class="mt-1">
+                  <label for="q3-b" class="ml-2 text-gray-700">Prices increase as the tariff cost is passed to consumers</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q3-c" name="q3" class="mt-1">
+                  <label for="q3-c" class="ml-2 text-gray-700">Prices remain the same as the government subsidizes the difference</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q3-d" name="q3" class="mt-1">
+                  <label for="q3-d" class="ml-2 text-gray-700">Prices fluctuate unpredictably regardless of the tariff</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="mb-8 p-5 border border-gray-200 rounded-lg">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">4. Which organization has played a key role in reducing global tariffs since the mid-20th century?</h3>
+              <div class="space-y-3">
+                <div class="flex items-start">
+                  <input type="radio" id="q4-a" name="q4" class="mt-1">
+                  <label for="q4-a" class="ml-2 text-gray-700">The International Monetary Fund (IMF)</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q4-b" name="q4" class="mt-1">
+                  <label for="q4-b" class="ml-2 text-gray-700">The World Bank</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q4-c" name="q4" class="mt-1">
+                  <label for="q4-c" class="ml-2 text-gray-700">The World Trade Organization (WTO)</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q4-d" name="q4" class="mt-1">
+                  <label for="q4-d" class="ml-2 text-gray-700">The United Nations Development Programme (UNDP)</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="mb-8 p-5 border border-gray-200 rounded-lg">
+              <h3 class="text-lg font-semibold text-gray-800 mb-3">5. In a scenario where Country A imposes a 25% tariff on electronics from Country B, who directly pays this tariff?</h3>
+              <div class="space-y-3">
+                <div class="flex items-start">
+                  <input type="radio" id="q5-a" name="q5" class="mt-1">
+                  <label for="q5-a" class="ml-2 text-gray-700">The manufacturers in Country B</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q5-b" name="q5" class="mt-1">
+                  <label for="q5-b" class="ml-2 text-gray-700">The consumers in Country A</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q5-c" name="q5" class="mt-1">
+                  <label for="q5-c" class="ml-2 text-gray-700">The importers bringing the goods into Country A</label>
+                </div>
+                <div class="flex items-start">
+                  <input type="radio" id="q5-d" name="q5" class="mt-1">
+                  <label for="q5-d" class="ml-2 text-gray-700">The government of Country B</label>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              Submit Quiz
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12 mt-16">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between">
+        <div class="mb-8 md:mb-0">
+          <h3 class="text-xl font-bold mb-4">TariffSmart</h3>
+          <p class="text-gray-400 max-w-md">Your comprehensive platform for understanding international trade, tariffs, and global commerce.</p>
+        </div>
+        <div>
+          <h4 class="text-lg font-medium mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="/v2" class="text-gray-400 hover:text-white">Home</a></li>
+            <li><a href="/v2/modules" class="text-gray-400 hover:text-white">Modules</a></li>
+            <li><a href="/v2/dictionary" class="text-gray-400 hover:text-white">Dictionary</a></li>
+            <li><a href="/" class="text-gray-400 hover:text-white">Main App</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+        <p>&copy; 2025 TariffSmart. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
