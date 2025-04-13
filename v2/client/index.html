@@ -7,7 +7,83 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  <!-- Static content that doesn't depend on React -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/" class="text-xl font-bold text-blue-600">TariffSmart</a>
+        <span class="text-gray-400">|</span>
+        <span class="text-gray-600">Education Platform</span>
+      </div>
+      <nav>
+        <ul class="flex space-x-6">
+          <li><a href="/" class="text-gray-600 hover:text-blue-600">Back to Main App</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <section class="py-12">
+      <div class="text-center">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-6">TariffSmart Education Platform</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          Your comprehensive resource for understanding international trade, tariffs, and global commerce.
+        </p>
+        <div class="inline-block bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-8">
+          <p class="font-medium">Coming Soon!</p>
+          <p>Our education platform is currently under development. Check back soon for learning modules, quizzes, and more.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-12 bg-white rounded-lg shadow-sm">
+      <div class="max-w-5xl mx-auto px-4">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">What to Expect</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-blue-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold text-blue-800 mb-3">Learning Modules</h3>
+            <p class="text-gray-700">Structured courses on tariffs, trade agreements, and international commerce fundamentals.</p>
+          </div>
+          
+          <div class="bg-green-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold text-green-800 mb-3">Trade Dictionary</h3>
+            <p class="text-gray-700">Comprehensive glossary of international trade and tariff terminology.</p>
+          </div>
+          
+          <div class="bg-purple-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold text-purple-800 mb-3">Interactive Quizzes</h3>
+            <p class="text-gray-700">Test your knowledge with quizzes that reinforce key concepts from each module.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between">
+        <div class="mb-8 md:mb-0">
+          <h3 class="text-xl font-bold mb-4">TariffSmart</h3>
+          <p class="text-gray-400 max-w-md">Your comprehensive platform for understanding international trade, tariffs, and global commerce.</p>
+        </div>
+        <div>
+          <h4 class="text-lg font-medium mb-4">Quick Links</h4>
+          <ul class="space-y-2">
+            <li><a href="/" class="text-gray-400 hover:text-white">Main App</a></li>
+            <li><a href="/about" class="text-gray-400 hover:text-white">About Us</a></li>
+            <li><a href="/contact" class="text-gray-400 hover:text-white">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+        <p>&copy; 2025 TariffSmart. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="root" style="display: none;"></div>
+  <!-- Removed React script -->
 </body>
 </html>
