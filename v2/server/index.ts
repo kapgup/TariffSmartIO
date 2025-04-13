@@ -2,17 +2,20 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import path from 'path';
 import session from 'express-session';
 import cors from 'cors';
+import { createServer } from 'http';
 import { configureAuth } from './auth';
 import { setupRoutes } from './routes';
 import { db, pool } from './db';
 import { featureFlags } from '../shared/schema';
 import { eq } from 'drizzle-orm';
+import { log, setupVite, serveStatic } from './vite';
 
 /**
  * Initialize the v2 platform's Express application
  */
 async function init() {
   const app: Express = express();
+  const httpServer = createServer(app);
   
   // Set up middleware
   app.use(express.json());
@@ -38,7 +41,7 @@ async function init() {
   // Log requests in development
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[v2] ${req.method} ${req.url}`);
+      log(`${req.method} ${req.url}`);
     }
     next();
   });
@@ -49,26 +52,17 @@ async function init() {
   // Set up API routes under /v2/api
   await setupRoutes(app);
   
-  // Serve static assets for the v2 client
-  const v2ClientPath = path.resolve(__dirname, '../client');
-  const v2PublicPath = path.resolve(__dirname, '../client/public');
-  
   // Create a specific route for the logo that serves directly from public
   app.get('/v2/assets/logo.svg', (_req: Request, res: Response) => {
+    const v2PublicPath = path.resolve(__dirname, '../client/public');
     res.sendFile(path.resolve(v2PublicPath, 'logo.svg'));
   });
   
-  // Serve static files from public directory first
-  app.use('/v2/assets', express.static(v2PublicPath));
+  // Serve static assets from public directory
+  serveStatic(app);
   
-  // Then serve other client assets
-  app.use('/v2/assets', express.static(v2ClientPath));
-  
-  // Handle all other v2 routes using the v2 index.html for client-side routing
-  app.get("/v2*", (_req: Request, res: Response) => {
-    console.log('[v2] Serving v2 index.html');
-    res.sendFile(path.resolve(__dirname, '../client/index.html'));
-  });
+  // Set up Vite for development
+  await setupVite(app, httpServer);
   
   // Error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
