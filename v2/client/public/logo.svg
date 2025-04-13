@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="40" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Graph Line and Arrow -->
+  <g transform="translate(25, 40)">
+    <!-- Line Graph -->
+    <path d="M0,20 L15,15 L30,25 L45,10 L60,0" 
+          stroke="url(#logoGradient)" 
+          stroke-width="4" 
+          fill="none" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+    
+    <!-- Arrow -->
+    <path d="M45,10 L60,0 L55,15" 
+          stroke="url(#logoGradient)" 
+          stroke-width="4" 
+          fill="none" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+  </g>
+</svg>
