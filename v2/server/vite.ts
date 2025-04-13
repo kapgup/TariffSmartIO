@@ -103,7 +103,14 @@ export function serveStatic(app: Express) {
 
   app.get('/v2/modules/:moduleName', (req: Request, res: Response) => {
     const moduleName = req.params.moduleName;
-    const modulePath = path.resolve(clientPath, `modules/${moduleName}`);
+    // First try to find the module as a direct file
+    let modulePath = path.resolve(clientPath, `modules/${moduleName}`);
+    
+    // If direct file doesn't exist, try with HTML extension
+    if (!fs.existsSync(modulePath)) {
+      modulePath = path.resolve(clientPath, `modules/${moduleName}.html`);
+    }
+    
     res.sendFile(modulePath);
   });
 
