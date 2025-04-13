@@ -45,6 +45,16 @@ function Router() {
           <Route path="/savings-tips" component={ComingSoon} />
           <Route path="/help-center" component={ComingSoon} />
           <Route path="/pricing" component={ComingSoon} />
+          {/* v2 Education Platform Redirect */}
+          <Route path="/education" component={() => {
+            useEffect(() => {
+              window.location.href = "/v2";
+            }, []);
+            return <div className="p-12 text-center">
+              <h2 className="text-2xl font-bold mb-4">Redirecting to TariffSmart Education Platform...</h2>
+              <p>If you are not redirected automatically, <a href="/v2" className="text-primary underline">click here</a>.</p>
+            </div>;
+          }} />
           <Route component={NotFound} />
         </Switch>
       </div>
