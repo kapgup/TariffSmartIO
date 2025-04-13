@@ -22,6 +22,33 @@ export default function Footer() {
             <div>
               <Link href="/">
                 <a className="flex items-center">
+                  <svg width="40" height="32" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+                    <defs>
+                      <linearGradient id="footerBlueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{stopColor:"#3B82F6", stopOpacity:1}} />
+                        <stop offset="100%" style={{stopColor:"#1E40AF", stopOpacity:1}} />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Graph Line and Arrow */}
+                    <g transform="translate(25, 40)">
+                      {/* Line Graph */}
+                      <path d="M0,20 L15,15 L30,25 L45,10 L60,0" 
+                            stroke="url(#footerBlueGradient)" 
+                            strokeWidth="4" 
+                            fill="none" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" />
+                      
+                      {/* Arrow */}
+                      <path d="M45,10 L60,0 L55,15" 
+                            stroke="url(#footerBlueGradient)" 
+                            strokeWidth="4" 
+                            fill="none" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" />
+                    </g>
+                  </svg>
                   <span className="text-xl font-bold text-blue-600">{APP_NAME}</span>
                   <span className="ml-2 text-xs text-gray-500 font-medium rounded-full bg-blue-50 px-1.5 py-0.5">v2</span>
                 </a>
