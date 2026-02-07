@@ -36,12 +36,12 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
-  
+
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
     const results = await db.select().from(users).where(eq(users.googleId, googleId));
     return results.length > 0 ? results[0] : undefined;
   }
-  
+
   async updateUserRole(userId: number, role: string): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
@@ -50,16 +50,16 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedUser;
   }
-  
+
   async updateUserSubscription(
-    userId: number, 
-    tier: string | null, 
+    userId: number,
+    tier: string | null,
     expirationDate: Date | null
   ): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
-      .set({ 
-        subscriptionTier: tier, 
+      .set({
+        subscriptionTier: tier,
         subscriptionExpiration: expirationDate,
         isSubscribed: tier !== null
       })
@@ -67,22 +67,22 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedUser;
   }
-  
+
   // Subscriptions
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
     const [newSubscription] = await db.insert(subscriptions).values(subscription).returning();
     return newSubscription;
   }
-  
+
   async getSubscription(id: number): Promise<Subscription | undefined> {
     const results = await db.select().from(subscriptions).where(eq(subscriptions.id, id));
     return results.length > 0 ? results[0] : undefined;
   }
-  
+
   async getUserSubscriptions(userId: number): Promise<Subscription[]> {
     return await db.select().from(subscriptions).where(eq(subscriptions.userId, userId));
   }
-  
+
   async updateSubscriptionStatus(id: number, status: string): Promise<Subscription | undefined> {
     const [updatedSubscription] = await db
       .update(subscriptions)
@@ -91,7 +91,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedSubscription;
   }
-  
+
   // Feature Access
   async getFeatureAccess(featureName: string, userRole: string): Promise<FeatureAccess | undefined> {
     const results = await db
@@ -105,15 +105,15 @@ export class DatabaseStorage implements IStorage {
       );
     return results.length > 0 ? results[0] : undefined;
   }
-  
+
   async getAllFeatureAccess(): Promise<FeatureAccess[]> {
     return await db.select().from(featureAccess);
   }
-  
+
   async setFeatureAccess(featureName: string, userRole: string, isEnabled: boolean): Promise<FeatureAccess> {
     // Check if record exists
     const existing = await this.getFeatureAccess(featureName, userRole);
-    
+
     if (existing) {
       // Update existing record
       const [updated] = await db
@@ -150,11 +150,11 @@ export class DatabaseStorage implements IStorage {
   async createProductCategory(insertCategory: InsertProductCategory): Promise<ProductCategory> {
     // Create a copy to avoid modifying the input
     let formattedCategory: typeof insertCategory = { ...insertCategory };
-    
+
     // Convert primaryCountries to proper string[] format if needed
     if (formattedCategory.primaryCountries) {
       let countries: string[] = [];
-      
+
       // Handle different input types
       if (Array.isArray(formattedCategory.primaryCountries)) {
         // Already an array, just copy it
@@ -167,16 +167,16 @@ export class DatabaseStorage implements IStorage {
         const strValue = formattedCategory.primaryCountries as string;
         countries = strValue.split(',').map((s: string) => s.trim());
       }
-      
+
       // Update the value with properly formatted array
       formattedCategory = {
         ...formattedCategory,
         primaryCountries: countries
       };
     }
-    
+
     // Insert into database
-    const [category] = await db.insert(productCategories).values(formattedCategory).returning();
+    const [category] = await db.insert(productCategories).values(formattedCategory as any).returning();
     return category;
   }
 
@@ -232,53 +232,53 @@ export class DatabaseStorage implements IStorage {
   async updateFeatureFlag(name: string, isEnabled: boolean): Promise<FeatureFlag | undefined> {
     const results = await db.select().from(featureFlags).where(eq(featureFlags.name, name));
     if (results.length === 0) return undefined;
-    
+
     const [updatedFlag] = await db
       .update(featureFlags)
       .set({ isEnabled })
       .where(eq(featureFlags.name, name))
       .returning();
-    
+
     return updatedFlag;
   }
-  
+
   // Email Subscriber methods
   async getEmailSubscribers(): Promise<EmailSubscriber[]> {
     return await db.select().from(emailSubscribers);
   }
-  
+
   async getEmailSubscriber(email: string): Promise<EmailSubscriber | undefined> {
     const results = await db.select().from(emailSubscribers).where(eq(emailSubscribers.email, email));
     return results.length > 0 ? results[0] : undefined;
   }
-  
+
   async createEmailSubscriber(insertSubscriber: InsertEmailSubscriber): Promise<EmailSubscriber> {
     // Check if email already exists to avoid duplicates
     const existing = await this.getEmailSubscriber(insertSubscriber.email);
     if (existing) {
       return existing;
     }
-    
+
     const [subscriber] = await db.insert(emailSubscribers).values({
       ...insertSubscriber,
       status: "active",
       createdAt: new Date(),
       consentTimestamp: new Date()
     }).returning();
-    
+
     return subscriber;
   }
-  
+
   async updateEmailSubscriberStatus(email: string, status: string): Promise<EmailSubscriber | undefined> {
     const subscriber = await this.getEmailSubscriber(email);
     if (!subscriber) return undefined;
-    
+
     const [updatedSubscriber] = await db
       .update(emailSubscribers)
       .set({ status })
       .where(eq(emailSubscribers.email, email))
       .returning();
-    
+
     return updatedSubscriber;
   }
 
@@ -286,12 +286,12 @@ export class DatabaseStorage implements IStorage {
   async initializeData() {
     try {
       console.log('Checking if database needs initialization...');
-      
+
       // Check if we already have data
       const result = await db.select({
         count: sql<number>`count(*)`,
       }).from(featureFlags);
-      
+
       if (result.length > 0 && result[0].count > 0) {
         console.log('Database already contains data, skipping initialization');
         return;
@@ -562,42 +562,42 @@ export class DatabaseStorage implements IStorage {
         isEnabled: false,
         description: "Enables alternative product recommendations"
       });
-      
+
       // Create feature access records
       const roles = ['anonymous', 'user', 'premium', 'editor', 'admin'];
       const features = ['calculator', 'productFiltering', 'authentication', 'emailAlerts', 'alternativeProducts'];
-      
+
       // Set permissions for each role and feature
       await this.setFeatureAccess('calculator', 'anonymous', true);
       await this.setFeatureAccess('calculator', 'user', true);
       await this.setFeatureAccess('calculator', 'premium', true);
       await this.setFeatureAccess('calculator', 'editor', true);
       await this.setFeatureAccess('calculator', 'admin', true);
-      
+
       await this.setFeatureAccess('productFiltering', 'anonymous', true);
       await this.setFeatureAccess('productFiltering', 'user', true);
       await this.setFeatureAccess('productFiltering', 'premium', true);
       await this.setFeatureAccess('productFiltering', 'editor', true);
       await this.setFeatureAccess('productFiltering', 'admin', true);
-      
+
       await this.setFeatureAccess('authentication', 'anonymous', false);
       await this.setFeatureAccess('authentication', 'user', true);
       await this.setFeatureAccess('authentication', 'premium', true);
       await this.setFeatureAccess('authentication', 'editor', true);
       await this.setFeatureAccess('authentication', 'admin', true);
-      
+
       await this.setFeatureAccess('emailAlerts', 'anonymous', true);
       await this.setFeatureAccess('emailAlerts', 'user', true);
       await this.setFeatureAccess('emailAlerts', 'premium', true);
       await this.setFeatureAccess('emailAlerts', 'editor', true);
       await this.setFeatureAccess('emailAlerts', 'admin', true);
-      
+
       await this.setFeatureAccess('alternativeProducts', 'anonymous', false);
       await this.setFeatureAccess('alternativeProducts', 'user', false);
       await this.setFeatureAccess('alternativeProducts', 'premium', true);
       await this.setFeatureAccess('alternativeProducts', 'editor', true);
       await this.setFeatureAccess('alternativeProducts', 'admin', true);
-      
+
       // Create admin user
       await this.createUser({
         username: 'admin',
@@ -606,7 +606,7 @@ export class DatabaseStorage implements IStorage {
         displayName: 'Administrator',
         isSubscribed: true
       });
-      
+
       console.log('Database initialization complete');
     } catch (error) {
       console.error('Failed to initialize database:', error);
